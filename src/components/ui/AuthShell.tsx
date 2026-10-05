@@ -16,7 +16,7 @@ export function AuthShell({
   dark?: boolean;
 }) {
   return (
-    <main className={`min-h-screen-dvh ${dark ? "bg-ink text-white" : ""}`}>
+    <main id="contenido" tabIndex={-1} className={`min-h-screen-dvh ${dark ? "bg-ink text-white" : ""}`}>
       <div className="pt-safe pb-safe mx-auto flex max-w-[480px] flex-col gap-[18px] px-5 py-5 pb-10">
         {back ? (
           <Link

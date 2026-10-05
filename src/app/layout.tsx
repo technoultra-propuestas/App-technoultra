@@ -46,6 +46,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="es-CO" className={manrope.variable}>
       <body>
+        <a href="#contenido" className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[100] focus:rounded-[12px] focus:bg-ink focus:px-4 focus:py-3 focus:font-extrabold focus:text-white">
+          Saltar al contenido
+        </a>
         {children}
         <PwaRegister />
       </body>

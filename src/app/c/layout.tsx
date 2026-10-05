@@ -19,7 +19,7 @@ export default async function ClientLayout({ children }: { children: React.React
     <div className="min-h-screen-dvh">
       <AppHeader home="/c" name={profile.full_name} roleLabel="Cliente" unread={unread ?? 0} />
       <ClientNav />
-      <div className="mx-auto max-w-[1040px] px-5 pb-28 pt-6 md:pb-10">{children}</div>
+      <div id="contenido" tabIndex={-1} className="mx-auto max-w-[1040px] px-5 pb-28 pt-6 outline-none md:pb-10">{children}</div>
     </div>
   );
 }

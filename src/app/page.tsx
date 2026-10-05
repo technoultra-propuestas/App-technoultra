@@ -21,7 +21,7 @@ export default async function WelcomePage() {
   }
 
   return (
-    <main className="min-h-screen-dvh flex flex-col">
+    <main id="contenido" tabIndex={-1} className="min-h-screen-dvh flex flex-col">
       <header className="pt-safe rounded-b-[32px] bg-ink px-5 pb-10 pt-10 text-white sm:px-[clamp(20px,6vw,64px)]">
         <div className="mx-auto flex max-w-[1040px] flex-col gap-[22px]">
           <div className="flex items-center gap-3">

@@ -10,7 +10,7 @@ export default async function StaffLayout({ children }: { children: React.ReactN
     <div className="min-h-screen-dvh">
       <AppHeader home="/b" name={profile.full_name} roleLabel={profile.role === "admin" ? "Administración" : "Técnico"} unread={unread ?? 0} />
       <StaffNav isAdmin={profile.role === "admin"} />
-      <div className="pb-safe mx-auto max-w-[1040px] px-5 pb-10 pt-6">{children}</div>
+      <div id="contenido" tabIndex={-1} className="pb-safe mx-auto max-w-[1040px] px-5 pb-10 pt-6 outline-none">{children}</div>
     </div>
   );
 }

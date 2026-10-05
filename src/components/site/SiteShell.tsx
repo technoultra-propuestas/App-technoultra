@@ -17,7 +17,7 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
           </nav>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-[1040px] flex-1 px-5 py-8">{children}</main>
+      <main id="contenido" tabIndex={-1} className="mx-auto w-full max-w-[1040px] flex-1 px-5 py-8">{children}</main>
       <footer className="pb-safe border-t border-line bg-white">
         <div className="mx-auto flex max-w-[1040px] flex-wrap gap-x-5 gap-y-2 px-5 py-5 text-[13px] font-semibold text-muted">
           <Link href="/legal/terms" className="text-muted">Términos</Link>
