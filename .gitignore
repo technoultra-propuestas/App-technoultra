@@ -42,3 +42,8 @@ next-env.d.ts
 
 # permitir plantilla de variables
 !.env.example
+
+# herramientas locales / credenciales de MCP
+.mcp.json
+.serena/
+supabase/.temp/
