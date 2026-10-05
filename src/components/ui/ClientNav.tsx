@@ -3,22 +3,22 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const ITEMS = [
+type Item = { href: string; label: string; exact?: boolean; also?: string[] };
+const ITEMS: Item[] = [
   { href: "/c", label: "Inicio", exact: true },
   { href: "/c/solicitar", label: "Servicios" },
   { href: "/c/tickets", label: "Tickets" },
-  { href: "/c/equipos", label: "Equipos" },
-  { href: "/c/tienda", label: "Tienda" },
-  { href: "/c/proyectos", label: "Proyectos" },
-  { href: "/c/documentos", label: "Docs" },
-  { href: "/c/perfil", label: "Perfil" },
+  { href: "/c/tienda", label: "Tienda", also: ["/c/carrito", "/c/pedidos"] },
+  { href: "/c/mas", label: "Más", also: ["/c/equipos", "/c/proyectos", "/c/documentos", "/c/direcciones", "/c/perfil", "/c/legal"] },
 ];
 
 /** Navegación inferior en móvil (con safe-area del iPhone) y superior en pantallas anchas. */
 export function ClientNav() {
   const path = usePathname();
-  const active = (i: (typeof ITEMS)[number]) =>
-    i.exact ? path === i.href : path === i.href || path.startsWith(i.href + "/");
+  const active = (i: Item) => {
+    const hit = (p: string) => path === p || path.startsWith(p + "/");
+    return i.exact ? path === i.href : hit(i.href) || (i.also ?? []).some(hit);
+  };
   return (
     <nav
       aria-label="Principal"
