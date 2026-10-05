@@ -6,7 +6,7 @@
 
 | Área | Estado |
 |---|---|
-| Base de datos (18 migraciones) | Implementada y probada en PGlite (Postgres 17). **No aplicada al Supabase remoto** (falta `SUPABASE_DB_PASSWORD`, ver bloqueos). |
+| Base de datos (19 migraciones) | **Aplicada al Supabase remoto `agosikmonvjujxzokdlc` (2026-10-05)** y verificada: 55 tablas con RLS, 104 políticas (0 con `USING true`), funciones administrativas cerradas a `anon`/`authenticated`, bucket privado `documents`, cobertura Cali/Palmira/Jamundí/Yumbo, cadena de auditoría íntegra. |
 | Auth (correo + código, Google OAuth, staff por invitación) | Implementada y probada con pruebas automáticas. **No probada contra Supabase/Google reales.** |
 | Onboarding persistente + aceptación legal versionada | Implementado. |
 | Servicios, cobertura (Cali/Palmira/Jamundí/Yumbo + remoto nacional), equipos, direcciones, solicitudes | Implementado (cobertura validada en BD). |
