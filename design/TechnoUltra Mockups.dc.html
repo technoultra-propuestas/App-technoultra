@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&family=Barlow+Condensed:wght@700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400..600,0..1,0&display=block" rel="stylesheet">
+<script src="./image-slot.js"></script>
+<style>
+body{margin:0;background:#E9E9E6;font-family:Manrope,system-ui,sans-serif;color:#121212;-webkit-font-smoothing:antialiased}
+a{color:#121212;text-decoration-color:#FF8A00}a:hover{color:#000}
+.dv-turn{padding:48px 56px 40px;border-bottom:1px solid rgba(0,0,0,.08)}
+.dv-thd{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;margin:0 0 16px}
+.dv-tid{font:600 10px 'JetBrains Mono',monospace;padding:3px 7px;background:#121212;color:#fff;border-radius:4px;text-decoration:none}
+.dv-tname{font:700 15px/1.2 Manrope,sans-serif;color:#121212}
+.dv-opts{display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start}
+.dv-opt{flex:none;display:flex;flex-direction:column;gap:12px}
+.dv-oid{font:600 10.5px 'JetBrains Mono',monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#121212;border-radius:5px;text-decoration:none}
+.dv-olabel{display:flex;align-items:baseline;gap:8px;font:500 12px/1.3 Manrope,sans-serif;color:rgba(0,0,0,.6)}
+.dv-opt:target .dv-oid{background:#FF8A00;color:#121212}
+.dv-next{margin:28px 0 0;font:13px/1.5 Manrope,sans-serif;color:rgba(0,0,0,.55)}
+</style>
+</helmet>
+
+<section class="dv-turn" id="t2">
+  <div class="dv-thd"><a class="dv-tid" href="#t2">2</a><span class="dv-tname">Con logo y referencia · variantes de Inicio + tienda, ticket, CRM y calendario</span></div>
+  <p style="margin:0 0 32px;max-width:760px;font-size:14px;line-height:1.55;color:#4A4A48;text-wrap:pretty">Del flyer tomé el wordmark TECHN⏻ULTRA, los titulares condensados en mayúscula, la barra corta naranja bajo los títulos y los iconos de línea. Los titulares condensados se usan solo en momentos de marca; la interfaz sigue en Manrope. Los recuadros de foto aceptan tus imágenes: arrástralas encima.</p>
+  <div class="dv-opts">
+
+    <!-- 2a MARCA -->
+    <div class="dv-opt" id="2a">
+      <div class="dv-olabel"><a class="dv-oid" href="#2a">2a</a>Marca aplicada a la interfaz</div>
+      <div style="width:820px;background:#FFFFFF;border-radius:20px;overflow:hidden;display:flex;flex-direction:column">
+        <div style="background:#121212;color:#FFFFFF;padding:36px 40px;display:grid;grid-template-columns:1fr 220px;gap:32px;align-items:center">
+          <div style="display:flex;flex-direction:column;gap:18px">
+            <div style="display:flex;align-items:center;font-weight:800;font-size:30px;letter-spacing:-0.01em;line-height:1"><span>TECHN</span><span style="font-family:'Material Symbols Rounded';font-size:30px;font-variation-settings:'wght' 600;color:#FF8A00;margin:0 1px">power_settings_new</span><span style="color:#FF8A00">ULTRA</span></div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:64px;line-height:0.92;text-transform:uppercase;letter-spacing:0.005em">Tu equipo<br>funcionando<br><span style="color:#FF8A00">de nuevo</span></div>
+            <div style="width:48px;height:5px;border-radius:3px;background:#FF8A00"></div>
+            <div style="font-size:16px;line-height:1.5;color:#C9C9C5;max-width:420px">Titular condensado solo en portadas, bienvenida y notificaciones clave. Nunca en formularios ni tablas.</div>
+          </div>
+          <div style="width:220px;height:220px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center"><img src="assets/logo-technoultra.png" alt="Logo TechnoUltra" style="width:118%;height:118%;object-fit:cover"></div>
+        </div>
+        <div style="padding:32px 40px;display:grid;grid-template-columns:1fr 1fr;gap:32px">
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <div style="font-size:12px;font-weight:700;color:#6B6B68;letter-spacing:0.06em">ICONOGRAFÍA · LÍNEA POR DEFECTO, RELLENO = SELECCIONADO</div>
+            <div style="display:flex;gap:10px">
+              <div style="width:64px;height:64px;border-radius:16px;background:#F6F6F5;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-size:30px">laptop_chromebook</span></div>
+              <div style="width:64px;height:64px;border-radius:16px;background:#F6F6F5;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-size:30px">build</span></div>
+              <div style="width:64px;height:64px;border-radius:16px;background:#F6F6F5;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-size:30px">hard_drive</span></div>
+              <div style="width:64px;height:64px;border-radius:16px;background:#121212;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-size:30px;color:#FF8A00;font-variation-settings:'FILL' 1">verified_user</span></div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <div style="font-size:12px;font-weight:700;color:#6B6B68;letter-spacing:0.06em">FOTOGRAFÍA · REAL, CÁLIDA, BANCO DE TRABAJO</div>
+            <div style="height:120px;border-radius:16px;overflow:hidden;position:relative"><image-slot id="brand-photo" shape="rect" placeholder="Foto: equipo en banco de trabajo"></image-slot></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2b INICIO CLARO -->
+    <div class="dv-opt" id="2b">
+      <div class="dv-olabel"><a class="dv-oid" href="#2b">2b</a>Inicio · menos negro, botones grandes</div>
+      <div style="width:390px;height:844px;border-radius:52px;background:#121212;padding:10px;box-sizing:content-box">
+        <div style="width:390px;height:844px;border-radius:42px;background:#F6F6F5;overflow:hidden;display:flex;flex-direction:column">
+          <div style="height:50px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 28px;font-size:15px;font-weight:700"><span>9:41</span><span style="display:flex;gap:4px;font-family:'Material Symbols Rounded';font-size:18px"><span>signal_cellular_alt</span><span>wifi</span><span>battery_full</span></span></div>
+          <div style="flex:1;overflow:hidden;padding:4px 20px 0;display:flex;flex-direction:column;gap:16px">
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="width:40px;height:40px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#FFFFFF"><img src="assets/logo-technoultra.png" alt="" style="width:120%;height:120%;object-fit:cover"></div>
+              <div style="flex:1;display:flex;align-items:center;font-weight:800;font-size:16px;line-height:1"><span>TECHN</span><span style="font-family:'Material Symbols Rounded';font-size:16px;font-variation-settings:'wght' 600;margin:0 1px">power_settings_new</span><span style="color:#FF8A00">ULTRA</span></div>
+              <div style="width:44px;height:44px;border-radius:14px;background:#FFFFFF;display:flex;align-items:center;justify-content:center;position:relative"><span style="font-family:'Material Symbols Rounded';font-size:24px">notifications</span><span style="position:absolute;top:10px;right:11px;width:9px;height:9px;border-radius:50%;background:#FF8A00;border:2px solid #FFFFFF"></span></div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div style="font-size:26px;font-weight:800;letter-spacing:-0.025em;line-height:1.15">Hola, Juan.<br>¿En qué te ayudamos?</div>
+              <div style="width:36px;height:4px;border-radius:2px;background:#FF8A00"></div>
+            </div>
+            <div style="background:#FFFFFF;border-radius:22px;padding:16px;display:flex;flex-direction:column;gap:12px;border:1px solid #ECECE9">
+              <div style="display:flex;align-items:center;gap:12px">
+                <div style="width:44px;height:44px;border-radius:14px;background:#F6F6F5;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-size:24px">laptop_chromebook</span></div>
+                <div style="flex:1"><div style="font-size:16px;font-weight:700">HP 14-R005LA</div><div style="font:600 12px 'JetBrains Mono',monospace;color:#5C5C59">TU-2026-00001</div></div>
+                <span style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px 6px 7px;border-radius:999px;background:oklch(0.95 0.04 275);color:oklch(0.40 0.14 275);font-size:12px;font-weight:700"><span style="font-family:'Material Symbols Rounded';font-size:16px">fact_check</span>En pruebas</span>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px"><div style="height:6px;border-radius:3px;background:#FF8A00"></div><div style="height:6px;border-radius:3px;background:#FF8A00"></div><div style="height:6px;border-radius:3px;background:#FF8A00"></div><div style="height:6px;border-radius:3px;background:#FF8A00"></div><div style="height:6px;border-radius:3px;background:#FF8A00"></div><div style="height:6px;border-radius:3px;background:#E7E7E4"></div><div style="height:6px;border-radius:3px;background:#E7E7E4"></div></div>
+              <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:14px;color:#3A3A38;font-weight:600">Listo aprox. mañana</span><span style="font-size:15px;font-weight:800;display:flex;align-items:center;gap:2px">Ver detalle<span style="font-family:'Material Symbols Rounded';font-size:20px">chevron_right</span></span></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div style="height:118px;border-radius:20px;background:#FF8A00;padding:16px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between"><span style="font-family:'Material Symbols Rounded';font-size:30px;color:#121212">add_circle</span><span style="font-size:17px;font-weight:800;line-height:1.2;color:#121212">Solicitar<br>un servicio</span></div>
+              <div style="height:118px;border-radius:20px;background:#FFFFFF;border:1px solid #ECECE9;padding:16px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between"><span style="font-family:'Material Symbols Rounded';font-size:30px">devices</span><span style="font-size:17px;font-weight:800;line-height:1.2">Mis equipos<br><span style="font-size:13px;color:#5C5C59;font-weight:600">2 registrados</span></span></div>
+              <div style="height:118px;border-radius:20px;background:#FFFFFF;border:1px solid #ECECE9;padding:16px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between"><span style="font-family:'Material Symbols Rounded';font-size:30px">verified_user</span><span style="font-size:17px;font-weight:800;line-height:1.2">Garantías<br><span style="font-size:13px;color:#5C5C59;font-weight:600">1 vigente</span></span></div>
+              <div style="height:118px;border-radius:20px;background:#FFFFFF;border:1px solid #ECECE9;padding:16px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between"><span style="font-family:'Material Symbols Rounded';font-size:30px">storefront</span><span style="font-size:17px;font-weight:800;line-height:1.2">Tienda<br><span style="font-size:13px;color:#5C5C59;font-weight:600">SSD, RAM y más</span></span></div>
+            </div>
+            <div style="background:#121212;color:#FFFFFF;border-radius:18px;padding:14px 16px;display:flex;align-items:center;gap:12px">
+              <span style="font-family:'Material Symbols Rounded';font-size:24px;color:#FF8A00">event_repeat</span>
+              <div style="flex:1"><div style="font-size:14px;font-weight:700">Mantenimiento de tu Epson</div><div style="font-size:13px;color:#BDBDBA">Recomendado el 12/11/2026</div></div>
+              <span style="font-size:14px;font-weight:800;color:#FF9F2A">Agendar</span>
+            </div>
+          </div>
+          <div style="flex:none;background:#FFFFFF;border-top:1px solid #ECECE9;padding:0 6px 26px;display:grid;grid-template-columns:repeat(6,1fr)">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;padding-top:0"><div style="width:32px;height:3px;border-radius:0 0 3px 3px;background:#FF8A00"></div><span style="font-family:'Material Symbols Rounded';font-size:24px;font-variation-settings:'FILL' 1;margin-top:6px">home</span><span style="font-size:12px;font-weight:800">Inicio</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;color:#5C5C59;padding-top:9px"><span style="font-family:'Material Symbols Rounded';font-size:24px">home_repair_service</span><span style="font-size:12px;font-weight:600">Servicios</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;color:#5C5C59;padding-top:9px"><span style="font-family:'Material Symbols Rounded';font-size:24px">devices</span><span style="font-size:12px;font-weight:600">Equipos</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;color:#5C5C59;padding-top:9px"><span style="font-family:'Material Symbols Rounded';font-size:24px">confirmation_number</span><span style="font-size:12px;font-weight:600">Tickets</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;color:#5C5C59;padding-top:9px"><span style="font-family:'Material Symbols Rounded';font-size:24px">storefront</span><span style="font-size:12px;font-weight:600">Tienda</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;color:#5C5C59;padding-top:9px"><span style="font-family:'Material Symbols Rounded';font-size:24px">more_horiz</span><span style="font-size:12px;font-weight:600">Más</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2c INICIO FOTO -->
+    <div class="dv-opt" id="2c">
+      <div class="dv-olabel"><a class="dv-oid" href="#2c">2c</a>Inicio · portada con foto, estilo flyer</div>
+      <div style="width:390px;height:844px;border-radius:52px;background:#121212;padding:10px;box-sizing:content-box">
+        <div style="width:390px;height:844px;border-radius:42px;background:#FFFFFF;overflow:hidden;display:flex;flex-direction:column">
+          <div style="height:400px;flex:none;position:relative;background:#121212">
+            <div style="position:absolute;inset:0"><image-slot id="home-hero" shape="rect" placeholder="Foto: banco de trabajo con portátil abierto"></image-slot></div>
+            <div style="position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(18,18,18,.55) 0%,rgba(18,18,18,.2) 35%,rgba(18,18,18,.92) 100%)"></div>
+            <div style="position:absolute;inset:0;pointer-events:none;display:flex;flex-direction:column;padding:0 22px 22px;color:#FFFFFF">
+              <div style="height:50px;display:flex;align-items:center;justify-content:space-between;padding:0 6px;font-size:15px;font-weight:700"><span>9:41</span><span style="display:flex;gap:4px;font-family:'Material Symbols Rounded';font-size:18px"><span>signal_cellular_alt</span><span>wifi</span><span>battery_full</span></span></div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px">
+                <div style="display:flex;align-items:center;font-weight:800;font-size:18px;line-height:1"><span>TECHN</span><span style="font-family:'Material Symbols Rounded';font-size:18px;font-variation-settings:'wght' 600;color:#FF8A00;margin:0 1px">power_settings_new</span><span style="color:#FF8A00">ULTRA</span></div>
+                <div style="width:44px;height:44px;border-radius:14px;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;pointer-events:auto"><span style="font-family:'Material Symbols Rounded';font-size:24px">notifications</span></div>
+              </div>
+              <div style="margin-top:auto;display:flex;flex-direction:column;gap:12px">
+                <div style="font-size:15px;font-weight:600;color:#E6E6E3">Hola, Juan</div>
+                <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:46px;line-height:0.92;text-transform:uppercase">Tu equipo<br><span style="color:#FF8A00">casi listo</span></div>
+                <div style="width:40px;height:4px;border-radius:2px;background:#FF8A00"></div>
+                <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.12);border-radius:14px;padding:10px 12px;pointer-events:auto">
+                  <span style="font-family:'Material Symbols Rounded';font-size:22px;color:#FFB255">fact_check</span>
+                  <div style="flex:1;font-size:14px;font-weight:600">HP 14-R005LA · En pruebas</div>
+                  <span style="font-family:'Material Symbols Rounded';font-size:22px">chevron_right</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div style="flex:1;overflow:hidden;padding:20px 20px 0;display:flex;flex-direction:column;gap:18px">
+            <div style="height:60px;border-radius:18px;background:#FF8A00;color:#121212;font-weight:800;font-size:17px;display:flex;align-items:center;justify-content:center;gap:8px"><span style="font-family:'Material Symbols Rounded';font-size:24px">add_circle</span>Solicitar un servicio</div>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr)">
+              <div style="display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center"><span style="font-family:'Material Symbols Rounded';font-size:32px;font-variation-settings:'wght' 300">laptop_chromebook</span><span style="font-size:12px;font-weight:700;line-height:1.25">Manteni-<br>miento</span></div>
+              <div style="display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;border-left:1px solid #ECECE9"><span style="font-family:'Material Symbols Rounded';font-size:32px;font-variation-settings:'wght' 300">build</span><span style="font-size:12px;font-weight:700;line-height:1.25">Reparación</span></div>
+              <div style="display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;border-left:1px solid #ECECE9"><span style="font-family:'Material Symbols Rounded';font-size:32px;font-variation-settings:'wght' 300">window</span><span style="font-size:12px;font-weight:700;line-height:1.25">Windows</span></div>
+              <div style="display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;border-left:1px solid #ECECE9"><span style="font-family:'Material Symbols Rounded';font-size:32px;font-variation-settings:'wght' 300">hard_drive</span><span style="font-size:12px;font-weight:700;line-height:1.25">Cambio<br>a SSD</span></div>
+            </div>
+            <div style="background:#121212;border-radius:20px;padding:14px 16px;display:flex;align-items:center;gap:14px;color:#FFFFFF">
+              <div style="width:44px;height:44px;border-radius:50%;border:2px solid #FF8A00;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-size:22px;color:#FF8A00">chat</span></div>
+              <div style="flex:1"><div style="font-size:12px;font-weight:700;letter-spacing:0.06em;color:#BDBDBA">ESCRÍBENOS</div><div style="font-size:20px;font-weight:800">318 394 3465</div></div>
+              <span style="font-family:'Material Symbols Rounded';font-size:24px;color:#FF8A00">arrow_forward</span>
+            </div>
+          </div>
+          <div style="flex:none;background:#FFFFFF;border-top:1px solid #ECECE9;padding:8px 6px 26px;display:grid;grid-template-columns:repeat(6,1fr)">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:3px"><div style="width:44px;height:30px;border-radius:10px;background:#121212;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-size:22px;color:#FF8A00;font-variation-settings:'FILL' 1">home</span></div><span style="font-size:11px;font-weight:800">Inicio</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#5C5C59"><div style="height:30px;display:flex;align-items:center"><span style="font-family:'Material Symbols Rounded';font-size:22px">home_repair_service</span></div><span style="font-size:11px;font-weight:600">Servicios</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#5C5C59"><div style="height:30px;display:flex;align-items:center"><span style="font-family:'Material Symbols Rounded';font-size:22px">devices</span></div><span style="font-size:11px;font-weight:600">Equipos</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#5C5C59"><div style="height:30px;display:flex;align-items:center"><span style="font-family:'Material Symbols Rounded';font-size:22px">confirmation_number</span></div><span style="font-size:11px;font-weight:600">Tickets</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#5C5C59"><div style="height:30px;display:flex;align-items:center"><span style="font-family:'Material Symbols Rounded';font-size:22px">storefront</span></div><span style="font-size:11px;font-weight:600">Tienda</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#5C5C59"><div style="height:30px;display:flex;align-items:center"><span style="font-family:'Material Symbols Rounded';font-size:22px">more_horiz</span></div><span style="font-size:11px;font-weight:600">Más</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2d TIENDA -->
+    <div class="dv-opt" id="2d">
+      <div class="dv-olabel"><a class="dv-oid" href="#2d">2d</a>Cliente · Tienda</div>
+      <div style="width:390px;height:844px;border-radius:52px;background:#121212;padding:10px;box-sizing:content-box">
+        <div style="width:390px;height:844px;border-radius:42px;background:#F6F6F5;overflow:hidden;display:flex;flex-direction:column;position:relative">
+          <div style="height:50px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 28px;font-size:15px;font-weight:700"><span>9:41</span><span style="display:flex;gap:4px;font-family:'Material Symbols Rounded';font-size:18px"><span>signal_cellular_alt</span><span>wifi</span><span>battery_full</span></span></div>
+          <div style="flex:none;padding:4px 20px 12px;display:flex;flex-direction:column;gap:14px">
+            <div style="display:flex;align-items:center;justify-content:space-between"><div style="font-size:26px;font-weight:800;letter-spacing:-0.025em">Tienda</div><div style="width:44px;height:44px;border-radius:14px;background:#FFFFFF;display:flex;align-items:center;justify-content:center;position:relative"><span style="font-family:'Material Symbols Rounded';font-size:24px">shopping_bag</span><span style="position:absolute;top:4px;right:4px;min-width:18px;height:18px;border-radius:9px;background:#FF8A00;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center">2</span></div></div>
+            <div style="height:50px;border-radius:14px;background:#FFFFFF;display:flex;align-items:center;gap:10px;padding:0 16px"><span style="font-family:'Material Symbols Rounded';font-size:22px;color:#5C5C59">search</span><span style="font-size:15px;color:#6B6B68;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0">Buscar SSD, RAM, cargadores…</span></div>
+            <div style="display:flex;gap:8px;overflow:hidden">
+              <span style="flex:none;white-space:nowrap;height:40px;padding:0 16px;border-radius:12px;background:#121212;color:#FFFFFF;font-size:14px;font-weight:700;display:flex;align-items:center">Almacenamiento</span>
+              <span style="flex:none;white-space:nowrap;height:40px;padding:0 16px;border-radius:12px;background:#FFFFFF;font-size:14px;font-weight:600;display:flex;align-items:center">Memoria RAM</span>
+              <span style="flex:none;white-space:nowrap;height:40px;padding:0 16px;border-radius:12px;background:#FFFFFF;font-size:14px;font-weight:600;display:flex;align-items:center">Periféricos</span>
+              <span style="flex:none;white-space:nowrap;height:40px;padding:0 16px;border-radius:12px;background:#FFFFFF;font-size:14px;font-weight:600;display:flex;align-items:center">Impresión</span>
+            </div>
+          </div>
+          <div style="flex:1;overflow:hidden;padding:0 20px;display:flex;flex-direction:column;gap:12px">
+            <div style="background:#121212;color:#FFFFFF;border-radius:20px;padding:16px;display:flex;align-items:center;gap:14px">
+              <div style="flex:1;display:flex;flex-direction:column;gap:4px"><div style="font-size:12px;font-weight:700;letter-spacing:0.06em;color:#FFB255">PRODUCTO + INSTALACIÓN</div><div style="font-size:17px;font-weight:800;line-height:1.25">Agrega la instalación y te lo dejamos funcionando</div></div>
+              <span style="font-family:'Material Symbols Rounded';font-size:34px;color:#FF8A00">handyman</span>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">
+              <div style="background:#FFFFFF;border-radius:18px;padding:10px;display:flex;flex-direction:column;gap:8px;min-width:0">
+                <div style="height:112px;border-radius:12px;overflow:hidden;background:#F6F6F5"><image-slot id="prod-ssd" shape="rect" placeholder="SSD Kingston"></image-slot></div>
+                <div style="padding:0 4px;display:flex;flex-direction:column;gap:2px"><div style="font-size:14px;font-weight:700;line-height:1.3">SSD Kingston 480 GB</div><div style="font-size:12px;color:oklch(0.38 0.10 150);font-weight:700">En stock</div><div style="font-size:17px;font-weight:800">$189.000</div></div>
+                <div style="height:42px;border-radius:12px;background:#121212;color:#FFFFFF;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:4px"><span style="font-family:'Material Symbols Rounded';font-size:18px;color:#FF8A00">check</span>Agregado</div>
+              </div>
+              <div style="background:#FFFFFF;border-radius:18px;padding:10px;display:flex;flex-direction:column;gap:8px;min-width:0">
+                <div style="height:112px;border-radius:12px;overflow:hidden;background:#F6F6F5"><image-slot id="prod-hdd" shape="rect" placeholder="Disco externo"></image-slot></div>
+                <div style="padding:0 4px;display:flex;flex-direction:column;gap:2px"><div style="font-size:14px;font-weight:700;line-height:1.3">Disco externo 1 TB</div><div style="font-size:12px;color:oklch(0.38 0.10 150);font-weight:700">En stock</div><div style="font-size:17px;font-weight:800">$245.000</div></div>
+                <div style="height:42px;border-radius:12px;background:#FF8A00;color:#121212;font-size:14px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:4px"><span style="font-family:'Material Symbols Rounded';font-size:18px">add</span>Agregar</div>
+              </div>
+              <div style="background:#FFFFFF;border-radius:18px;padding:10px;display:flex;flex-direction:column;gap:8px;min-width:0">
+                <div style="height:112px;border-radius:12px;overflow:hidden;background:#F6F6F5"><image-slot id="prod-usb" shape="rect" placeholder="Memoria USB"></image-slot></div>
+                <div style="padding:0 4px;display:flex;flex-direction:column;gap:2px"><div style="font-size:14px;font-weight:700;line-height:1.3">Memoria USB 64 GB</div><div style="font-size:12px;color:#8A4500;font-weight:700">Últimas 3</div><div style="font-size:17px;font-weight:800">$35.000</div></div>
+              </div>
+              <div style="background:#FFFFFF;border-radius:18px;padding:10px;display:flex;flex-direction:column;gap:8px;min-width:0">
+                <div style="height:112px;border-radius:12px;overflow:hidden;background:#F6F6F5"><image-slot id="prod-sd" shape="rect" placeholder="MicroSD"></image-slot></div>
+                <div style="padding:0 4px;display:flex;flex-direction:column;gap:2px"><div style="font-size:14px;font-weight:700;line-height:1.3">MicroSD 128 GB</div><div style="font-size:12px;color:oklch(0.38 0.10 150);font-weight:700">En stock</div><div style="font-size:17px;font-weight:800">$59.000</div></div>
+              </div>
+            </div>
+          </div>
+          <div style="position:absolute;left:16px;right:16px;bottom:28px;height:64px;border-radius:20px;background:#121212;color:#FFFFFF;display:flex;align-items:center;padding:0 10px 0 18px;gap:12px">
+            <div style="flex:1"><div style="font-size:13px;color:#BDBDBA;font-weight:600">SSD + instalación</div><div style="font-size:18px;font-weight:800">$229.000</div></div>
+            <div style="height:46px;padding:0 18px;border-radius:14px;background:#FF8A00;color:#121212;font-weight:800;font-size:15px;display:flex;align-items:center;gap:6px">Solicitar<span style="font-family:'Material Symbols Rounded';font-size:20px">arrow_forward</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2e DETALLE TICKET -->
+    <div class="dv-opt" id="2e">
+      <div class="dv-olabel"><a class="dv-oid" href="#2e">2e</a>Backoffice · Detalle de ticket (navegación en riel)</div>
+      <div style="width:1440px;height:940px;border-radius:16px;overflow:hidden;background:#F6F6F5;display:flex">
+        <div style="width:84px;flex:none;background:#121212;padding:20px 0;display:flex;flex-direction:column;align-items:center;gap:6px">
+          <div style="width:44px;height:44px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;margin-bottom:14px"><img src="assets/logo-technoultra.png" alt="" style="width:120%;height:120%;object-fit:cover"></div>
+          <div style="width:64px;padding:8px 0;border-radius:12px;display:flex;flex-direction:column;align-items:center;gap:3px;color:#A3A3A0"><span style="font-family:'Material Symbols Rounded';font-size:22px">space_dashboard</span><span style="font-size:10px;font-weight:700">Inicio</span></div>
+          <div style="width:64px;padding:8px 0;border-radius:12px;background:#262626;display:flex;flex-direction:column;align-items:center;gap:3px;color:#FFFFFF"><span style="font-family:'Material Symbols Rounded';font-size:22px;color:#FF8A00;font-variation-settings:'FILL' 1">confirmation_number</span><span style="font-size:10px;font-weight:700">Tickets</span></div>
+          <div style="width:64px;padding:8px 0;border-radius:12px;display:flex;flex-direction:column;align-items:center;gap:3px;color:#A3A3A0"><span style="font-family:'Material Symbols Rounded';font-size:22px">group</span><span style="font-size:10px;font-weight:700">Clientes</span></div>
+          <div style="width:64px;padding:8px 0;border-radius:12px;display:flex;flex-direction:column;align-items:center;gap:3px;color:#A3A3A0"><span style="font-family:'Material Symbols Rounded';font-size:22px">request_quote</span><span style="font-size:10px;font-weight:700">Cotizar</span></div>
+          <div style="width:64px;padding:8px 0;border-radius:12px;display:flex;flex-direction:column;align-items:center;gap:3px;color:#A3A3A0"><span style="font-family:'Material Symbols Rounded';font-size:22px">calendar_month</span><span style="font-size:10px;font-weight:700">Agenda</span></div>
+          <div style="width:64px;padding:8px 0;border-radius:12px;display:flex;flex-direction:column;align-items:center;gap:3px;color:#A3A3A0"><span style="font-family:'Material Symbols Rounded';font-size:22px">support_agent</span><span style="font-size:10px;font-weight:700">CRM</span></div>
+          <div style="width:64px;padding:8px 0;border-radius:12px;display:flex;flex-direction:column;align-items:center;gap:3px;color:#A3A3A0"><span style="font-family:'Material Symbols Rounded';font-size:22px">storefront</span><span style="font-size:10px;font-weight:700">Tienda</span></div>
+          <div style="width:64px;padding:8px 0;border-radius:12px;display:flex;flex-direction:column;align-items:center;gap:3px;color:#A3A3A0"><span style="font-family:'Material Symbols Rounded';font-size:22px">bar_chart</span><span style="font-size:10px;font-weight:700">Reportes</span></div>
+        </div>
+        <div style="flex:1;min-width:0;padding:24px 32px;display:flex;flex-direction:column;gap:18px">
+          <div style="display:flex;align-items:center;gap:14px">
+            <div style="width:44px;height:44px;border-radius:14px;background:#FFFFFF;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-size:22px">arrow_back</span></div>
+            <div style="flex:1;display:flex;flex-direction:column;gap:2px">
+              <div style="display:flex;align-items:center;gap:12px"><span style="font:600 22px 'JetBrains Mono',monospace">TU-2026-00001</span><span style="display:inline-flex;align-items:center;gap:6px;padding:6px 11px 6px 8px;border-radius:999px;background:oklch(0.95 0.04 275);color:oklch(0.40 0.14 275);font-size:13px;font-weight:700"><span style="font-family:'Material Symbols Rounded';font-size:17px">fact_check</span>En pruebas</span><span style="display:inline-flex;align-items:center;gap:4px;font-size:13px;font-weight:700;color:#5C5C59"><span style="font-family:'Material Symbols Rounded';font-size:17px">flag</span>Prioridad normal</span></div>
+              <div style="font-size:14px;color:#5C5C59;font-weight:600">Juan Pérez · HP 14-R005LA · Serial 5CD4281XQZ · Técnico: Wilder</div>
+            </div>
+            <div style="height:46px;padding:0 16px;border-radius:14px;background:#FFFFFF;font-weight:700;font-size:14px;display:flex;align-items:center;gap:8px"><span style="font-family:'Material Symbols Rounded';font-size:20px">chat</span>WhatsApp</div>
+            <div style="height:46px;padding:0 16px;border-radius:14px;background:#FFFFFF;font-weight:700;font-size:14px;display:flex;align-items:center;gap:8px"><span style="font-family:'Material Symbols Rounded';font-size:20px">add_task</span>Trabajo adicional</div>
+            <div style="height:46px;padding:0 18px;border-radius:14px;background:#FF8A00;color:#121212;font-weight:800;font-size:14px;display:flex;align-items:center;gap:8px">Marcar listo para entregar<span style="font-family:'Material Symbols Rounded';font-size:20px">arrow_forward</span></div>
+          </div>
+          <div style="background:#FFFFFF;border-radius:18px;padding:16px 20px;display:grid;grid-template-columns:repeat(8,1fr);gap:6px">
+            <div style="display:flex;flex-direction:column;gap:6px"><div style="height:5px;border-radius:3px;background:#121212"></div><span style="font-size:12px;font-weight:700">Recibido</span><span style="font-size:11px;color:#5C5C59">04/10 9:12</span></div>
+            <div style="display:flex;flex-direction:column;gap:6px"><div style="height:5px;border-radius:3px;background:#121212"></div><span style="font-size:12px;font-weight:700">Diagnóstico</span><span style="font-size:11px;color:#5C5C59">05/10 8:40</span></div>
+            <div style="display:flex;flex-direction:column;gap:6px"><div style="height:5px;border-radius:3px;background:#121212"></div><span style="font-size:12px;font-weight:700">Aprobación</span><span style="font-size:11px;color:#5C5C59">05/10 11:03</span></div>
+            <div style="display:flex;flex-direction:column;gap:6px"><div style="height:5px;border-radius:3px;background:#E7E7E4"></div><span style="font-size:12px;font-weight:600;color:#8A8A87">Repuesto</span><span style="font-size:11px;color:#8A8A87">No aplica</span></div>
+            <div style="display:flex;flex-direction:column;gap:6px"><div style="height:5px;border-radius:3px;background:#121212"></div><span style="font-size:12px;font-weight:700">En servicio</span><span style="font-size:11px;color:#5C5C59">06/10 9:20</span></div>
+            <div style="display:flex;flex-direction:column;gap:6px"><div style="height:5px;border-radius:3px;background:#FF8A00"></div><span style="font-size:12px;font-weight:800">En pruebas</span><span style="font-size:11px;color:#121212;font-weight:700">Desde 10:42</span></div>
+            <div style="display:flex;flex-direction:column;gap:6px"><div style="height:5px;border-radius:3px;background:#E7E7E4"></div><span style="font-size:12px;font-weight:600;color:#5C5C59">Listo</span></div>
+            <div style="display:flex;flex-direction:column;gap:6px"><div style="height:5px;border-radius:3px;background:#E7E7E4"></div><span style="font-size:12px;font-weight:600;color:#5C5C59">Entregado</span></div>
+          </div>
+          <div style="flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:18px">
+            <div style="display:flex;flex-direction:column;gap:18px;min-height:0">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <div style="background:#FFFFFF;border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:8px">
+                  <div style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;letter-spacing:0.05em;color:#5C5C59"><span style="font-family:'Material Symbols Rounded';font-size:18px">person</span>REPORTADO POR EL CLIENTE</div>
+                  <div style="font-size:15px;line-height:1.5;color:#2A2A28">"Está muy lento. Se demora mucho en prender y en abrir Excel."</div>
+                  <div style="font-size:12px;color:#5C5C59;font-weight:600">Pre-diagnóstico IA: HDD y RAM limitada</div>
+                </div>
+                <div style="background:#121212;color:#FFFFFF;border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:8px">
+                  <div style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;letter-spacing:0.05em;color:#FFB255"><span style="font-family:'Material Symbols Rounded';font-size:18px">verified</span>DIAGNÓSTICO CONFIRMADO</div>
+                  <div style="font-size:15px;line-height:1.5;color:#F0F0EE">HDD al 100% de uso sostenido; 4 GB RAM con 92% ocupado en reposo. Temperaturas normales. Sin daño físico.</div>
+                  <div style="font-size:12px;color:#BDBDBA;font-weight:600">Wilder · 05/10/2026 8:40 a. m.</div>
+                </div>
+              </div>
+              <div style="background:#FFFFFF;border-radius:18px;padding:18px 20px;display:flex;flex-direction:column;gap:12px">
+                <div style="display:flex;justify-content:space-between;align-items:baseline"><div style="font-size:16px;font-weight:800">Checklist de pruebas</div><div style="font-size:14px;font-weight:700"><span style="color:#C46A00">14</span> / 17</div></div>
+                <div style="height:6px;border-radius:3px;background:#F0F0EE;overflow:hidden"><div style="width:82%;height:100%;background:#FF8A00"></div></div>
+                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+                  <span style="height:38px;border-radius:10px;background:#F6F6F5;display:flex;align-items:center;gap:6px;padding:0 10px;font-size:13px;font-weight:600"><span style="font-family:'Material Symbols Rounded';font-size:18px;color:oklch(0.45 0.12 150)">check_circle</span>Encendido</span>
+                  <span style="height:38px;border-radius:10px;background:#F6F6F5;display:flex;align-items:center;gap:6px;padding:0 10px;font-size:13px;font-weight:600"><span style="font-family:'Material Symbols Rounded';font-size:18px;color:oklch(0.45 0.12 150)">check_circle</span>Pantalla</span>
+                  <span style="height:38px;border-radius:10px;background:#F6F6F5;display:flex;align-items:center;gap:6px;padding:0 10px;font-size:13px;font-weight:600"><span style="font-family:'Material Symbols Rounded';font-size:18px;color:oklch(0.45 0.12 150)">check_circle</span>Teclado</span>
+                  <span style="height:38px;border-radius:10px;background:#F6F6F5;display:flex;align-items:center;gap:6px;padding:0 10px;font-size:13px;font-weight:600"><span style="font-family:'Material Symbols Rounded';font-size:18px;color:oklch(0.45 0.12 150)">check_circle</span>USB</span>
+                  <span style="height:38px;border-radius:10px;background:#F6F6F5;display:flex;align-items:center;gap:6px;padding:0 10px;font-size:13px;font-weight:600"><span style="font-family:'Material Symbols Rounded';font-size:18px;color:oklch(0.45 0.12 150)">check_circle</span>WiFi</span>
+                  <span style="height:38px;border-radius:10px;background:#F6F6F5;display:flex;align-items:center;gap:6px;padding:0 10px;font-size:13px;font-weight:600"><span style="font-family:'Material Symbols Rounded';font-size:18px;color:oklch(0.45 0.12 150)">check_circle</span>Drivers</span>
+                  <span style="height:38px;border-radius:10px;border:1.5px dashed #FF8A00;box-sizing:border-box;display:flex;align-items:center;gap:6px;padding:0 10px;font-size:13px;font-weight:700"><span style="font-family:'Material Symbols Rounded';font-size:18px;color:#C46A00">radio_button_unchecked</span>Batería</span>
+                  <span style="height:38px;border-radius:10px;border:1.5px dashed #FF8A00;box-sizing:border-box;display:flex;align-items:center;gap:6px;padding:0 10px;font-size:13px;font-weight:700"><span style="font-family:'Material Symbols Rounded';font-size:18px;color:#C46A00">radio_button_unchecked</span>Actualizaciones</span>
+                </div>
+              </div>
+              <div style="background:#FFFFFF;border-radius:18px;padding:18px 20px;display:flex;flex-direction:column;gap:12px">
+                <div style="display:flex;justify-content:space-between;align-items:baseline"><div style="font-size:16px;font-weight:800">Fotos de recepción</div><div style="font-size:13px;font-weight:700;color:#5C5C59;white-space:nowrap">Privadas · 6 fotos</div></div>
+                <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px">
+                  <div style="aspect-ratio:1;border-radius:12px;overflow:hidden"><image-slot id="tk-f1" shape="rect" placeholder="Frontal"></image-slot></div>
+                  <div style="aspect-ratio:1;border-radius:12px;overflow:hidden"><image-slot id="tk-f2" shape="rect" placeholder="Posterior"></image-slot></div>
+                  <div style="aspect-ratio:1;border-radius:12px;overflow:hidden"><image-slot id="tk-f3" shape="rect" placeholder="Pantalla"></image-slot></div>
+                  <div style="aspect-ratio:1;border-radius:12px;overflow:hidden"><image-slot id="tk-f4" shape="rect" placeholder="Serial"></image-slot></div>
+                  <div style="aspect-ratio:1;border-radius:12px;overflow:hidden"><image-slot id="tk-f5" shape="rect" placeholder="Lateral"></image-slot></div>
+                  <div style="aspect-ratio:1;border-radius:12px;overflow:hidden"><image-slot id="tk-f6" shape="rect" placeholder="Cargador"></image-slot></div>
+                </div>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:18px;min-height:0">
+              <div style="background:#FFFFFF;border-radius:18px;padding:18px 20px;display:flex;flex-direction:column;gap:4px">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div><div style="font-size:16px;font-weight:800">Cotización</div><div style="font:600 12px 'JetBrains Mono',monospace;color:#5C5C59">COT-2026-00012</div></div><span style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px 6px 7px;border-radius:999px;background:oklch(0.95 0.05 150);color:oklch(0.38 0.10 150);font-size:12px;font-weight:700"><span style="font-family:'Material Symbols Rounded';font-size:16px">check_circle</span>Aprobada</span></div>
+                <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #F3F3F1;font-size:14px"><span style="font-weight:600">SSD Kingston 480 GB</span><span style="font-weight:700">$189.000</span></div>
+                <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #F3F3F1;font-size:14px"><span style="font-weight:600">Instalación SSD + Windows</span><span style="font-weight:700">$40.000</span></div>
+                <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #F3F3F1;font-size:14px"><span style="font-weight:600">Memoria RAM 8 GB DDR3L</span><span style="font-weight:700">$165.000</span></div>
+                <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #F3F3F1;font-size:14px"><span style="font-weight:600">Mantenimiento preventivo</span><span style="font-weight:700">$70.000</span></div>
+                <div style="display:flex;justify-content:space-between;padding:10px 0 2px;font-size:18px;font-weight:800"><span>Total</span><span>$464.000</span></div>
+                <div style="font-size:12px;color:#5C5C59;font-weight:600">Aprobada por Juan Pérez desde el celular · 05/10/2026 11:03 a. m.</div>
+              </div>
+              <div style="flex:1;min-height:0;background:#FFFFFF;border-radius:18px;padding:18px 20px;display:flex;flex-direction:column;gap:12px;overflow:hidden">
+                <div style="font-size:16px;font-weight:800">Historial de cambios</div>
+                <div style="display:flex;gap:12px"><div style="width:8px;height:8px;border-radius:50%;background:#FF8A00;margin-top:6px;flex:none"></div><div><div style="font-size:14px;font-weight:700">En servicio → En pruebas</div><div style="font-size:13px;color:#5C5C59">Wilder · hoy 10:42 a. m. · "Arranca en 12 s"</div></div></div>
+                <div style="display:flex;gap:12px"><div style="width:8px;height:8px;border-radius:50%;background:#C9C9C5;margin-top:6px;flex:none"></div><div><div style="font-size:14px;font-weight:700">Esperando aprobación → En servicio</div><div style="font-size:13px;color:#5C5C59">Wilder · 06/10 9:20 a. m.</div></div></div>
+                <div style="display:flex;gap:12px"><div style="width:8px;height:8px;border-radius:50%;background:#C9C9C5;margin-top:6px;flex:none"></div><div><div style="font-size:14px;font-weight:700">Cotización aprobada</div><div style="font-size:13px;color:#5C5C59">Juan Pérez · 05/10 11:03 a. m.</div></div></div>
+                <div style="display:flex;gap:12px"><div style="width:8px;height:8px;border-radius:50%;background:#C9C9C5;margin-top:6px;flex:none"></div><div><div style="font-size:14px;font-weight:700">En diagnóstico → Esperando aprobación</div><div style="font-size:13px;color:#5C5C59">Wilder · 05/10 8:52 a. m.</div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2f CRM -->
+    <div class="dv-opt" id="2f">
+      <div class="dv-olabel"><a class="dv-oid" href="#2f">2f</a>Backoffice · CRM de seguimiento</div>
+      <div style="width:1440px;height:860px;border-radius:16px;overflow:hidden;background:#F6F6F5;display:flex">
+        <div style="width:84px;flex:none;background:#121212;padding:20px 0;display:flex;flex-direction:column;align-items:center;gap:6px">
+          <div style="width:44px;height:44px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;margin-bottom:14px"><img src="assets/logo-technoultra.png" alt="" style="width:120%;height:120%;object-fit:cover"></div>
+          <div style="width:64px;padding:8px 0;border-radius:12px;display:flex;flex-direction:column;align-items:center;gap:3px;color:#A3A3A0"><span style="font-family:'Material Symbols Rounded';font-size:22px">space_dashboard</span><span style="font-size:10px;font-weight:700">Inicio</span></div>
+          <div style="width:64px;padding:8px 0;border-radius:12px;display:flex;flex-direction:column;align-items:center;gap:3px;color:#A3A3A0"><span style="font-family:'Material Symbols Rounded';font-size:22px">confirmation_number</span><span style="font-size:10px;font-weight:700">Tickets</span></div>
+          <div style="width:64px;padding:8px 0;border-radius:12px;display:flex;flex-direction:column;align-items:center;gap:3px;color:#A3A3A0"><span style="font-family:'Material Symbols Rounded';font-size:22px">group</span><span style="font-size:10px;font-weight:700">Clientes</span></div>
+          <div style="width:64px;padding:8px 0;border-radius:12px;display:flex;flex-direction:column;align-items:center;gap:3px;color:#A3A3A0"><span style="font-family:'Material Symbols Rounded';font-size:22px">request_quote</span><span style="font-size:10px;font-weight:700">Cotizar</span></div>
+          <div style="width:64px;padding:8px 0;border-radius:12px;display:flex;flex-direction:column;align-items:center;gap:3px;color:#A3A3A0"><span style="font-family:'Material Symbols Rounded';font-size:22px">calendar_month</span><span style="font-size:10px;font-weight:700">Agenda</span></div>
+          <div style="width:64px;padding:8px 0;border-radius:12px;background:#262626;display:flex;flex-direction:column;align-items:center;gap:3px;color:#FFFFFF"><span style="font-family:'Material Symbols Rounded';font-size:22px;color:#FF8A00;font-variation-settings:'FILL' 1">support_agent</span><span style="font-size:10px;font-weight:700">CRM</span></div>
+          <div style="width:64px;padding:8px 0;border-radius:12px;display:flex;flex-direction:column;align-items:center;gap:3px;color:#A3A3A0"><span style="font-family:'Material Symbols Rounded';font-size:22px">storefront</span><span style="font-size:10px;font-weight:700">Tienda</span></div>
+          <div style="width:64px;padding:8px 0;border-radius:12px;display:flex;flex-direction:column;align-items:center;gap:3px;color:#A3A3A0"><span style="font-family:'Material Symbols Rounded';font-size:22px">bar_chart</span><span style="font-size:10px;font-weight:700">Reportes</span></div>
+        </div>
+        <div style="flex:1;min-width:0;padding:24px 28px;display:flex;flex-direction:column;gap:18px">
+          <div style="display:flex;align-items:flex-end;gap:16px">
+            <div style="flex:1;display:flex;flex-direction:column;gap:6px"><div style="font-size:28px;font-weight:800;letter-spacing:-0.025em">Seguimiento de clientes</div><div style="font-size:14px;color:#5C5C59;font-weight:600">Tareas creadas al cumplirse el mantenimiento recomendado o al vencer garantías</div></div>
+            <div style="display:flex;background:#FFFFFF;border-radius:14px;padding:4px;gap:4px">
+              <span style="height:38px;padding:0 14px;border-radius:10px;background:#121212;color:#FFFFFF;font-size:14px;font-weight:700;display:flex;align-items:center">Todos · 18</span>
+              <span style="height:38px;padding:0 14px;border-radius:10px;font-size:14px;font-weight:600;display:flex;align-items:center">Mantenimientos</span>
+              <span style="height:38px;padding:0 14px;border-radius:10px;font-size:14px;font-weight:600;display:flex;align-items:center">Garantías</span>
+            </div>
+          </div>
+          <div style="flex:1;min-height:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) 380px;gap:14px">
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px"><span style="font-size:14px;font-weight:800">Pendiente</span><span style="font-size:13px;font-weight:700;color:#5C5C59">7</span></div>
+              <div style="background:#FFFFFF;border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:8px;outline:2px solid #FF8A00"><div style="font-size:15px;font-weight:700">Luis Herrera</div><div style="font-size:13px;color:#5C5C59">Lenovo IdeaPad · Mantenimiento</div><div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700"><span style="color:#8A4500">Vence hoy</span><span style="color:#5C5C59">Último: 04/04</span></div></div>
+              <div style="background:#FFFFFF;border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:8px"><div style="font-size:15px;font-weight:700">Patricia León</div><div style="font-size:13px;color:#5C5C59">Epson L3250 · Limpieza tinta</div><div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700"><span style="color:#5C5C59">Mañana</span><span style="color:#5C5C59">Último: 05/04</span></div></div>
+              <div style="background:#FFFFFF;border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:8px"><div style="font-size:15px;font-weight:700">Jorge Castaño</div><div style="font-size:13px;color:#5C5C59">SSD Kingston · Garantía</div><div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700"><span style="color:#5C5C59">11/10</span><span style="color:#5C5C59">Vence 18/10</span></div></div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px"><span style="font-size:14px;font-weight:800">Contactado</span><span style="font-size:13px;font-weight:700;color:#5C5C59">5</span></div>
+              <div style="background:#FFFFFF;border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:8px"><div style="font-size:15px;font-weight:700">Diana Ospina</div><div style="font-size:13px;color:#5C5C59">HP Pavilion · Mantenimiento</div><div style="font-size:12px;font-weight:700;color:#5C5C59">WhatsApp · ayer</div></div>
+              <div style="background:#FFFFFF;border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:8px"><div style="font-size:15px;font-weight:700">Ferretería El Tornillo</div><div style="font-size:13px;color:#5C5C59">3 equipos · Mantenimiento</div><div style="font-size:12px;font-weight:700;color:#5C5C59">Llamada · 02/10</div></div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px"><span style="font-size:14px;font-weight:800">Interesado</span><span style="font-size:13px;font-weight:700;color:#5C5C59">3</span></div>
+              <div style="background:#FFFFFF;border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:8px"><div style="font-size:15px;font-weight:700">Andrés Molina</div><div style="font-size:13px;color:#5C5C59">Asus · Ampliar RAM</div><div style="font-size:12px;font-weight:700;color:#5C5C59">Pidió cotización</div></div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px"><span style="font-size:14px;font-weight:800">Agendado</span><span style="font-size:13px;font-weight:700;color:#5C5C59">3</span></div>
+              <div style="background:#FFFFFF;border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:8px"><div style="font-size:15px;font-weight:700">Sofía Ramírez</div><div style="font-size:13px;color:#5C5C59">MacBook Air · Mantenimiento</div><div style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:700"><span style="font-family:'Material Symbols Rounded';font-size:16px;color:#C46A00">event</span>08/10 · 10:00 a. m.</div></div>
+            </div>
+            <div style="background:#FFFFFF;border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:16px">
+              <div style="display:flex;align-items:center;gap:12px"><div style="width:48px;height:48px;border-radius:50%;background:#121212;color:#FF8A00;font-weight:800;font-size:17px;display:flex;align-items:center;justify-content:center">LH</div><div style="flex:1"><div style="font-size:18px;font-weight:800">Luis Herrera</div><div style="font-size:13px;color:#5C5C59;font-weight:600">Cliente desde 2025 · 3 servicios</div></div></div>
+              <div style="background:#F6F6F5;border-radius:14px;padding:14px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                <div><div style="font-size:12px;color:#5C5C59;font-weight:600">Equipo</div><div style="font-size:14px;font-weight:700">Lenovo IdeaPad 3</div></div>
+                <div><div style="font-size:12px;color:#5C5C59;font-weight:600">Último servicio</div><div style="font-size:14px;font-weight:700">04/04/2026</div></div>
+                <div style="grid-column:1 / -1"><div style="font-size:12px;color:#5C5C59;font-weight:600">Recomendación</div><div style="font-size:14px;font-weight:700">Mantenimiento preventivo cada 6 meses</div></div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                <div style="height:48px;border-radius:14px;background:#FF8A00;color:#121212;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;gap:6px"><span style="font-family:'Material Symbols Rounded';font-size:20px">chat</span>WhatsApp</div>
+                <div style="height:48px;border-radius:14px;background:#121212;color:#FFFFFF;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;gap:6px"><span style="font-family:'Material Symbols Rounded';font-size:20px">call</span>Llamar</div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <div style="font-size:13px;font-weight:800">Resultado del contacto</div>
+                <div style="display:flex;flex-wrap:wrap;gap:6px">
+                  <span style="height:36px;padding:0 12px;border-radius:10px;background:#F6F6F5;font-size:13px;font-weight:600;display:flex;align-items:center">Interesado</span>
+                  <span style="height:36px;padding:0 12px;border-radius:10px;background:#F6F6F5;font-size:13px;font-weight:600;display:flex;align-items:center">Agendado</span>
+                  <span style="height:36px;padding:0 12px;border-radius:10px;background:#F6F6F5;font-size:13px;font-weight:600;display:flex;align-items:center">No responde</span>
+                  <span style="height:36px;padding:0 12px;border-radius:10px;background:#F6F6F5;font-size:13px;font-weight:600;display:flex;align-items:center">No interesado</span>
+                </div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:10px;border-top:1px solid #F0F0EE;padding-top:14px">
+                <div style="font-size:13px;font-weight:800">Historial de contacto</div>
+                <div style="display:flex;gap:10px"><span style="font-family:'Material Symbols Rounded';font-size:18px;color:#5C5C59">chat</span><div><div style="font-size:13px;font-weight:700">04/04/2026 · WhatsApp · Wilder</div><div style="font-size:13px;color:#5C5C59">Entrega y recomendación de mantenimiento.</div></div></div>
+                <div style="display:flex;gap:10px"><span style="font-family:'Material Symbols Rounded';font-size:18px;color:#5C5C59">call</span><div><div style="font-size:13px;font-weight:700">12/11/2025 · Llamada · Wilder</div><div style="font-size:13px;color:#5C5C59">Cliente interesado, agendó revisión.</div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2g CALENDARIO -->
+    <div class="dv-opt" id="2g">
+      <div class="dv-olabel"><a class="dv-oid" href="#2g">2g</a>Backoffice · Calendario semanal</div>
+      <div style="width:1440px;height:860px;border-radius:16px;overflow:hidden;background:#F6F6F5;display:flex">
+        <div style="width:84px;flex:none;background:#121212;padding:20px 0;display:flex;flex-direction:column;align-items:center;gap:6px">
+          <div style="width:44px;height:44px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;margin-bottom:14px"><img src="assets/logo-technoultra.png" alt="" style="width:120%;height:120%;object-fit:cover"></div>
+          <div style="width:64px;padding:8px 0;border-radius:12px;display:flex;flex-direction:column;align-items:center;gap:3px;color:#A3A3A0"><span style="font-family:'Material Symbols Rounded';font-size:22px">space_dashboard</span><span style="font-size:10px;font-weight:700">Inicio</span></div>
+          <div style="width:64px;padding:8px 0;border-radius:12px;display:flex;flex-direction:column;align-items:center;gap:3px;color:#A3A3A0"><span style="font-family:'Material Symbols Rounded';font-size:22px">confirmation_number</span><span style="font-size:10px;font-weight:700">Tickets</span></div>
+          <div style="width:64px;padding:8px 0;border-radius:12px;display:flex;flex-direction:column;align-items:center;gap:3px;color:#A3A3A0"><span style="font-family:'Material Symbols Rounded';font-size:22px">group</span><span style="font-size:10px;font-weight:700">Clientes</span></div>
+          <div style="width:64px;padding:8px 0;border-radius:12px;display:flex;flex-direction:column;align-items:center;gap:3px;color:#A3A3A0"><span style="font-family:'Material Symbols Rounded';font-size:22px">request_quote</span><span style="font-size:10px;font-weight:700">Cotizar</span></div>
+          <div style="width:64px;padding:8px 0;border-radius:12px;background:#262626;display:flex;flex-direction:column;align-items:center;gap:3px;color:#FFFFFF"><span style="font-family:'Material Symbols Rounded';font-size:22px;color:#FF8A00;font-variation-settings:'FILL' 1">calendar_month</span><span style="font-size:10px;font-weight:700">Agenda</span></div>
+          <div style="width:64px;padding:8px 0;border-radius:12px;display:flex;flex-direction:column;align-items:center;gap:3px;color:#A3A3A0"><span style="font-family:'Material Symbols Rounded';font-size:22px">support_agent</span><span style="font-size:10px;font-weight:700">CRM</span></div>
+          <div style="width:64px;padding:8px 0;border-radius:12px;display:flex;flex-direction:column;align-items:center;gap:3px;color:#A3A3A0"><span style="font-family:'Material Symbols Rounded';font-size:22px">storefront</span><span style="font-size:10px;font-weight:700">Tienda</span></div>
+          <div style="width:64px;padding:8px 0;border-radius:12px;display:flex;flex-direction:column;align-items:center;gap:3px;color:#A3A3A0"><span style="font-family:'Material Symbols Rounded';font-size:22px">bar_chart</span><span style="font-size:10px;font-weight:700">Reportes</span></div>
+        </div>
+        <div style="flex:1;min-width:0;padding:24px 28px;display:flex;flex-direction:column;gap:16px">
+          <div style="display:flex;align-items:center;gap:14px">
+            <div style="flex:1;font-size:28px;font-weight:800;letter-spacing:-0.025em">5 – 10 de octubre</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;font-size:13px;font-weight:700">
+              <span style="display:flex;align-items:center;gap:6px;padding:0 10px;height:34px;border-radius:10px;background:#FFFFFF"><span style="width:10px;height:10px;border-radius:3px;background:oklch(0.62 0.13 250)"></span>Recepción</span>
+              <span style="display:flex;align-items:center;gap:6px;padding:0 10px;height:34px;border-radius:10px;background:#FFFFFF"><span style="width:10px;height:10px;border-radius:3px;background:oklch(0.78 0.13 85)"></span>Diagnóstico</span>
+              <span style="display:flex;align-items:center;gap:6px;padding:0 10px;height:34px;border-radius:10px;background:#FFFFFF"><span style="width:10px;height:10px;border-radius:3px;background:oklch(0.62 0.12 150)"></span>Entrega</span>
+              <span style="display:flex;align-items:center;gap:6px;padding:0 10px;height:34px;border-radius:10px;background:#FFFFFF"><span style="width:10px;height:10px;border-radius:3px;background:#FF8A00"></span>CRM</span>
+            </div>
+            <div style="display:flex;background:#FFFFFF;border-radius:14px;padding:4px;gap:4px">
+              <span style="height:38px;padding:0 14px;border-radius:10px;font-size:14px;font-weight:600;display:flex;align-items:center">Día</span>
+              <span style="height:38px;padding:0 14px;border-radius:10px;background:#121212;color:#FFFFFF;font-size:14px;font-weight:700;display:flex;align-items:center">Semana</span>
+              <span style="height:38px;padding:0 14px;border-radius:10px;font-size:14px;font-weight:600;display:flex;align-items:center">Mes</span>
+            </div>
+          </div>
+          <div style="flex:1;min-height:0;background:#FFFFFF;border-radius:20px;padding:16px 16px 0;display:grid;grid-template-columns:56px repeat(6,minmax(0,1fr));grid-template-rows:48px 1fr">
+            <div></div>
+            <div style="padding:0 10px;border-left:1px solid #F0F0EE"><div style="font-size:12px;font-weight:700;color:#5C5C59">LUN</div><div style="font-size:20px;font-weight:800">5</div></div>
+            <div style="padding:0 10px;border-left:1px solid #F0F0EE"><div style="font-size:12px;font-weight:700;color:#C46A00">MAR · HOY</div><div style="display:inline-flex;width:32px;height:28px;border-radius:8px;background:#FF8A00;font-size:18px;font-weight:800;align-items:center;justify-content:center">6</div></div>
+            <div style="padding:0 10px;border-left:1px solid #F0F0EE"><div style="font-size:12px;font-weight:700;color:#5C5C59">MIÉ</div><div style="font-size:20px;font-weight:800">7</div></div>
+            <div style="padding:0 10px;border-left:1px solid #F0F0EE"><div style="font-size:12px;font-weight:700;color:#5C5C59">JUE</div><div style="font-size:20px;font-weight:800">8</div></div>
+            <div style="padding:0 10px;border-left:1px solid #F0F0EE"><div style="font-size:12px;font-weight:700;color:#5C5C59">VIE</div><div style="font-size:20px;font-weight:800">9</div></div>
+            <div style="padding:0 10px;border-left:1px solid #F0F0EE"><div style="font-size:12px;font-weight:700;color:#5C5C59">SÁB</div><div style="font-size:20px;font-weight:800">10</div></div>
+            <div style="display:flex;flex-direction:column;font-size:12px;color:#6B6B68;font-weight:600">
+              <div style="height:64px">8:00</div><div style="height:64px">9:00</div><div style="height:64px">10:00</div><div style="height:64px">11:00</div><div style="height:64px">12:00</div><div style="height:64px">2:00</div><div style="height:64px">3:00</div><div style="height:64px">4:00</div><div style="height:64px">5:00</div>
+            </div>
+            <div style="position:relative;border-left:1px solid #F0F0EE;background:repeating-linear-gradient(180deg,transparent 0 63px,#F3F3F1 63px 64px)">
+              <div style="position:absolute;top:4px;left:6px;right:6px;height:56px;border-radius:10px;background:oklch(0.95 0.03 250);border-left:4px solid oklch(0.62 0.13 250);padding:6px 8px;box-sizing:border-box"><div style="font-size:12px;font-weight:800">Recepción</div><div style="font-size:12px;color:#3A3A38">María Gómez · Lenovo</div></div>
+              <div style="position:absolute;top:132px;left:6px;right:6px;height:120px;border-radius:10px;background:oklch(0.96 0.05 90);border-left:4px solid oklch(0.78 0.13 85);padding:6px 8px;box-sizing:border-box"><div style="font-size:12px;font-weight:800">Diagnóstico</div><div style="font-size:12px;color:#3A3A38">Dell Latitude 5490</div><div style="font:600 11px 'JetBrains Mono',monospace;color:#5C5C59;margin-top:4px">TU-2026-00147</div></div>
+            </div>
+            <div style="position:relative;border-left:1px solid #F0F0EE;background:repeating-linear-gradient(180deg,transparent 0 63px,#F3F3F1 63px 64px),#FFFBF5">
+              <div style="position:absolute;top:68px;left:6px;right:6px;height:56px;border-radius:10px;background:#FFF0DD;border-left:4px solid #FF8A00;padding:6px 8px;box-sizing:border-box"><div style="font-size:12px;font-weight:800">Contactar · Luis H.</div><div style="font-size:12px;color:#3A3A38">Mantenimiento 6 meses</div></div>
+              <div style="position:absolute;top:196px;left:6px;right:6px;height:88px;border-radius:10px;background:#121212;color:#FFFFFF;border-left:4px solid #FF8A00;padding:6px 8px;box-sizing:border-box"><div style="font-size:12px;font-weight:800">Pruebas finales</div><div style="font-size:12px;color:#BDBDBA">HP 14-R005LA · Juan P.</div></div>
+              <div style="position:absolute;top:388px;left:6px;right:6px;height:56px;border-radius:10px;background:oklch(0.95 0.05 150);border-left:4px solid oklch(0.62 0.12 150);padding:6px 8px;box-sizing:border-box"><div style="font-size:12px;font-weight:800">Entrega</div><div style="font-size:12px;color:#3A3A38">Ana Martínez · Asus</div></div>
+            </div>
+            <div style="position:relative;border-left:1px solid #F0F0EE;background:repeating-linear-gradient(180deg,transparent 0 63px,#F3F3F1 63px 64px)">
+              <div style="position:absolute;top:4px;left:6px;right:6px;height:56px;border-radius:10px;background:oklch(0.95 0.05 150);border-left:4px solid oklch(0.62 0.12 150);padding:6px 8px;box-sizing:border-box"><div style="font-size:12px;font-weight:800">Entrega</div><div style="font-size:12px;color:#3A3A38">Juan Pérez · HP</div></div>
+              <div style="position:absolute;top:260px;left:6px;right:6px;height:56px;border-radius:10px;background:oklch(0.95 0.03 250);border-left:4px solid oklch(0.62 0.13 250);padding:6px 8px;box-sizing:border-box"><div style="font-size:12px;font-weight:800">Recepción</div><div style="font-size:12px;color:#3A3A38">Carlos R. · Epson</div></div>
+            </div>
+            <div style="position:relative;border-left:1px solid #F0F0EE;background:repeating-linear-gradient(180deg,transparent 0 63px,#F3F3F1 63px 64px)">
+              <div style="position:absolute;top:132px;left:6px;right:6px;height:120px;border-radius:10px;background:#FFF0DD;border-left:4px solid #FF8A00;padding:6px 8px;box-sizing:border-box"><div style="font-size:12px;font-weight:800">Mantenimiento agendado</div><div style="font-size:12px;color:#3A3A38">Sofía Ramírez · MacBook</div><div style="font-size:11px;color:#8A4500;font-weight:700;margin-top:4px">Viene de CRM</div></div>
+            </div>
+            <div style="position:relative;border-left:1px solid #F0F0EE;background:repeating-linear-gradient(180deg,transparent 0 63px,#F3F3F1 63px 64px)">
+              <div style="position:absolute;top:68px;left:6px;right:6px;height:56px;border-radius:10px;background:#FFF0DD;border-left:4px solid #FF8A00;padding:6px 8px;box-sizing:border-box"><div style="font-size:12px;font-weight:800">Garantía vence</div><div style="font-size:12px;color:#3A3A38">Jorge C. · SSD</div></div>
+              <div style="position:absolute;top:196px;left:6px;right:6px;height:120px;border-radius:10px;background:oklch(0.96 0.05 90);border-left:4px solid oklch(0.78 0.13 85);padding:6px 8px;box-sizing:border-box"><div style="font-size:12px;font-weight:800">Diagnóstico</div><div style="font-size:12px;color:#3A3A38">Epson L3250</div></div>
+            </div>
+            <div style="position:relative;border-left:1px solid #F0F0EE;background:repeating-linear-gradient(180deg,transparent 0 63px,#F3F3F1 63px 64px),#FAFAF9">
+              <div style="position:absolute;top:4px;left:6px;right:6px;height:120px;border-radius:10px;background:oklch(0.95 0.03 250);border-left:4px solid oklch(0.62 0.13 250);padding:6px 8px;box-sizing:border-box"><div style="font-size:12px;font-weight:800">Recepciones a domicilio</div><div style="font-size:12px;color:#3A3A38">3 citas · Cali sur</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Siguiente: "usa <a class="dv-oid" href="#2b">2b</a> como Inicio y aplica la portada de <a class="dv-oid" href="#2c">2c</a> solo en el primer ingreso" · "pasa el dashboard <a class="dv-oid" href="#1g">1g</a> a navegación en riel" · "más compacto el CRM <a class="dv-oid" href="#2f">2f</a>"</p>
+</section>
+
+<section class="dv-turn" id="t1">
+  <div class="dv-thd"><a class="dv-tid" href="#t1">1</a><span class="dv-tname">TechnoUltra · sistema visual y pantallas clave</span></div>
+  <p style="margin:0 0 32px;max-width:760px;font-size:14px;line-height:1.55;color:#4A4A48;text-wrap:pretty">Una dirección: fondos claros con bloques en negro para el estado más importante de cada pantalla, naranja solo en acción y progreso. Botones naranjas llevan texto negro (contraste 9:1). Manrope en todo, números de ticket en monoespaciada. Fotos e imagen de marca son placeholders.</p>
+
+  <div class="dv-opts">
+
+    <!-- 1a SISTEMA -->
+    <div class="dv-opt" id="1a">
+      <div class="dv-olabel"><a class="dv-oid" href="#1a">1a</a>Sistema base</div>
+      <div style="width:820px;background:#FFFFFF;border-radius:20px;padding:40px;box-sizing:border-box;display:flex;flex-direction:column;gap:36px">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="width:34px;height:34px;border-radius:10px;background:#121212;display:flex;align-items:center;justify-content:center"><div style="width:12px;height:12px;border-radius:3px;background:#FF8A00"></div></div>
+            <div style="font-weight:800;font-size:22px;letter-spacing:-0.02em">Techno<span style="color:#FF8A00">Ultra</span></div>
+          </div>
+          <div style="font:500 11px 'JetBrains Mono',monospace;color:#8A8A87">LOGO · PLACEHOLDER</div>
+        </div>
+        <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr 1fr;gap:10px">
+          <div style="display:flex;flex-direction:column;gap:8px"><div style="height:88px;border-radius:14px;background:#FF8A00"></div><div style="font-size:12px;font-weight:700">Naranja #FF8A00</div><div style="font-size:11px;color:#6B6B68">Acción, progreso</div></div>
+          <div style="display:flex;flex-direction:column;gap:8px"><div style="height:88px;border-radius:14px;background:#FF9F2A"></div><div style="font-size:12px;font-weight:700">#FF9F2A</div><div style="font-size:11px;color:#6B6B68">Hover</div></div>
+          <div style="display:flex;flex-direction:column;gap:8px"><div style="height:88px;border-radius:14px;background:#000000"></div><div style="font-size:12px;font-weight:700">#000000</div><div style="font-size:11px;color:#6B6B68">Texto fuerte</div></div>
+          <div style="display:flex;flex-direction:column;gap:8px"><div style="height:88px;border-radius:14px;background:#121212"></div><div style="font-size:12px;font-weight:700">#121212</div><div style="font-size:11px;color:#6B6B68">Bloques</div></div>
+          <div style="display:flex;flex-direction:column;gap:8px"><div style="height:88px;border-radius:14px;background:#F6F6F5;border:1px solid #E7E7E4"></div><div style="font-size:12px;font-weight:700">#F6F6F5</div><div style="font-size:11px;color:#6B6B68">Fondo</div></div>
+          <div style="display:flex;flex-direction:column;gap:8px"><div style="height:88px;border-radius:14px;background:#5C5C59"></div><div style="font-size:12px;font-weight:700">#5C5C59</div><div style="font-size:11px;color:#6B6B68">Texto 2°</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px">
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="font-size:40px;font-weight:800;letter-spacing:-0.03em;line-height:1.05">Tu equipo está listo.</div>
+            <div style="font-size:20px;font-weight:700">Título de sección · 20</div>
+            <div style="font-size:16px;line-height:1.5;color:#3A3A38">Cuerpo 16 px mínimo en cliente. Hablamos de forma sencilla y estamos aquí para ayudarte.</div>
+            <div style="font:600 14px 'JetBrains Mono',monospace;color:#121212">TU-2026-00001</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div style="height:56px;border-radius:16px;background:#FF8A00;color:#121212;font-weight:800;font-size:17px;display:flex;align-items:center;justify-content:center;gap:8px">Aprobar cotización<span style="font-family:'Material Symbols Rounded';font-size:22px">arrow_forward</span></div>
+            <div style="height:56px;border-radius:16px;background:#121212;color:#FFFFFF;font-weight:700;font-size:17px;display:flex;align-items:center;justify-content:center">Ver seguimiento</div>
+            <div style="height:56px;border-radius:16px;background:#FFFFFF;border:1.5px solid #D6D6D2;color:#121212;font-weight:700;font-size:17px;display:flex;align-items:center;justify-content:center">Rechazar</div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div style="font-size:12px;font-weight:700;color:#6B6B68;letter-spacing:0.06em">ESTADOS DE TICKET · SIEMPRE ICONO + TEXTO</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px">
+            <span style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px 7px 9px;border-radius:999px;background:oklch(0.95 0.03 250);color:oklch(0.38 0.12 250);font-size:13px;font-weight:700"><span style="font-family:'Material Symbols Rounded';font-size:18px">inventory_2</span>Recibido</span>
+            <span style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px 7px 9px;border-radius:999px;background:oklch(0.96 0.05 90);color:oklch(0.42 0.09 80);font-size:13px;font-weight:700"><span style="font-family:'Material Symbols Rounded';font-size:18px">search</span>En diagnóstico</span>
+            <span style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px 7px 9px;border-radius:999px;background:#FFF0DD;color:#8A4500;font-size:13px;font-weight:700"><span style="font-family:'Material Symbols Rounded';font-size:18px">hourglass_top</span>Esperando aprobación</span>
+            <span style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px 7px 9px;border-radius:999px;background:#EFEFED;color:#3A3A38;font-size:13px;font-weight:700"><span style="font-family:'Material Symbols Rounded';font-size:18px">local_shipping</span>Esperando repuesto</span>
+            <span style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px 7px 9px;border-radius:999px;background:oklch(0.95 0.04 300);color:oklch(0.40 0.13 300);font-size:13px;font-weight:700"><span style="font-family:'Material Symbols Rounded';font-size:18px">build</span>En servicio</span>
+            <span style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px 7px 9px;border-radius:999px;background:oklch(0.95 0.04 275);color:oklch(0.40 0.14 275);font-size:13px;font-weight:700"><span style="font-family:'Material Symbols Rounded';font-size:18px">fact_check</span>En pruebas</span>
+            <span style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px 7px 9px;border-radius:999px;background:oklch(0.95 0.05 150);color:oklch(0.38 0.10 150);font-size:13px;font-weight:700"><span style="font-family:'Material Symbols Rounded';font-size:18px">check_circle</span>Listo para entregar</span>
+            <span style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px 7px 9px;border-radius:999px;background:#121212;color:#FFFFFF;font-size:13px;font-weight:700"><span style="font-family:'Material Symbols Rounded';font-size:18px">handshake</span>Entregado</span>
+            <span style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px 7px 9px;border-radius:999px;background:oklch(0.95 0.03 25);color:oklch(0.45 0.15 25);font-size:13px;font-weight:700"><span style="font-family:'Material Symbols Rounded';font-size:18px">cancel</span>Cancelado</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1b INICIO CLIENTE -->
+    <div class="dv-opt" id="1b">
+      <div class="dv-olabel"><a class="dv-oid" href="#1b">1b</a>Cliente · Inicio</div>
+      <div style="width:390px;height:844px;border-radius:52px;background:#121212;padding:10px;box-sizing:content-box">
+        <div style="width:390px;height:844px;border-radius:42px;background:#F6F6F5;overflow:hidden;position:relative;display:flex;flex-direction:column">
+          <div style="height:50px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 28px;font-size:15px;font-weight:700"><span>9:41</span><span style="display:flex;gap:4px;font-family:'Material Symbols Rounded';font-size:18px"><span>signal_cellular_alt</span><span>wifi</span><span>battery_full</span></span></div>
+          <div style="flex:1;overflow:hidden;padding:4px 20px 0;display:flex;flex-direction:column;gap:14px">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <div style="display:flex;align-items:center;gap:8px"><div style="width:28px;height:28px;border-radius:8px;background:#121212;display:flex;align-items:center;justify-content:center"><div style="width:10px;height:10px;border-radius:2px;background:#FF8A00"></div></div><span style="font-weight:800;font-size:17px;letter-spacing:-0.02em">Techno<span style="color:#FF8A00">Ultra</span></span></div>
+              <div style="width:44px;height:44px;border-radius:14px;background:#FFFFFF;display:flex;align-items:center;justify-content:center;position:relative"><span style="font-family:'Material Symbols Rounded';font-size:24px">notifications</span><span style="position:absolute;top:10px;right:11px;width:9px;height:9px;border-radius:50%;background:#FF8A00;border:2px solid #FFFFFF"></span></div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:4px">
+              <div style="font-size:15px;color:#5C5C59;font-weight:600">Hola, Juan</div>
+              <div style="font-size:28px;font-weight:800;letter-spacing:-0.025em;line-height:1.1">¿En qué te ayudamos hoy?</div>
+            </div>
+            <div style="background:#121212;border-radius:24px;padding:18px;color:#FFFFFF;display:flex;flex-direction:column;gap:12px">
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <span style="font:600 12px 'JetBrains Mono',monospace;color:#A3A3A0">TU-2026-00001</span>
+                <span style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px 5px 7px;border-radius:999px;background:rgba(255,138,0,.16);color:#FFB255;font-size:12px;font-weight:700"><span style="font-family:'Material Symbols Rounded';font-size:16px">fact_check</span>En pruebas</span>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:4px">
+                <div style="font-size:20px;font-weight:700;line-height:1.25">Tu HP 14-R005LA está en la etapa final</div>
+                <div style="font-size:14px;color:#BDBDBA;line-height:1.45">Te avisamos cuando puedas recogerlo.</div>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">
+                <div style="height:6px;border-radius:3px;background:#FF8A00"></div><div style="height:6px;border-radius:3px;background:#FF8A00"></div><div style="height:6px;border-radius:3px;background:#FF8A00"></div><div style="height:6px;border-radius:3px;background:#FF8A00"></div><div style="height:6px;border-radius:3px;background:#FF8A00"></div><div style="height:6px;border-radius:3px;background:#3A3A38"></div><div style="height:6px;border-radius:3px;background:#3A3A38"></div>
+              </div>
+              <div style="height:48px;border-radius:14px;background:#FFFFFF;color:#121212;font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center;gap:6px">Ver seguimiento<span style="font-family:'Material Symbols Rounded';font-size:20px">arrow_forward</span></div>
+            </div>
+            <div style="background:#FF8A00;border-radius:22px;padding:18px 18px 18px 20px;display:flex;align-items:center;gap:14px">
+              <div style="flex:1;display:flex;flex-direction:column;gap:2px"><div style="font-size:18px;font-weight:800;color:#121212">Solicitar un servicio</div><div style="font-size:14px;color:#3D2200;font-weight:500">Cuéntanos qué le pasa a tu equipo</div></div>
+              <div style="width:48px;height:48px;border-radius:14px;background:#121212;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-size:26px;color:#FF8A00">add</span></div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <div style="display:flex;justify-content:space-between;align-items:baseline"><div style="font-size:18px;font-weight:800">Mis equipos</div><div style="font-size:14px;font-weight:700;color:#5C5C59">Ver todos</div></div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                <div style="background:#FFFFFF;border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:10px"><div style="width:40px;height:40px;border-radius:12px;background:#F6F6F5;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-size:22px">laptop_chromebook</span></div><div><div style="font-size:15px;font-weight:700">HP 14-R005LA</div><div style="font-size:13px;color:#5C5C59">Portátil · 3 servicios</div></div></div>
+                <div style="background:#FFFFFF;border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:10px"><div style="width:40px;height:40px;border-radius:12px;background:#F6F6F5;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-size:22px">print</span></div><div><div style="font-size:15px;font-weight:700">Epson L3160</div><div style="font-size:13px;color:#5C5C59">Impresora · 1 servicio</div></div></div>
+              </div>
+            </div>
+            <div style="background:#FFFFFF;border-radius:18px;padding:14px 16px;display:flex;align-items:center;gap:12px">
+              <span style="font-family:'Material Symbols Rounded';font-size:24px;color:#C46A00">event_repeat</span>
+              <div style="flex:1"><div style="font-size:14px;font-weight:700">Próximo mantenimiento</div><div style="font-size:13px;color:#5C5C59">Epson L3160 · 12/11/2026</div></div>
+              <span style="font-family:'Material Symbols Rounded';font-size:22px;color:#8A8A87">chevron_right</span>
+            </div>
+          </div>
+          <div style="flex:none;background:#FFFFFF;border-top:1px solid #ECECE9;padding:8px 6px 26px;display:grid;grid-template-columns:repeat(6,1fr)">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#121212"><div style="width:44px;height:30px;border-radius:10px;background:#FFF0DD;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-size:22px;color:#C46A00;font-variation-settings:'FILL' 1">home</span></div><span style="font-size:11px;font-weight:800">Inicio</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#5C5C59"><div style="height:30px;display:flex;align-items:center"><span style="font-family:'Material Symbols Rounded';font-size:22px">home_repair_service</span></div><span style="font-size:11px;font-weight:600">Servicios</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#5C5C59"><div style="height:30px;display:flex;align-items:center"><span style="font-family:'Material Symbols Rounded';font-size:22px">devices</span></div><span style="font-size:11px;font-weight:600">Equipos</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#5C5C59"><div style="height:30px;display:flex;align-items:center"><span style="font-family:'Material Symbols Rounded';font-size:22px">confirmation_number</span></div><span style="font-size:11px;font-weight:600">Tickets</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#5C5C59"><div style="height:30px;display:flex;align-items:center"><span style="font-family:'Material Symbols Rounded';font-size:22px">storefront</span></div><span style="font-size:11px;font-weight:600">Tienda</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#5C5C59"><div style="height:30px;display:flex;align-items:center"><span style="font-family:'Material Symbols Rounded';font-size:22px">more_horiz</span></div><span style="font-size:11px;font-weight:600">Más</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1c DIAGNOSTICO IA -->
+    <div class="dv-opt" id="1c">
+      <div class="dv-olabel"><a class="dv-oid" href="#1c">1c</a>Cliente · Diagnóstico preliminar con IA</div>
+      <div style="width:390px;height:844px;border-radius:52px;background:#121212;padding:10px;box-sizing:content-box">
+        <div style="width:390px;height:844px;border-radius:42px;background:#F6F6F5;overflow:hidden;position:relative;display:flex;flex-direction:column">
+          <div style="height:50px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 28px;font-size:15px;font-weight:700"><span>9:41</span><span style="display:flex;gap:4px;font-family:'Material Symbols Rounded';font-size:18px"><span>signal_cellular_alt</span><span>wifi</span><span>battery_full</span></span></div>
+          <div style="flex:none;padding:4px 20px 14px;display:flex;flex-direction:column;gap:14px">
+            <div style="display:flex;align-items:center;gap:12px">
+              <div style="width:44px;height:44px;border-radius:14px;background:#FFFFFF;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-size:24px">arrow_back</span></div>
+              <div style="flex:1"><div style="font-size:13px;color:#5C5C59;font-weight:600">Paso 4 de 4</div><div style="font-size:17px;font-weight:800">Lo que encontramos</div></div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px"><div style="height:5px;border-radius:3px;background:#121212"></div><div style="height:5px;border-radius:3px;background:#121212"></div><div style="height:5px;border-radius:3px;background:#121212"></div><div style="height:5px;border-radius:3px;background:#FF8A00"></div></div>
+          </div>
+          <div style="flex:1;overflow:hidden;padding:0 20px;display:flex;flex-direction:column;gap:10px">
+            <div style="align-self:flex-end;max-width:290px;background:#121212;color:#FFFFFF;border-radius:20px 20px 6px 20px;padding:12px 16px;font-size:15px;line-height:1.45">Tengo un HP viejo con 4 GB de RAM y disco duro y está demasiado lento.</div>
+            
+            <div style="background:#FFF0DD;border-radius:16px;padding:12px 14px;display:flex;gap:10px;align-items:flex-start">
+              <span style="font-family:'Material Symbols Rounded';font-size:22px;color:#8A4500">info</span>
+              <div style="font-size:13px;line-height:1.45;color:#5A2E00;font-weight:600">Diagnóstico preliminar generado con asistencia de IA. La recomendación está sujeta a verificación técnica presencial.</div>
+            </div>
+            <div style="background:#FFFFFF;border-radius:20px;padding:14px 16px;display:flex;flex-direction:column;gap:8px">
+              <div style="font-size:16px;font-weight:800">Lo que podría estar pasando</div>
+              <div style="font-size:14px;line-height:1.45;color:#3A3A38">Los síntomas son compatibles con un disco lento y poca memoria.</div>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <div style="display:flex;gap:10px;align-items:center"><span style="width:24px;height:24px;border-radius:8px;background:#121212;color:#FFFFFF;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center">1</span><span style="font-size:14px;font-weight:600">Disco HDD como cuello de botella</span></div>
+                <div style="display:flex;gap:10px;align-items:center"><span style="width:24px;height:24px;border-radius:8px;background:#121212;color:#FFFFFF;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center">2</span><span style="font-size:14px;font-weight:600">Memoria RAM limitada</span></div>
+                <div style="display:flex;gap:10px;align-items:center"><span style="width:24px;height:24px;border-radius:8px;background:#EFEFED;color:#121212;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center">3</span><span style="font-size:14px;font-weight:600;color:#5C5C59">Posible acumulación de programas</span></div>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;justify-content:space-between;align-items:baseline"><div style="font-size:16px;font-weight:800">Te recomendamos</div><div style="font-size:12px;color:#5C5C59;font-weight:600">Precios de catálogo</div></div>
+              <div style="background:#FFFFFF;border-radius:16px;padding:9px 14px;display:flex;align-items:center;gap:12px;border:2px solid #FF8A00">
+                <span style="width:26px;height:26px;border-radius:8px;background:#FF8A00;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-size:18px;color:#121212">check</span></span>
+                <div style="flex:1"><div style="font-size:15px;font-weight:700">Cambio a SSD 480 GB</div><div style="font-size:12px;color:#8A4500;font-weight:700">Prioridad alta</div></div>
+                <div style="font-size:15px;font-weight:800">$229.000</div>
+              </div>
+              <div style="background:#FFFFFF;border-radius:16px;padding:9px 14px;display:flex;align-items:center;gap:12px;border:2px solid #FF8A00">
+                <span style="width:26px;height:26px;border-radius:8px;background:#FF8A00;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-size:18px;color:#121212">check</span></span>
+                <div style="flex:1"><div style="font-size:15px;font-weight:700">Ampliar a 8 GB de RAM</div><div style="font-size:12px;color:#5C5C59;font-weight:700">Prioridad media</div></div>
+                <div style="font-size:15px;font-weight:800">$165.000</div>
+              </div>
+              <div style="background:#FFFFFF;border-radius:16px;padding:9px 14px;display:flex;align-items:center;gap:12px;border:2px solid #ECECE9">
+                <span style="width:26px;height:26px;border-radius:8px;border:2px solid #C9C9C5;box-sizing:border-box"></span>
+                <div style="flex:1"><div style="font-size:15px;font-weight:700">Mantenimiento preventivo</div><div style="font-size:12px;color:#5C5C59;font-weight:700">Revisión de temperaturas</div></div>
+                <div style="font-size:15px;font-weight:800">$70.000</div>
+              </div>
+            </div>
+          </div>
+          <div style="flex:none;padding:12px 20px 28px;background:#F6F6F5;border-top:1px solid #E7E7E4;display:flex;flex-direction:column;gap:6px">
+            <div style="height:56px;border-radius:16px;background:#FF8A00;color:#121212;font-weight:800;font-size:16px;display:flex;align-items:center;justify-content:center;gap:8px">Agregar 2 a mi cotización<span style="font-family:'Material Symbols Rounded';font-size:22px">arrow_forward</span></div>
+            <div style="text-align:center;font-size:13px;color:#5C5C59;font-weight:600">Un técnico confirmará el precio final al revisar tu equipo</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1d APROBACION -->
+    <div class="dv-opt" id="1d">
+      <div class="dv-olabel"><a class="dv-oid" href="#1d">1d</a>Cliente · Aprobar cotización</div>
+      <div style="width:390px;height:844px;border-radius:52px;background:#121212;padding:10px;box-sizing:content-box">
+        <div style="width:390px;height:844px;border-radius:42px;background:#F6F6F5;overflow:hidden;position:relative;display:flex;flex-direction:column">
+          <div style="flex:none;background:#121212;color:#FFFFFF;padding:0 20px 22px;display:flex;flex-direction:column;gap:16px">
+            <div style="height:50px;display:flex;align-items:center;justify-content:space-between;padding:0 8px;font-size:15px;font-weight:700"><span>9:41</span><span style="display:flex;gap:4px;font-family:'Material Symbols Rounded';font-size:18px"><span>signal_cellular_alt</span><span>wifi</span><span>battery_full</span></span></div>
+            <div style="display:flex;align-items:center;gap:12px">
+              <div style="width:44px;height:44px;border-radius:14px;background:#262626;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-size:24px">arrow_back</span></div>
+              <div style="flex:1"><div style="font:600 12px 'JetBrains Mono',monospace;color:#A3A3A0">COT-2026-00012 · TU-2026-00001</div><div style="font-size:17px;font-weight:800">Cotización para tu HP</div></div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:2px">
+              <div style="font-size:14px;color:#BDBDBA;font-weight:600">Total a aprobar</div>
+              <div style="font-size:40px;font-weight:800;letter-spacing:-0.03em">$464.000</div>
+              <div style="font-size:13px;color:#FFB255;font-weight:700">Válida hasta el 11/10/2026</div>
+            </div>
+          </div>
+          <div style="flex:1;overflow:hidden;padding:18px 20px 0;display:flex;flex-direction:column;gap:14px">
+            <div style="background:#FFFFFF;border-radius:20px;padding:16px;display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;align-items:center;gap:8px"><span style="font-family:'Material Symbols Rounded';font-size:20px;color:oklch(0.38 0.10 150)">verified</span><span style="font-size:14px;font-weight:800">Diagnóstico del técnico</span></div>
+              <div style="font-size:15px;line-height:1.5;color:#3A3A38">Confirmamos que el disco duro trabaja al 100% todo el tiempo y la memoria se queda corta. Por eso el equipo está lento.</div>
+              <div style="font-size:13px;color:#5C5C59;font-weight:600">Wilder · Técnico · 05/10/2026</div>
+            </div>
+            <div style="background:#FFFFFF;border-radius:20px;padding:6px 16px">
+              <div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #F0F0EE"><div><div style="font-size:15px;font-weight:700">SSD Kingston 480 GB</div><div style="font-size:12px;color:#5C5C59;font-weight:600">Producto · garantía 12 meses</div></div><div style="font-size:15px;font-weight:700">$189.000</div></div>
+              <div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #F0F0EE"><div><div style="font-size:15px;font-weight:700">Instalación SSD + Windows</div><div style="font-size:12px;color:#5C5C59;font-weight:600">Servicio · garantía 3 meses</div></div><div style="font-size:15px;font-weight:700">$40.000</div></div>
+              <div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #F0F0EE"><div><div style="font-size:15px;font-weight:700">Memoria RAM 8 GB DDR3L</div><div style="font-size:12px;color:#5C5C59;font-weight:600">Producto · garantía 12 meses</div></div><div style="font-size:15px;font-weight:700">$165.000</div></div>
+              <div style="display:flex;justify-content:space-between;padding:12px 0"><div><div style="font-size:15px;font-weight:700">Mantenimiento preventivo</div><div style="font-size:12px;color:#5C5C59;font-weight:600">Servicio · limpieza y pasta térmica</div></div><div style="font-size:15px;font-weight:700">$70.000</div></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;padding:0 4px">
+              <span style="font-family:'Material Symbols Rounded';font-size:20px;color:#5C5C59">schedule</span>
+              <span style="font-size:14px;color:#3A3A38;font-weight:600">Listo aprox. 2 días hábiles después de aprobar</span>
+            </div>
+          </div>
+          <div style="flex:none;padding:14px 20px 30px;display:grid;grid-template-columns:1fr 2fr;gap:10px">
+            <div style="height:58px;border-radius:16px;background:#FFFFFF;border:1.5px solid #D6D6D2;color:#121212;font-weight:700;font-size:16px;display:flex;align-items:center;justify-content:center">Rechazar</div>
+            <div style="height:58px;border-radius:16px;background:#FF8A00;color:#121212;font-weight:800;font-size:17px;display:flex;align-items:center;justify-content:center;gap:6px"><span style="font-family:'Material Symbols Rounded';font-size:22px">check</span>Aprobar</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1e SEGUIMIENTO -->
+    <div class="dv-opt" id="1e">
+      <div class="dv-olabel"><a class="dv-oid" href="#1e">1e</a>Seguimiento público · /seguimiento</div>
+      <div style="width:390px;height:844px;border-radius:52px;background:#121212;padding:10px;box-sizing:content-box">
+        <div style="width:390px;height:844px;border-radius:42px;background:#FFFFFF;overflow:hidden;position:relative;display:flex;flex-direction:column">
+          <div style="height:50px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 28px;font-size:15px;font-weight:700"><span>9:41</span><span style="display:flex;gap:4px;font-family:'Material Symbols Rounded';font-size:18px"><span>signal_cellular_alt</span><span>wifi</span><span>battery_full</span></span></div>
+          <div style="flex:1;overflow:hidden;padding:6px 20px 0;display:flex;flex-direction:column;gap:18px">
+            <div style="display:flex;align-items:center;gap:8px"><div style="width:28px;height:28px;border-radius:8px;background:#121212;display:flex;align-items:center;justify-content:center"><div style="width:10px;height:10px;border-radius:2px;background:#FF8A00"></div></div><span style="font-weight:800;font-size:17px;letter-spacing:-0.02em">Techno<span style="color:#FF8A00">Ultra</span></span><span style="margin-left:auto;font-size:14px;font-weight:600;color:#5C5C59">Seguimiento</span></div>
+            <div style="height:56px;border-radius:16px;background:#F6F6F5;display:flex;align-items:center;padding:0 8px 0 16px;gap:10px">
+              <span style="font-family:'Material Symbols Rounded';font-size:22px;color:#5C5C59">confirmation_number</span>
+              <span style="flex:1;font:600 16px 'JetBrains Mono',monospace">TU-2026-00001</span>
+              <span style="height:42px;padding:0 16px;border-radius:12px;background:#121212;color:#FFFFFF;font-weight:700;font-size:14px;display:flex;align-items:center">Buscar</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <span style="align-self:flex-start;display:inline-flex;align-items:center;gap:6px;padding:7px 12px 7px 9px;border-radius:999px;background:oklch(0.95 0.04 275);color:oklch(0.40 0.14 275);font-size:13px;font-weight:700"><span style="font-family:'Material Symbols Rounded';font-size:18px">fact_check</span>En pruebas</span>
+              <div style="font-size:26px;font-weight:800;letter-spacing:-0.025em;line-height:1.15">Ya casi está. Estamos probando tu equipo.</div>
+              <div style="font-size:14px;color:#5C5C59;font-weight:600">HP 14-R005LA · Ingresó el 04/10/2026</div>
+            </div>
+            <div style="background:#F6F6F5;border-radius:18px;padding:14px 16px;display:flex;gap:12px">
+              <div style="width:36px;height:36px;border-radius:12px;background:#121212;flex:none;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-size:20px;color:#FF8A00">chat</span></div>
+              <div><div style="font-size:14px;line-height:1.45;color:#2A2A28">"Instalamos el SSD y la memoria. El equipo arranca en 12 segundos. Hoy terminamos las pruebas."</div><div style="font-size:12px;color:#5C5C59;font-weight:600;margin-top:4px">Actualizado hoy, 10:42 a. m.</div></div>
+            </div>
+            <div style="display:flex;flex-direction:column">
+              <div style="display:flex;gap:14px"><div style="display:flex;flex-direction:column;align-items:center"><div style="width:26px;height:26px;border-radius:50%;background:#121212;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-size:16px;color:#FFFFFF">check</span></div><div style="width:2px;flex:1;min-height:18px;background:#121212"></div></div><div style="flex:1;display:flex;justify-content:space-between;padding-top:3px"><span style="font-size:15px;font-weight:700">Equipo recibido</span><span style="font-size:13px;color:#5C5C59;font-weight:600">04/10</span></div></div>
+              <div style="display:flex;gap:14px"><div style="display:flex;flex-direction:column;align-items:center"><div style="width:26px;height:26px;border-radius:50%;background:#121212;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-size:16px;color:#FFFFFF">check</span></div><div style="width:2px;flex:1;min-height:18px;background:#121212"></div></div><div style="flex:1;display:flex;justify-content:space-between;padding-top:3px"><span style="font-size:15px;font-weight:700">Diagnóstico realizado</span><span style="font-size:13px;color:#5C5C59;font-weight:600">05/10</span></div></div>
+              <div style="display:flex;gap:14px"><div style="display:flex;flex-direction:column;align-items:center"><div style="width:26px;height:26px;border-radius:50%;background:#121212;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-size:16px;color:#FFFFFF">check</span></div><div style="width:2px;flex:1;min-height:18px;background:#121212"></div></div><div style="flex:1;display:flex;justify-content:space-between;padding-top:3px"><span style="font-size:15px;font-weight:700">Cotización aprobada</span><span style="font-size:13px;color:#5C5C59;font-weight:600">05/10</span></div></div>
+              <div style="display:flex;gap:14px"><div style="display:flex;flex-direction:column;align-items:center"><div style="width:26px;height:26px;border-radius:50%;background:#121212;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-size:16px;color:#FFFFFF">check</span></div><div style="width:2px;flex:1;min-height:18px;background:#FF8A00"></div></div><div style="flex:1;display:flex;justify-content:space-between;padding-top:3px"><span style="font-size:15px;font-weight:700">Servicio realizado</span><span style="font-size:13px;color:#5C5C59;font-weight:600">06/10</span></div></div>
+              <div style="display:flex;gap:14px"><div style="display:flex;flex-direction:column;align-items:center"><div style="width:26px;height:26px;border-radius:50%;background:#FF8A00;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 5px #FFF0DD"><div style="width:8px;height:8px;border-radius:50%;background:#121212"></div></div><div style="width:2px;flex:1;min-height:18px;background:#E2E2DF"></div></div><div style="flex:1;display:flex;justify-content:space-between;padding-top:3px"><span style="font-size:15px;font-weight:800">En pruebas</span><span style="font-size:13px;color:#121212;font-weight:700">Ahora</span></div></div>
+              <div style="display:flex;gap:14px"><div style="display:flex;flex-direction:column;align-items:center"><div style="width:26px;height:26px;border-radius:50%;border:2px solid #D6D6D2;box-sizing:border-box;background:#FFFFFF"></div><div style="width:2px;flex:1;min-height:18px;background:#E2E2DF"></div></div><div style="flex:1;padding-top:3px"><span style="font-size:15px;font-weight:600;color:#6B6B68">Listo para entregar</span></div></div>
+              <div style="display:flex;gap:14px"><div style="display:flex;flex-direction:column;align-items:center"><div style="width:26px;height:26px;border-radius:50%;border:2px solid #D6D6D2;box-sizing:border-box;background:#FFFFFF"></div></div><div style="flex:1;padding-top:3px"><span style="font-size:15px;font-weight:600;color:#6B6B68">Entregado</span></div></div>
+            </div>
+          </div>
+          <div style="flex:none;padding:14px 20px 30px;display:flex;align-items:center;gap:10px;background:#F6F6F5">
+            <span style="font-family:'Material Symbols Rounded';font-size:22px">storefront</span>
+            <div style="flex:1;font-size:13px;line-height:1.4;color:#3A3A38;font-weight:600">Lun a sáb · 8:00 a. m. a 6:00 p. m.</div>
+            <div style="height:44px;padding:0 14px;border-radius:12px;background:#121212;color:#FFFFFF;font-weight:700;font-size:14px;display:flex;align-items:center;gap:6px"><span style="font-family:'Material Symbols Rounded';font-size:18px">call</span>Escríbenos</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1f RECEPCION TECNICO -->
+    <div class="dv-opt" id="1f">
+      <div class="dv-olabel"><a class="dv-oid" href="#1f">1f</a>Técnico · Recepción y fotos</div>
+      <div style="width:390px;height:844px;border-radius:52px;background:#121212;padding:10px;box-sizing:content-box">
+        <div style="width:390px;height:844px;border-radius:42px;background:#F6F6F5;overflow:hidden;position:relative;display:flex;flex-direction:column">
+          <div style="height:50px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 28px;font-size:15px;font-weight:700"><span>9:41</span><span style="display:flex;gap:4px;font-family:'Material Symbols Rounded';font-size:18px"><span>signal_cellular_alt</span><span>wifi</span><span>battery_full</span></span></div>
+          <div style="flex:none;padding:4px 20px 14px;display:flex;flex-direction:column;gap:14px">
+            <div style="display:flex;align-items:center;gap:12px">
+              <div style="width:44px;height:44px;border-radius:14px;background:#FFFFFF;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-size:24px">close</span></div>
+              <div style="flex:1"><div style="font-size:13px;color:#5C5C59;font-weight:600">Nuevo ticket · Juan Pérez</div><div style="font-size:17px;font-weight:800">HP 14-R005LA</div></div>
+              <span style="font:600 12px 'JetBrains Mono',monospace;color:#5C5C59">00001</span>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px">
+              <div style="display:flex;flex-direction:column;gap:5px"><div style="height:5px;border-radius:3px;background:#121212"></div><span style="font-size:11px;font-weight:700">Cliente</span></div>
+              <div style="display:flex;flex-direction:column;gap:5px"><div style="height:5px;border-radius:3px;background:#121212"></div><span style="font-size:11px;font-weight:700">Equipo</span></div>
+              <div style="display:flex;flex-direction:column;gap:5px"><div style="height:5px;border-radius:3px;background:#121212"></div><span style="font-size:11px;font-weight:700">Motivo</span></div>
+              <div style="display:flex;flex-direction:column;gap:5px"><div style="height:5px;border-radius:3px;background:#FF8A00"></div><span style="font-size:11px;font-weight:800;color:#121212">Fotos</span></div>
+              <div style="display:flex;flex-direction:column;gap:5px"><div style="height:5px;border-radius:3px;background:#DCDCD8"></div><span style="font-size:11px;font-weight:600;color:#6B6B68">Checklist</span></div>
+            </div>
+          </div>
+          <div style="flex:1;overflow:hidden;padding:0 20px;display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;justify-content:space-between;align-items:baseline"><div style="font-size:20px;font-weight:800">Fotos de recepción</div><div style="font-size:14px;font-weight:700;color:#5C5C59">4 de 6 obligatorias</div></div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px 8px">
+              <div style="display:flex;flex-direction:column;gap:5px"><div style="aspect-ratio:1;border-radius:14px;background:repeating-linear-gradient(135deg,#E4E4E1 0 7px,#DADAD6 7px 14px);position:relative;display:flex;align-items:flex-end;padding:6px;box-sizing:border-box"><span style="font:500 9px 'JetBrains Mono',monospace;color:#5C5C59">foto</span><span style="position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:50%;background:#121212;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-size:15px;color:#FFFFFF">check</span></span></div><span style="font-size:12px;font-weight:700">Frontal</span></div>
+              <div style="display:flex;flex-direction:column;gap:5px"><div style="aspect-ratio:1;border-radius:14px;background:repeating-linear-gradient(135deg,#E4E4E1 0 7px,#DADAD6 7px 14px);position:relative;display:flex;align-items:flex-end;padding:6px;box-sizing:border-box"><span style="font:500 9px 'JetBrains Mono',monospace;color:#5C5C59">foto</span><span style="position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:50%;background:#121212;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-size:15px;color:#FFFFFF">check</span></span></div><span style="font-size:12px;font-weight:700">Posterior</span></div>
+              <div style="display:flex;flex-direction:column;gap:5px"><div style="aspect-ratio:1;border-radius:14px;background:repeating-linear-gradient(135deg,#E4E4E1 0 7px,#DADAD6 7px 14px);position:relative;display:flex;align-items:flex-end;padding:6px;box-sizing:border-box"><span style="font:500 9px 'JetBrains Mono',monospace;color:#5C5C59">foto</span><span style="position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:50%;background:#121212;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-size:15px;color:#FFFFFF">check</span></span></div><span style="font-size:12px;font-weight:700">Pantalla</span></div>
+              <div style="display:flex;flex-direction:column;gap:5px"><div style="aspect-ratio:1;border-radius:14px;background:repeating-linear-gradient(135deg,#E4E4E1 0 7px,#DADAD6 7px 14px);position:relative;display:flex;align-items:flex-end;padding:6px;box-sizing:border-box"><span style="font:500 9px 'JetBrains Mono',monospace;color:#5C5C59">foto</span><span style="position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:50%;background:#121212;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-size:15px;color:#FFFFFF">check</span></span></div><span style="font-size:12px;font-weight:700">Serial</span></div>
+              <div style="display:flex;flex-direction:column;gap:5px"><div style="aspect-ratio:1;border-radius:14px;background:#FFFFFF;border:2px dashed #FF8A00;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px"><span style="font-family:'Material Symbols Rounded';font-size:28px;color:#C46A00">photo_camera</span><span style="font-size:11px;font-weight:700;color:#8A4500">Tomar</span></div><span style="font-size:12px;font-weight:700">Lateral izq.</span></div>
+              <div style="display:flex;flex-direction:column;gap:5px"><div style="aspect-ratio:1;border-radius:14px;background:#FFFFFF;border:2px dashed #FF8A00;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px"><span style="font-family:'Material Symbols Rounded';font-size:28px;color:#C46A00">photo_camera</span><span style="font-size:11px;font-weight:700;color:#8A4500">Tomar</span></div><span style="font-size:12px;font-weight:700">Lateral der.</span></div>
+              <div style="display:flex;flex-direction:column;gap:5px"><div style="aspect-ratio:1;border-radius:14px;background:#FFFFFF;border:1.5px solid #E2E2DF;box-sizing:border-box;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-size:26px;color:#8A8A87">power</span></div><span style="font-size:12px;font-weight:600;color:#5C5C59">Cargador</span></div>
+              <div style="display:flex;flex-direction:column;gap:5px"><div style="aspect-ratio:1;border-radius:14px;background:#FFFFFF;border:1.5px solid #E2E2DF;box-sizing:border-box;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-size:26px;color:#8A8A87">report</span></div><span style="font-size:12px;font-weight:600;color:#5C5C59">Daños</span></div>
+              <div style="display:flex;flex-direction:column;gap:5px"><div style="aspect-ratio:1;border-radius:14px;background:#FFFFFF;border:1.5px solid #E2E2DF;box-sizing:border-box;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-size:26px;color:#8A8A87">add</span></div><span style="font-size:12px;font-weight:600;color:#5C5C59">Otros</span></div>
+            </div>
+            <div style="background:#FFFFFF;border-radius:18px;padding:14px 16px;display:flex;flex-direction:column;gap:10px">
+              <div style="font-size:15px;font-weight:800">Accesorios entregados</div>
+              <div style="display:flex;flex-wrap:wrap;gap:8px">
+                <span style="height:40px;padding:0 14px;border-radius:12px;background:#121212;color:#FFFFFF;font-size:14px;font-weight:700;display:flex;align-items:center;gap:6px"><span style="font-family:'Material Symbols Rounded';font-size:18px">check</span>Cargador</span>
+                <span style="height:40px;padding:0 14px;border-radius:12px;background:#F6F6F5;font-size:14px;font-weight:600;display:flex;align-items:center">Estuche</span>
+                <span style="height:40px;padding:0 14px;border-radius:12px;background:#F6F6F5;font-size:14px;font-weight:600;display:flex;align-items:center">Mouse</span>
+                <span style="height:40px;padding:0 14px;border-radius:12px;background:#F6F6F5;font-size:14px;font-weight:600;display:flex;align-items:center">Otro</span>
+              </div>
+            </div>
+          </div>
+          <div style="flex:none;padding:10px 20px 26px;display:flex;gap:10px">
+            <div style="height:58px;width:58px;border-radius:16px;background:#FFFFFF;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-size:24px">arrow_back</span></div>
+            <div style="flex:1;height:58px;border-radius:16px;background:#121212;color:#FFFFFF;font-weight:700;font-size:16px;display:flex;align-items:center;justify-content:center;gap:8px">Continuar a checklist<span style="font-family:'Material Symbols Rounded';font-size:22px;color:#FF8A00">arrow_forward</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1g DASHBOARD -->
+    <div class="dv-opt" id="1g">
+      <div class="dv-olabel"><a class="dv-oid" href="#1g">1g</a>Backoffice · Dashboard</div>
+      <div style="width:1440px;height:900px;border-radius:16px;overflow:hidden;background:#F6F6F5;display:flex">
+        <div style="width:248px;flex:none;background:#121212;color:#FFFFFF;padding:24px 16px;box-sizing:border-box;display:flex;flex-direction:column;gap:22px">
+          <div style="display:flex;align-items:center;gap:10px;padding:0 8px"><div style="width:30px;height:30px;border-radius:9px;background:#FF8A00;display:flex;align-items:center;justify-content:center"><div style="width:10px;height:10px;border-radius:2px;background:#121212"></div></div><span style="font-weight:800;font-size:18px;letter-spacing:-0.02em">Techno<span style="color:#FF8A00">Ultra</span></span></div>
+          <div style="display:flex;flex-direction:column;gap:2px">
+            <div style="height:42px;border-radius:12px;background:#262626;display:flex;align-items:center;gap:12px;padding:0 12px;font-size:14px;font-weight:700"><span style="font-family:'Material Symbols Rounded';font-size:21px;color:#FF8A00">space_dashboard</span>Dashboard</div>
+            <div style="height:12px"></div>
+            <div style="height:40px;border-radius:12px;display:flex;align-items:center;gap:12px;padding:0 12px;font-size:14px;font-weight:600;color:#C9C9C5"><span style="font-family:'Material Symbols Rounded';font-size:21px">group</span>Clientes</div>
+            <div style="height:40px;border-radius:12px;display:flex;align-items:center;gap:12px;padding:0 12px;font-size:14px;font-weight:600;color:#C9C9C5"><span style="font-family:'Material Symbols Rounded';font-size:21px">devices</span>Equipos</div>
+            <div style="height:40px;border-radius:12px;display:flex;align-items:center;gap:12px;padding:0 12px;font-size:14px;font-weight:600;color:#C9C9C5"><span style="font-family:'Material Symbols Rounded';font-size:21px">confirmation_number</span>Tickets<span style="margin-left:auto;font-size:12px;font-weight:700;color:#121212;background:#FF8A00;border-radius:999px;padding:2px 8px">23</span></div>
+            <div style="height:40px;border-radius:12px;display:flex;align-items:center;gap:12px;padding:0 12px;font-size:14px;font-weight:600;color:#C9C9C5"><span style="font-family:'Material Symbols Rounded';font-size:21px">request_quote</span>Cotizaciones</div>
+            <div style="height:40px;border-radius:12px;display:flex;align-items:center;gap:12px;padding:0 12px;font-size:14px;font-weight:600;color:#C9C9C5"><span style="font-family:'Material Symbols Rounded';font-size:21px">home_repair_service</span>Servicios</div>
+            <div style="height:40px;border-radius:12px;display:flex;align-items:center;gap:12px;padding:0 12px;font-size:14px;font-weight:600;color:#C9C9C5"><span style="font-family:'Material Symbols Rounded';font-size:21px">inventory_2</span>Productos</div>
+            <div style="height:40px;border-radius:12px;display:flex;align-items:center;gap:12px;padding:0 12px;font-size:14px;font-weight:600;color:#C9C9C5"><span style="font-family:'Material Symbols Rounded';font-size:21px">storefront</span>Tienda</div>
+            <div style="height:40px;border-radius:12px;display:flex;align-items:center;gap:12px;padding:0 12px;font-size:14px;font-weight:600;color:#C9C9C5"><span style="font-family:'Material Symbols Rounded';font-size:21px">calendar_month</span>Calendario</div>
+            <div style="height:40px;border-radius:12px;display:flex;align-items:center;gap:12px;padding:0 12px;font-size:14px;font-weight:600;color:#C9C9C5"><span style="font-family:'Material Symbols Rounded';font-size:21px">support_agent</span>CRM</div>
+            <div style="height:40px;border-radius:12px;display:flex;align-items:center;gap:12px;padding:0 12px;font-size:14px;font-weight:600;color:#C9C9C5"><span style="font-family:'Material Symbols Rounded';font-size:21px">description</span>Documentos</div>
+            <div style="height:40px;border-radius:12px;display:flex;align-items:center;gap:12px;padding:0 12px;font-size:14px;font-weight:600;color:#C9C9C5"><span style="font-family:'Material Symbols Rounded';font-size:21px">verified_user</span>Garantías</div>
+            <div style="height:40px;border-radius:12px;display:flex;align-items:center;gap:12px;padding:0 12px;font-size:14px;font-weight:600;color:#C9C9C5"><span style="font-family:'Material Symbols Rounded';font-size:21px">bar_chart</span>Reportes</div>
+          </div>
+          <div style="margin-top:auto;display:flex;align-items:center;gap:10px;padding:12px;border-radius:14px;background:#1E1E1E">
+            <div style="width:36px;height:36px;border-radius:50%;background:#FF8A00;color:#121212;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center">W</div>
+            <div style="flex:1"><div style="font-size:14px;font-weight:700">Wilder</div><div style="font-size:12px;color:#A3A3A0">Administrador</div></div>
+            <span style="font-family:'Material Symbols Rounded';font-size:20px;color:#A3A3A0">settings</span>
+          </div>
+        </div>
+        <div style="flex:1;padding:28px 36px;display:flex;flex-direction:column;gap:24px;min-width:0">
+          <div style="display:flex;align-items:center;gap:16px">
+            <div style="flex:1"><div style="font-size:14px;color:#5C5C59;font-weight:600">Domingo, 4 de octubre</div><div style="font-size:28px;font-weight:800;letter-spacing:-0.025em">Buenos días, Wilder</div></div>
+            <div style="width:420px;height:48px;border-radius:14px;background:#FFFFFF;display:flex;align-items:center;gap:10px;padding:0 10px 0 16px">
+              <span style="font-family:'Material Symbols Rounded';font-size:22px;color:#5C5C59">search</span>
+              <span style="flex:1;font-size:14px;color:#6B6B68">Cliente, teléfono, ticket, serial…</span>
+              <span style="font:600 11px 'JetBrains Mono',monospace;padding:4px 7px;border-radius:6px;background:#F0F0EE;color:#5C5C59">Ctrl K</span>
+            </div>
+            <div style="height:48px;padding:0 20px;border-radius:14px;background:#FF8A00;color:#121212;font-weight:800;font-size:15px;display:flex;align-items:center;gap:8px"><span style="font-family:'Material Symbols Rounded';font-size:22px">add</span>Nuevo ticket</div>
+          </div>
+          <div style="background:#FFFFFF;border-radius:20px;padding:6px;display:grid;grid-template-columns:repeat(6,1fr);gap:6px">
+            <div style="padding:16px;border-radius:15px;display:flex;flex-direction:column;gap:10px"><span style="display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:oklch(0.38 0.12 250)"><span style="font-family:'Material Symbols Rounded';font-size:18px">inventory_2</span>Recibidos</span><span style="font-size:34px;font-weight:800;letter-spacing:-0.03em">4</span></div>
+            <div style="padding:16px;border-radius:15px;display:flex;flex-direction:column;gap:10px"><span style="display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:oklch(0.42 0.09 80)"><span style="font-family:'Material Symbols Rounded';font-size:18px">search</span>En diagnóstico</span><span style="font-size:34px;font-weight:800;letter-spacing:-0.03em">6</span></div>
+            <div style="padding:16px;border-radius:15px;display:flex;flex-direction:column;gap:10px;background:#121212;color:#FFFFFF"><span style="display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:#FFB255"><span style="font-family:'Material Symbols Rounded';font-size:18px">hourglass_top</span>Esperando aprobación</span><div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:34px;font-weight:800;letter-spacing:-0.03em">5</span><span style="font-size:13px;color:#BDBDBA;font-weight:600">2 hace +48 h</span></div></div>
+            <div style="padding:16px;border-radius:15px;display:flex;flex-direction:column;gap:10px"><span style="display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:oklch(0.40 0.13 300)"><span style="font-family:'Material Symbols Rounded';font-size:18px">build</span>En servicio</span><span style="font-size:34px;font-weight:800;letter-spacing:-0.03em">3</span></div>
+            <div style="padding:16px;border-radius:15px;display:flex;flex-direction:column;gap:10px"><span style="display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:oklch(0.40 0.14 275)"><span style="font-family:'Material Symbols Rounded';font-size:18px">fact_check</span>En pruebas</span><span style="font-size:34px;font-weight:800;letter-spacing:-0.03em">2</span></div>
+            <div style="padding:16px;border-radius:15px;display:flex;flex-direction:column;gap:10px"><span style="display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:oklch(0.38 0.10 150)"><span style="font-family:'Material Symbols Rounded';font-size:18px">check_circle</span>Listos para entregar</span><span style="font-size:34px;font-weight:800;letter-spacing:-0.03em">3</span></div>
+          </div>
+          <div style="flex:1;display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:20px;min-height:0">
+            <div style="background:#FFFFFF;border-radius:20px;padding:22px 24px;display:flex;flex-direction:column;gap:6px">
+              <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px"><div style="font-size:18px;font-weight:800">Requiere tu atención</div><div style="font-size:14px;font-weight:700;color:#5C5C59">Ver todos los tickets</div></div>
+              <div style="display:grid;grid-template-columns:130px minmax(0,1fr) 200px 120px;gap:16px;padding:0 0 8px;border-bottom:1px solid #EFEFED;font-size:12px;font-weight:700;color:#6B6B68;letter-spacing:0.04em"><span>TICKET</span><span>CLIENTE · EQUIPO</span><span>ESTADO</span><span style="text-align:right">ACCIÓN</span></div>
+              <div style="display:grid;grid-template-columns:130px minmax(0,1fr) 200px 120px;gap:16px;align-items:center;padding:12px 0;border-bottom:1px solid #F3F3F1"><span style="font:600 13px 'JetBrains Mono',monospace">TU-2026-00158</span><div><div style="font-size:14px;font-weight:700">María Gómez</div><div style="font-size:13px;color:#5C5C59">Lenovo IdeaPad 3 · hace 3 días</div></div><span style="justify-self:start;display:inline-flex;align-items:center;gap:6px;padding:6px 11px 6px 8px;border-radius:999px;background:#FFF0DD;color:#8A4500;font-size:12px;font-weight:700"><span style="font-family:'Material Symbols Rounded';font-size:16px">hourglass_top</span>Esperando aprobación</span><span style="justify-self:end;height:34px;padding:0 12px;border-radius:10px;background:#121212;color:#FFFFFF;font-size:13px;font-weight:700;display:flex;align-items:center;gap:5px"><span style="font-family:'Material Symbols Rounded';font-size:16px">chat</span>Recordar</span></div>
+              <div style="display:grid;grid-template-columns:130px minmax(0,1fr) 200px 120px;gap:16px;align-items:center;padding:12px 0;border-bottom:1px solid #F3F3F1"><span style="font:600 13px 'JetBrains Mono',monospace">TU-2026-00151</span><div><div style="font-size:14px;font-weight:700">Carlos Ruiz</div><div style="font-size:13px;color:#5C5C59">Epson L3250 · hace 2 días</div></div><span style="justify-self:start;display:inline-flex;align-items:center;gap:6px;padding:6px 11px 6px 8px;border-radius:999px;background:#FFF0DD;color:#8A4500;font-size:12px;font-weight:700"><span style="font-family:'Material Symbols Rounded';font-size:16px">hourglass_top</span>Esperando aprobación</span><span style="justify-self:end;height:34px;padding:0 12px;border-radius:10px;background:#121212;color:#FFFFFF;font-size:13px;font-weight:700;display:flex;align-items:center;gap:5px"><span style="font-family:'Material Symbols Rounded';font-size:16px">chat</span>Recordar</span></div>
+              <div style="display:grid;grid-template-columns:130px minmax(0,1fr) 200px 120px;gap:16px;align-items:center;padding:12px 0;border-bottom:1px solid #F3F3F1"><span style="font:600 13px 'JetBrains Mono',monospace">TU-2026-00149</span><div><div style="font-size:14px;font-weight:700">Ana Martínez</div><div style="font-size:13px;color:#5C5C59">Asus VivoBook 15 · desde ayer</div></div><span style="justify-self:start;display:inline-flex;align-items:center;gap:6px;padding:6px 11px 6px 8px;border-radius:999px;background:oklch(0.95 0.05 150);color:oklch(0.38 0.10 150);font-size:12px;font-weight:700"><span style="font-family:'Material Symbols Rounded';font-size:16px">check_circle</span>Listo para entregar</span><span style="justify-self:end;height:34px;padding:0 12px;border-radius:10px;background:#F0F0EE;color:#121212;font-size:13px;font-weight:700;display:flex;align-items:center;gap:5px">Entregar</span></div>
+              <div style="display:grid;grid-template-columns:130px minmax(0,1fr) 200px 120px;gap:16px;align-items:center;padding:12px 0;border-bottom:1px solid #F3F3F1"><span style="font:600 13px 'JetBrains Mono',monospace">TU-2026-00147</span><div><div style="font-size:14px;font-weight:700">Distribuciones Andina</div><div style="font-size:13px;color:#5C5C59">Dell Latitude 5490 · 4 días</div></div><span style="justify-self:start;display:inline-flex;align-items:center;gap:6px;padding:6px 11px 6px 8px;border-radius:999px;background:#EFEFED;color:#3A3A38;font-size:12px;font-weight:700"><span style="font-family:'Material Symbols Rounded';font-size:16px">local_shipping</span>Esperando repuesto</span><span style="justify-self:end;height:34px;padding:0 12px;border-radius:10px;background:#F0F0EE;color:#121212;font-size:13px;font-weight:700;display:flex;align-items:center">Ver</span></div>
+              <div style="display:grid;grid-template-columns:130px minmax(0,1fr) 200px 120px;gap:16px;align-items:center;padding:12px 0"><span style="font:600 13px 'JetBrains Mono',monospace">TU-2026-00001</span><div><div style="font-size:14px;font-weight:700">Juan Pérez</div><div style="font-size:13px;color:#5C5C59">HP 14-R005LA · checklist 14/17</div></div><span style="justify-self:start;display:inline-flex;align-items:center;gap:6px;padding:6px 11px 6px 8px;border-radius:999px;background:oklch(0.95 0.04 275);color:oklch(0.40 0.14 275);font-size:12px;font-weight:700"><span style="font-family:'Material Symbols Rounded';font-size:16px">fact_check</span>En pruebas</span><span style="justify-self:end;height:34px;padding:0 12px;border-radius:10px;background:#F0F0EE;color:#121212;font-size:13px;font-weight:700;display:flex;align-items:center">Ver</span></div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:20px;min-height:0">
+              <div style="background:#121212;color:#FFFFFF;border-radius:20px;padding:22px 24px;display:flex;flex-direction:column;gap:16px">
+                <div style="display:flex;justify-content:space-between;align-items:baseline"><div style="font-size:16px;font-weight:800">Cotizaciones · octubre</div><div style="font-size:13px;color:#A3A3A0;font-weight:600">14 enviadas</div></div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                  <div><div style="font-size:13px;color:#A3A3A0;font-weight:600">Cotizado</div><div style="font-size:26px;font-weight:800;letter-spacing:-0.02em">$6,8 M</div></div>
+                  <div><div style="font-size:13px;color:#A3A3A0;font-weight:600">Aprobado</div><div style="font-size:26px;font-weight:800;letter-spacing:-0.02em;color:#FF9F2A">$4,9 M</div></div>
+                </div>
+                <div style="display:flex;height:10px;border-radius:5px;overflow:hidden;gap:3px"><div style="flex:9;background:#FF8A00"></div><div style="flex:3;background:#5C5C59"></div><div style="flex:2;background:#3A3A38"></div></div>
+                <div style="display:flex;gap:16px;font-size:12px;color:#BDBDBA;font-weight:600"><span>9 aprobadas</span><span>3 pendientes</span><span>2 rechazadas</span></div>
+              </div>
+              <div style="flex:1;background:#FFFFFF;border-radius:20px;padding:22px 24px;display:flex;flex-direction:column;gap:12px">
+                <div style="display:flex;justify-content:space-between;align-items:baseline"><div style="font-size:16px;font-weight:800">Clientes por contactar</div><div style="font-size:13px;font-weight:700;color:#5C5C59">CRM</div></div>
+                <div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid #F3F3F1"><span style="font-family:'Material Symbols Rounded';font-size:22px;color:#C46A00">event_repeat</span><div style="flex:1"><div style="font-size:14px;font-weight:700">Luis Herrera</div><div style="font-size:13px;color:#5C5C59">Mantenimiento · 6 meses cumplidos</div></div><span style="font-size:12px;font-weight:700;color:#5C5C59">Hoy</span></div>
+                <div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid #F3F3F1"><span style="font-family:'Material Symbols Rounded';font-size:22px;color:#C46A00">event_repeat</span><div style="flex:1"><div style="font-size:14px;font-weight:700">Patricia León</div><div style="font-size:13px;color:#5C5C59">Mantenimiento impresora</div></div><span style="font-size:12px;font-weight:700;color:#5C5C59">Mañana</span></div>
+                <div style="display:flex;align-items:center;gap:12px;padding:8px 0"><span style="font-family:'Material Symbols Rounded';font-size:22px;color:#5C5C59">verified_user</span><div style="flex:1"><div style="font-size:14px;font-weight:700">Jorge Castaño</div><div style="font-size:13px;color:#5C5C59">Garantía vence en 7 días</div></div><span style="font-size:12px;font-weight:700;color:#5C5C59">11/10</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Siguiente: "explora 2 variantes de <a class="dv-oid" href="#1b">1b</a> con menos negro" · "diseña el detalle de ticket y el CRM" · "prueba otra tipografía en <a class="dv-oid" href="#1a">1a</a>"</p>
+</section>
+</x-dc>
+</body>
+</html>

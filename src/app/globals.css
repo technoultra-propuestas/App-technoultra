@@ -1,0 +1,75 @@
+@import "tailwindcss";
+
+/* Tokens de marca aprobados en el diseño de Claude Design. No cambiar valores sin aprobación. */
+@theme inline {
+  --color-brand: #ff8a00;
+  --color-brand-soft: #ff9f2a;
+  --color-ink: #121212;
+  --color-black: #000000;
+  --color-paper: #f6f6f5;
+  --color-muted: #5c5c59;
+  --color-line: #ecece9;
+  --color-line-strong: #d9d9d5;
+  --color-ink-2: #3a3a38;
+  --font-sans: var(--font-manrope), system-ui, sans-serif;
+}
+
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  font-variant-numeric: tabular-nums;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+button {
+  cursor: pointer;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-brand);
+  outline-offset: 2px;
+}
+
+a {
+  text-decoration-color: var(--color-brand);
+  text-underline-offset: 3px;
+}
+
+.min-h-screen-dvh {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.pt-safe {
+  padding-top: var(--safe-top);
+}
+.pb-safe {
+  padding-bottom: var(--safe-bottom);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
