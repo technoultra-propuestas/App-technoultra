@@ -1,6 +1,7 @@
 import "server-only";
 import { createHash } from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
+import type { QuotePricing } from "@/lib/domain/pricing";
 import {
   buildDeliveryPdf, buildDiagnosisPdf, buildQuotePdf, buildReceptionPdf, buildWarrantyPdf,
   type EquipmentInfo, type Party,
@@ -83,11 +84,11 @@ export async function generateTicketDocument(kind: DocKind, ticketId: string, ac
     ]);
     pdf = await buildDiagnosisPdf({ ticketCode: t.code, customer: party(t), equipment: equip(t), summary: d.summary, components: items ?? [], tests: d.tests_performed, recommendations: d.recommendations, parts: d.suggested_parts, ai: ai ? { summary: (ai.output as { summary?: string }).summary ?? "", disclaimer: ai.disclaimer, validation: ai.validation_status } : null }, meta);
   } else if (kind === "quote") {
-    const { data: q } = await admin.from("quotes").select("id, valid_until, notes, terms, subtotal, discount_total, tax_total, total, status").eq("ticket_id", ticketId).in("status", ["sent", "clarification", "approved"]).order("version", { ascending: false }).limit(1).maybeSingle();
+    const { data: q } = await admin.from("quotes").select("id, valid_until, notes, terms, subtotal, discount_total, tax_total, total, status, urgency_amount, urgency_snapshot, delivery_fee, delivery_snapshot, diagnosis_credit, vat_included, tax_snapshot").eq("ticket_id", ticketId).in("status", ["sent", "clarification", "approved"]).order("version", { ascending: false }).limit(1).maybeSingle();
     if (!q) return { ok: false, error: "No hay una cotización enviada para documentar." };
     quoteId = q.id;
     const { data: items } = await admin.from("quote_items").select("description, qty, unit_price, discount, line_subtotal, warranty_days, warranty_kind").eq("quote_id", q.id).order("position");
-    pdf = await buildQuotePdf({ ticketCode: t.code, customer: party(t), equipment: equip(t), validUntil: q.valid_until, notes: q.notes, terms: q.terms, items: (items ?? []).map((i) => ({ description: i.description, qty: Number(i.qty), unitPrice: Number(i.unit_price), discount: Number(i.discount), lineSubtotal: Number(i.line_subtotal), warrantyDays: i.warranty_days, warrantyKind: i.warranty_kind })), subtotal: Number(q.subtotal), discountTotal: Number(q.discount_total), taxTotal: Number(q.tax_total), total: Number(q.total) }, meta);
+    pdf = await buildQuotePdf({ ticketCode: t.code, customer: party(t), equipment: equip(t), validUntil: q.valid_until, notes: q.notes, terms: q.terms, items: (items ?? []).map((i) => ({ description: i.description, qty: Number(i.qty), unitPrice: Number(i.unit_price), discount: Number(i.discount), lineSubtotal: Number(i.line_subtotal), warrantyDays: i.warranty_days, warrantyKind: i.warranty_kind })), subtotal: Number(q.subtotal), discountTotal: Number(q.discount_total), taxTotal: Number(q.tax_total), total: Number(q.total), pricing: q as unknown as QuotePricing }, meta);
   } else if (kind === "delivery") {
     const [{ data: dl }, { data: w }, { data: diag }] = await Promise.all([
       admin.from("deliveries").select("received_by_name, notes, next_maintenance_at, created_at").eq("ticket_id", ticketId).maybeSingle(),

@@ -17,6 +17,7 @@ const ITEMS: Item[] = [
   { href: "/b/cobertura", label: "Cobertura", admin: true },
   { href: "/b/reportes", label: "Reportes", admin: true },
   { href: "/b/legal", label: "Legal", admin: true },
+  { href: "/b/comercial", label: "Comercial", admin: true },
   { href: "/b/privacidad", label: "Privacidad", admin: true },
   { href: "/b/configuracion", label: "Ajustes", admin: true },
   { href: "/b/usuarios", label: "Usuarios", admin: true },

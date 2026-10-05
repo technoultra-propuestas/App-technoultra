@@ -41,3 +41,6 @@
 ## Catálogo oficial (2026-10-05)
 Migración 20, importador validado (161 servicios/13 categorías), CRM ampliado (filtros, subcategorías, historial, eliminación segura), catálogo público con subcategorías y precio "Desde"/"+ repuesto". Detalle en `docs/CATALOGO_IMPORTACION.md`.
 **Estado remoto verificado (2026-10-05):** migración 20 aplicada; 161 servicios, 13 categorías, 107 subcategorías, 41 con diagnóstico, 34 "Desde", 15 "+ repuesto", RLS activo y sin duplicados. Producción (app.technoultra.com y app-technoultra.vercel.app) responde 200; variables de Vercel cargadas por el propietario; redirectTo de Google exacto `/auth/callback`.
+
+## Configuración comercial (2026-10-05)
+IVA configurable, recargo por urgencia, domicilio, crédito de diagnóstico y snapshots (migración 22), consolidación del duplicado "Diagnóstico de red" (migración 23), pantalla `/b/comercial`, desglose en cotización (cliente, personal y PDF). Detalle en `docs/DECISIONS.md` D-050…D-055. **Migraciones 21, 22 y 23 pendientes de aplicar al remoto** (`supabase db push`); no desplegar el código antes (las pantallas de ticket usan las columnas nuevas).

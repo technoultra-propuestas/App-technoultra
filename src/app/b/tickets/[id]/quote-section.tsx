@@ -1,6 +1,7 @@
 import { Card, fmtDate, fmtDateTime, money } from "@/components/ui/layout";
 import { createClient } from "@/lib/supabase/server";
-import { removeItemAction, setNeedsPartAction } from "../quote-actions";
+import { quoteBreakdown } from "@/lib/domain/pricing";
+import { removeItemAction, setDeliveryAction, setNeedsPartAction, setUrgencyAction } from "../quote-actions";
 import { AddItemForm, CreateQuoteForm, QuoteActionForm } from "./quote-forms";
 
 const QUOTE_STATUS: Record<string, string> = {
@@ -17,7 +18,7 @@ export async function QuoteSection({ ticketId, canQuote, ticketOpen }: { ticketI
   const supabase = await createClient();
   const { data: quote } = await supabase
     .from("quotes")
-    .select("id, code, version, status, valid_until, needs_part, subtotal, discount_total, tax_total, total")
+    .select("id, code, version, status, valid_until, needs_part, subtotal, discount_total, tax_total, total, urgency_level_id, urgency_amount, urgency_snapshot, delivery_fee, delivery_snapshot, diagnosis_credit, vat_included, tax_snapshot")
     .eq("ticket_id", ticketId)
     .neq("status", "superseded")
     .order("version", { ascending: false })
@@ -34,6 +35,11 @@ export async function QuoteSection({ ticketId, canQuote, ticketOpen }: { ticketI
     );
   }
 
+  const [{ data: tk }, { data: levels }] = await Promise.all([
+    supabase.from("tickets").select("modality").eq("id", ticketId).maybeSingle(),
+    supabase.from("urgency_levels").select("id, code, label").eq("is_active", true).order("sort_order"),
+  ]);
+  const homeLike = tk?.modality === "home" || tk?.modality === "pickup";
   const [{ data: items }, { data: events }] = await Promise.all([
     supabase.from("quote_items").select("id, position, description, qty, unit_price, discount, line_subtotal, warranty_days").eq("quote_id", quote.id).order("position"),
     supabase.from("quote_events").select("id, event_type, actor_role, message, created_at").eq("quote_id", quote.id).order("created_at"),
@@ -85,30 +91,49 @@ export async function QuoteSection({ ticketId, canQuote, ticketOpen }: { ticketI
         ))}
       </ul>
       <div className="flex flex-col gap-1 border-t border-line pt-3 text-[14px] font-semibold">
-        <div className="flex justify-between">
-          <span>Subtotal</span>
-          <span>{money(quote.subtotal)}</span>
-        </div>
-        {Number(quote.discount_total) > 0 ? (
-          <div className="flex justify-between text-muted">
-            <span>Descuentos</span>
-            <span>−{money(quote.discount_total)}</span>
+        {quoteBreakdown(quote).map((l) => (
+          <div key={l.key} className={`flex justify-between ${l.strong ? "text-[18px] font-extrabold" : l.info ? "text-[13px] text-muted" : l.key === "subtotal" ? "" : "text-muted"}`}>
+            <span>{l.label}</span>
+            <span>
+              {l.sign === -1 ? "−" : ""}
+              {money(l.amount)}
+            </span>
           </div>
-        ) : null}
-        {Number(quote.tax_total) > 0 ? (
-          <div className="flex justify-between text-muted">
-            <span>Impuestos</span>
-            <span>{money(quote.tax_total)}</span>
-          </div>
-        ) : null}
-        <div className="flex justify-between text-[18px] font-extrabold">
-          <span>Total</span>
-          <span>{money(quote.total)}</span>
-        </div>
+        ))}
       </div>
 
       {draft && canQuote ? (
         <>
+          <div className="flex flex-wrap items-end gap-3 rounded-[14px] border border-line p-3">
+            <form action={setUrgencyAction} className="flex flex-wrap items-end gap-2">
+              <input type="hidden" name="ticketId" value={ticketId} />
+              <input type="hidden" name="quoteId" value={quote.id} />
+              <label className="flex flex-col gap-1 text-[13px] font-bold">
+                Urgencia
+                <select name="levelId" defaultValue={quote.urgency_level_id ?? ""} className="h-11 rounded-[12px] border border-line-strong bg-white px-3 text-[15px]">
+                  <option value="">Normal (sin recargo)</option>
+                  {(levels ?? []).filter((l) => l.code !== "normal").map((l) => (
+                    <option key={l.id} value={l.id}>
+                      {l.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button type="submit" className="min-h-11 rounded-[12px] border border-line-strong bg-white px-3 text-[13px] font-bold">
+                Aplicar
+              </button>
+            </form>
+            {homeLike ? (
+              <form action={setDeliveryAction}>
+                <input type="hidden" name="ticketId" value={ticketId} />
+                <input type="hidden" name="quoteId" value={quote.id} />
+                <input type="hidden" name="apply" value={String(Number(quote.delivery_fee) === 0)} />
+                <button type="submit" className="min-h-11 rounded-[12px] border border-line-strong bg-white px-3 text-[13px] font-bold">
+                  {Number(quote.delivery_fee) === 0 ? "Agregar domicilio" : "Quitar domicilio"}
+                </button>
+              </form>
+            ) : null}
+          </div>
           <form action={setNeedsPartAction} className="flex items-center gap-3 text-[14px] font-semibold">
             <input type="hidden" name="ticketId" value={ticketId} />
             <input type="hidden" name="quoteId" value={quote.id} />

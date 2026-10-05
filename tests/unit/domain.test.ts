@@ -122,3 +122,26 @@ describe("priceText del catálogo oficial", () => {
     expect(priceText({ price_mode: "quote", base_price: null, price_unit: null })).toBe("A cotizar");
   });
 });
+
+describe("desglose de cotización (snapshots)", () => {
+  it("muestra urgencia, domicilio y abono del diagnóstico, y solo informa IVA si es responsable", async () => {
+    const { quoteBreakdown } = await import("@/lib/domain/pricing");
+    const base = { subtotal: 190000, discount_total: 0, tax_total: 0, total: 190000 };
+    expect(quoteBreakdown(base).map((l) => l.key)).toEqual(["subtotal", "total"]);
+    const full = quoteBreakdown({
+      ...base,
+      urgency_amount: 30000,
+      urgency_snapshot: { label: "Urgente", percent: 20 },
+      delivery_fee: 15000,
+      delivery_snapshot: { city: "Cali" },
+      diagnosis_credit: 39900,
+      total: 195100,
+      vat_included: 31150.42,
+      tax_snapshot: { responsible: true, rate: 19 },
+    });
+    expect(full.map((l) => l.key)).toEqual(["subtotal", "urgency", "delivery", "credit", "total", "vat"]);
+    expect(full.find((l) => l.key === "urgency")?.label).toBe("Recargo por urgencia · Urgente (20%)");
+    expect(full.find((l) => l.key === "credit")?.sign).toBe(-1);
+    expect(quoteBreakdown({ ...base, vat_included: 100, tax_snapshot: { responsible: false } }).some((l) => l.key === "vat")).toBe(false);
+  });
+});

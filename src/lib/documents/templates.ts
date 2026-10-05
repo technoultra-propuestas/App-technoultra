@@ -1,4 +1,5 @@
 import { PdfBuilder, type PdfMeta } from "./pdf";
+import { quoteBreakdown, type QuotePricing } from "@/lib/domain/pricing";
 
 export type Party = { name: string; phone?: string | null; email?: string | null };
 export type EquipmentInfo = { type: string; brand: string; model: string; serial?: string | null } | null;
@@ -70,6 +71,7 @@ export type QuoteData = {
   ticketCode?: string | null; customer: Party; equipment: EquipmentInfo; validUntil?: string | null; notes?: string | null; terms?: string | null;
   items: { description: string; qty: number; unitPrice: number; discount: number; lineSubtotal: number; warrantyDays: number; warrantyKind: string }[];
   subtotal: number; discountTotal: number; taxTotal: number; total: number;
+  pricing?: QuotePricing; // desglose con snapshots (urgencia, domicilio, abono, IVA informativo)
 };
 export async function buildQuotePdf(d: QuoteData, meta: PdfMeta) {
   const b = await PdfBuilder.create(meta);
@@ -80,7 +82,11 @@ export async function buildQuotePdf(d: QuoteData, meta: PdfMeta) {
     d.items.map((i) => [i.description, String(i.qty), COP(i.unitPrice), i.discount > 0 ? COP(i.discount) : "-", COP(i.lineSubtotal), i.warrantyDays > 0 ? `${i.warrantyDays} d (${i.warrantyKind === "product" ? "producto" : "trabajo"})` : "-"]),
     [5, 1.2, 2, 1.5, 2, 2.4],
   );
-  b.kv([["Subtotal", COP(d.subtotal)], ["Descuentos", d.discountTotal > 0 ? `-${COP(d.discountTotal)}` : null], ["Impuestos", d.taxTotal > 0 ? COP(d.taxTotal) : null], ["TOTAL", COP(d.total)]]);
+  b.kv(
+    d.pricing
+      ? quoteBreakdown(d.pricing).map((l): [string, string] => [l.key === "total" ? "TOTAL" : l.label, `${l.sign === -1 ? "-" : ""}${COP(l.amount)}`])
+      : [["Subtotal", COP(d.subtotal)], ["Descuentos", d.discountTotal > 0 ? `-${COP(d.discountTotal)}` : null], ["Impuestos", d.taxTotal > 0 ? COP(d.taxTotal) : null], ["TOTAL", COP(d.total)]],
+  );
   b.kv([["Vigencia", d.validUntil ? `Hasta el ${day(d.validUntil)}` : null], ["Observaciones", d.notes], ["Condiciones", d.terms]]);
   b.note("No se realiza ningún trabajo sin la aprobación del cliente. Los valores corresponden al catálogo vigente al momento de emitir esta cotización.");
   return b.finish();

@@ -15,6 +15,7 @@ export type ServiceValues = {
   subcategory_id?: string | null;
   price_type_label?: string | null;
   parts_extra?: boolean;
+  is_diagnostic_fee?: boolean;
   includes_text?: string | null;
   excludes_text?: string | null;
   price_treatment?: string | null;
@@ -120,6 +121,7 @@ export function ServiceForm({
       </fieldset>
       <div className="flex flex-col gap-2">
         <Check name="partsExtra" label="El repuesto se cotiza aparte (+ repuesto)" checked={v.parts_extra ?? false} />
+        <Check name="isDiagnosticFee" label="Es un diagnóstico (su valor se abona a la reparación si se aprueba)" checked={v.is_diagnostic_fee ?? false} />
         <Check name="requiresEquipment" label="Requiere un equipo registrado" checked={v.requires_equipment ?? true} />
         <Check name="requiresDiagnosis" label="Requiere diagnóstico previo" checked={v.requires_diagnosis ?? true} />
         <Check name="requiresQuote" label="Requiere cotización y aprobación" checked={v.requires_quote ?? true} />

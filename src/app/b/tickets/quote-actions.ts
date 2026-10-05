@@ -16,6 +16,14 @@ const QUOTE_ERRORS: [RegExp, string][] = [
   [/price_override_forbidden/, "El precio debe ser el del catálogo. Pide autorización a administración."],
   [/precondition_failed: quote_not_sent/, "Primero envía la cotización."],
   [/duplicate|23505/, "Ya existe una cotización abierta para este ticket."],
+  [/urgency_unavailable/, "Ese nivel de urgencia no está disponible."],
+  [/urgency_not_applicable/, "Ese nivel no aplica ahora (día, horario o modalidad)."],
+  [/delivery_not_applicable/, "El domicilio solo aplica a servicios a domicilio."],
+  [/delivery_address_missing/, "La solicitud no tiene dirección."],
+  [/out_of_coverage/, "La dirección está fuera de cobertura."],
+  [/diagnosis_already_paid/, "El diagnóstico de este ticket ya está pagado."],
+  [/ticket_not_diagnosis/, "Este ticket no es de un servicio de diagnóstico."],
+  [/diagnosis_credit_already_used/, "El abono del diagnóstico ya fue usado."],
 ];
 const friendly = (m?: string) => QUOTE_ERRORS.find(([re]) => m && re.test(m))?.[1] ?? "No pudimos completar la acción. Inténtalo de nuevo.";
 const uuid = z.string().uuid();
@@ -125,5 +133,29 @@ export async function setNeedsPartAction(fd: FormData): Promise<void> {
   if (!p.success) return;
   const supabase = await createClient();
   await supabase.from("quotes").update({ needs_part: p.data.needsPart === "on" }).eq("id", p.data.quoteId);
+  refresh(p.data.ticketId);
+}
+
+const urgencySchema = z.object({ ticketId: uuid, quoteId: uuid, levelId: z.union([z.literal(""), uuid]) });
+/** Nivel de urgencia de la cotización en borrador. El recargo lo calcula la base de datos con los valores congelados del nivel. */
+export async function setUrgencyAction(fd: FormData): Promise<void> {
+  await assertRole(["technician", "admin"]);
+  const p = urgencySchema.safeParse(Object.fromEntries(fd.entries()));
+  if (!p.success) return;
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("set_quote_urgency", { p_quote: p.data.quoteId, p_level: p.data.levelId || (null as unknown as string) });
+  if (error) console.error("quote.urgency", error.code, friendly(error.message));
+  refresh(p.data.ticketId);
+}
+
+const deliverySchema = z.object({ ticketId: uuid, quoteId: uuid, apply: z.enum(["true", "false"]) });
+/** Domicilio como concepto aparte; la tarifa sale de la cobertura del municipio de la dirección. */
+export async function setDeliveryAction(fd: FormData): Promise<void> {
+  await assertRole(["technician", "admin"]);
+  const p = deliverySchema.safeParse(Object.fromEntries(fd.entries()));
+  if (!p.success) return;
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("set_quote_delivery", { p_quote: p.data.quoteId, p_apply: p.data.apply === "true" });
+  if (error) console.error("quote.delivery", error.code, friendly(error.message));
   refresh(p.data.ticketId);
 }

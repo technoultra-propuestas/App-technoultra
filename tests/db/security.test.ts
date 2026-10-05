@@ -683,6 +683,7 @@ describe("superficie de API", () => {
       "product_service_links",
       "push_subscriptions",
       "quote_items",
+      "urgency_level_services",
     ]);
   });
   it("authenticated no recibe TRUNCATE/REFERENCES/TRIGGER", async () => {

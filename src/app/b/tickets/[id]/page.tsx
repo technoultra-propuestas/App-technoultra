@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { AssignForm, NoteForm, TransitionForm } from "./forms";
 import { AiDiagnosisCard } from "@/components/ai/AiDiagnosisCard";
 import { reviewAiAction } from "../ai-actions";
+import { DiagnosisBox } from "./diagnosis-box";
 import { QuoteSection } from "./quote-section";
 import { ReceptionSection } from "./reception-section";
 import { WorkSection } from "./work-section";
@@ -105,6 +106,7 @@ export default async function StaffTicketPage({ params }: { params: Promise<{ id
         ) : null}
         <ReceptionSection ticketId={t.id} problem={t.problem} open={!["delivered", "cancelled"].includes(t.status) && ["received", "diagnosing"].includes(t.status)} />
         <WorkSection ticketId={t.id} status={t.status} />
+        <DiagnosisBox ticketId={t.id} isAdmin={me.role === "admin"} />
         <QuoteSection ticketId={t.id} canQuote ticketOpen={!(["delivered", "cancelled"] as string[]).includes(t.status)} />
         <DocumentsSection ticketId={t.id} status={t.status} />
         <Card className="flex flex-col gap-3">

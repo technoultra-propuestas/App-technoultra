@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 import { AiDiagnosisCard } from "@/components/ai/AiDiagnosisCard";
+import { quoteBreakdown } from "@/lib/domain/pricing";
 import { QuoteDecision } from "./quote-client";
 import {
   Card,
@@ -68,7 +69,7 @@ export default async function TicketDetail({ params }: { params: Promise<{ id: s
   ]);
   const { data: quote } = await supabase
     .from("quotes")
-    .select("id, code, status, valid_until, total, needs_part")
+    .select("id, code, status, valid_until, total, needs_part, subtotal, discount_total, tax_total, urgency_amount, urgency_snapshot, delivery_fee, delivery_snapshot, diagnosis_credit, vat_included, tax_snapshot")
     .eq("ticket_id", t.id)
     .neq("status", "superseded")
     .order("version", { ascending: false })
@@ -115,9 +116,16 @@ export default async function TicketDetail({ params }: { params: Promise<{ id: s
               </li>
             ))}
           </ul>
-          <div className="flex justify-between border-t border-line pt-3 text-[18px] font-extrabold">
-            <span>Total</span>
-            <span>{money(quote.total)}</span>
+          <div className="flex flex-col gap-1 border-t border-line pt-3 text-[14px] font-semibold">
+            {quoteBreakdown(quote).map((l) => (
+              <div key={l.key} className={`flex justify-between ${l.strong ? "text-[18px] font-extrabold" : l.info ? "text-[13px] text-muted" : ""}`}>
+                <span>{l.label}</span>
+                <span>
+                  {l.sign === -1 ? "−" : ""}
+                  {money(l.amount)}
+                </span>
+              </div>
+            ))}
           </div>
           {quote.valid_until ? <p className="m-0 text-[13px] text-muted">Vigente hasta {fmtDate(quote.valid_until)}</p> : null}
           {["sent", "clarification"].includes(quote.status) ? (

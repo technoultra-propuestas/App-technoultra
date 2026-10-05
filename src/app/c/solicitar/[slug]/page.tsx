@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Card, EQUIPMENT_LABEL, PageTitle } from "@/components/ui/layout";
+import { Alert } from "@/components/ui/form";
 import { requireRole } from "@/lib/auth/session";
 import { priceText } from "@/lib/domain/catalog";
+import { DIAGNOSIS_CONDITION } from "@/lib/domain/pricing";
 import { nextBusinessDays } from "@/lib/domain/requests";
 import { createClient } from "@/lib/supabase/server";
 import { RequestForm } from "./request-form";
@@ -17,7 +19,7 @@ export default async function RequestServicePage({ params }: { params: Promise<{
   const { data: svc } = await supabase
     .from("services")
     .select(
-      "id, name, description, short_description, price_mode, base_price, price_unit, price_type_label, parts_extra, includes_text, excludes_text, price_treatment, estimated_time, requires_diagnosis, allowed_modalities, requires_equipment",
+      "id, name, description, short_description, price_mode, base_price, price_unit, price_type_label, parts_extra, includes_text, excludes_text, price_treatment, estimated_time, requires_diagnosis, is_diagnostic_fee, allowed_modalities, requires_equipment",
     )
     .eq("slug", slug)
     .maybeSingle();
@@ -63,6 +65,7 @@ export default async function RequestServicePage({ params }: { params: Promise<{
         <span className="text-[14px] font-bold text-muted">Precio de referencia</span>
         <span className="text-[18px] font-extrabold">{priceText(svc)}</span>
       </Card>
+      {svc.is_diagnostic_fee ? <Alert>{DIAGNOSIS_CONDITION}</Alert> : null}
       {svc.includes_text || svc.excludes_text || svc.estimated_time || svc.requires_diagnosis || svc.price_treatment ? (
         <Card className="flex flex-col gap-2 text-[14px] leading-snug">
           {svc.includes_text ? <p className="m-0"><strong>Incluye:</strong> {svc.includes_text}</p> : null}
