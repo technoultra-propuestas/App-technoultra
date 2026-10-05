@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Mis pedidos", robots: { index: false } };
 
-export const ORDER_STATUS: Record<string, string> = { new: "Nuevo", preparing: "Preparando", shipped: "Enviado", delivered: "Entregado", cancelled: "Cancelado" };
+const ORDER_STATUS: Record<string, string> = { new: "Nuevo", preparing: "Preparando", shipped: "Enviado", delivered: "Entregado", cancelled: "Cancelado" };
 
 export default async function OrdersPage() {
   await requireRole(["client"]);

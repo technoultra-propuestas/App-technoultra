@@ -99,6 +99,15 @@ export async function receiveRequestAction(fd: FormData): Promise<void> {
     .eq("id", id.data)
     .maybeSingle();
   if (!r || !["pending", "scheduled"].includes(r.status)) return;
+  const { data: svc } = await supabase.from("services").select("name, kind").eq("id", r.service_id).maybeSingle();
+  if (svc?.kind === "digital") {
+    // Las soluciones digitales no pasan por el flujo de equipos: nacen como proyecto.
+    const { data: proj, error: pErr } = await supabase.from("digital_projects").insert({ customer_id: r.customer_id, service_id: r.service_id, title: svc.name, scope: r.problem_description, status: "lead", owner_id: admin.id }).select("id").single();
+    if (pErr || !proj) return;
+    await createAdminClient().from("service_requests").update({ status: "converted" }).eq("id", r.id);
+    revalidatePath("/b/solicitudes");
+    redirect(`/b/proyectos/${proj.id}`);
+  }
   const { data: t, error } = await supabase
     .from("tickets")
     .insert({
