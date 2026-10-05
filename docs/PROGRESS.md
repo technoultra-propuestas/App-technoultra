@@ -1,24 +1,32 @@
 # Progreso
 
-## Fase actual: FASE 0 — Base del proyecto (completada) → siguiente: FASE 1 (Supabase) **bloqueada por decisión**
+## Fase actual: FASE 1 — Supabase + seguridad (esquema, RLS, auditoría, máquina de estados)
 
-### Hecho
+### Hecho (verificado con 48 pruebas automáticas sobre Postgres 17)
 
-- Repo git inicializado (rama `main`). Prototipo de diseño movido a `design/` sin modificarlo.
-- Next.js 16 (App Router) + TypeScript estricto + Tailwind 4 + ESLint + Prettier + Vitest.
-- Manrope vía `next/font`; tokens de marca en `globals.css`; safe-areas, `dvh`, `prefers-reduced-motion`, `viewport-fit=cover`.
-- Cabeceras de seguridad (HSTS, nosniff, X-Frame-Options, Referrer-Policy, Permissions-Policy). Verificadas con `next start`.
-- Validación de entorno con Zod: públicas (`env.public.ts`) vs. solo-servidor (`env.server.ts`, `server-only`).
-- `.env.example` sin secretos + test que impide secretos en `NEXT_PUBLIC_*` y valores reales.
-- CI de GitHub Actions (typecheck, lint, tests, build).
-- Home provisional con identidad de marca (splash del diseño).
+- 9 migraciones versionadas en `supabase/migrations/` (55 tablas con RLS, 0 sin RLS).
+- Identidad y roles (`client` / `technician` / `admin`), alta segura (todo registro = cliente), anti-escalada de privilegios.
+- Cobertura geográfica configurable (Cali, Palmira, Jamundí, Yumbo) validada por trigger en base de datos; soporte remoto nacional.
+- Catálogo, inventario con libro mayor inmutable, cotizaciones con precio de catálogo obligatorio y totales calculados en BD.
+- Máquina de estados de tickets (matriz `ticket_transitions` + precondiciones) con historial inmutable y auditoría.
+- Garantías (producto/trabajo), plan de mantenimiento, tarea CRM y evento de agenda al entregar.
+- Pagos solo-servidor (estado final inmutable, eventos idempotentes), documentos con hash y firma que bloquea modificaciones.
+- Legal versionado (hash calculado en BD, versión publicada inmutable) y aceptación inmutable.
+- Auditoría insert-only con cadena de hashes verificable (`private.verify_audit_chain()`).
+- Arnés de pruebas `tests/db/` (PGlite + emulación de roles/`auth` de Supabase).
+
+### Pendiente de esta fase
+
+- Aplicar las migraciones al proyecto remoto `agosikmonvjujxzokdlc` (requiere `SUPABASE_DB_PASSWORD`; ver abajo).
+- Aplicar la configuración de Auth remota (`supabase config push`) y desactivar GraphQL expuesto en el panel.
+- Generar tipos TypeScript (`supabase gen types`) tras aplicar.
+- Revisión final con skills de seguridad (zero-trust / database review).
+
+### Bloqueo actual
+
+La CLI no puede abrir un rol temporal en la base remota (401) → necesita `SUPABASE_DB_PASSWORD`.
+Cree/actualice `.env.local` (ignorado por git) con esa variable; no la pegue en el chat.
 
 ### Validaciones
 
-- typecheck OK · lint OK · tests 3/3 · build OK.
-
-### Pendiente / bloqueos
-
-- Supabase: ver DECISIONS D-001. No se ha ejecutado ninguna migración.
-- GitHub: `gh` no está instalado; falta repo remoto. Vercel: la cuenta conectada no tiene equipos/proyectos.
-- CSP con nonce: se implementa en `proxy.ts` junto con la sesión de Supabase (Fase 2).
+typecheck OK · lint OK · tests 48/48 · build (ver último commit).
