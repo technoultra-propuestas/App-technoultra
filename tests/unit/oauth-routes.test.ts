@@ -22,7 +22,7 @@ import { GET as callback } from "@/app/auth/callback/route";
 import { GET as startGoogle } from "@/app/auth/google/route";
 import { allow } from "@/lib/auth/rate-limit";
 
-const req = (path: string) => new NextRequest(new URL(path, "https://app.technoultra.com"));
+const req = (path: string, headers?: Record<string, string>) => new NextRequest(new URL(path, "https://app.technoultra.com"), { headers });
 const loc = (r: Response) => r.headers.get("location");
 
 beforeEach(() => {
@@ -36,7 +36,7 @@ beforeEach(() => {
 
 describe("GET /auth/callback", () => {
   it("canjea el código y redirige al destino interno validado", async () => {
-    const r = await callback(req("/auth/callback?code=abc&next=/c/tickets"));
+    const r = await callback(req("/auth/callback?code=abc", { cookie: "tu_next=/c/tickets" }));
     expect(supabase.auth.exchangeCodeForSession).toHaveBeenCalledWith("abc");
     expect(loc(r)).toBe("https://app.technoultra.com/c/tickets");
   });
@@ -99,13 +99,15 @@ describe("GET /auth/google", () => {
     const r = await startGoogle(req("/auth/google?next=/c/solicitar"));
     const arg = supabase.auth.signInWithOAuth.mock.calls[0][0];
     expect(arg.provider).toBe("google");
-    expect(arg.options.redirectTo).toBe("https://app.technoultra.com/auth/callback?next=%2Fc%2Fsolicitar");
+    expect(arg.options.redirectTo).toBe("https://app.technoultra.com/auth/callback");
+    expect(r.cookies.get("tu_next")?.value).toBe("/c/solicitar");
     expect(loc(r)).toContain("supabase.co/auth/v1/authorize");
   });
   it("un next externo se descarta antes de construir redirectTo", async () => {
     supabase.auth.signInWithOAuth.mockResolvedValue({ data: { url: "https://x.supabase.co/auth/v1/authorize" }, error: null });
-    await startGoogle(req("/auth/google?next=https://evil.com"));
-    expect(supabase.auth.signInWithOAuth.mock.calls[0][0].options.redirectTo).toBe("https://app.technoultra.com/auth/callback?next=%2F");
+    const r = await startGoogle(req("/auth/google?next=https://evil.com"));
+    expect(supabase.auth.signInWithOAuth.mock.calls[0][0].options.redirectTo).toBe("https://app.technoultra.com/auth/callback");
+    expect(r.cookies.get("tu_next")?.value).toBe("/");
   });
   it("error de configuración del proveedor → /login?error=oauth", async () => {
     supabase.auth.signInWithOAuth.mockResolvedValue({ data: { url: null }, error: { status: 400, code: "provider_disabled" } });

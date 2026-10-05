@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getPublicEnv } from "@/lib/env.public";
 import { safeNext } from "@/lib/auth/routes";
 import { allow, clientIp } from "@/lib/auth/rate-limit";
+import { NEXT_COOKIE } from "@/lib/auth/routes";
 
 /**
  * Inicia "Continuar con Google" mediante Supabase Auth (signInWithOAuth, PKCE).
@@ -19,7 +20,7 @@ export async function GET(request: NextRequest) {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: `${appUrl}/auth/callback?next=${encodeURIComponent(next)}`,
+      redirectTo: `${appUrl}/auth/callback`, // exacto: debe coincidir con la lista de Redirect URLs de Supabase (sin query)
       queryParams: { prompt: "select_account" },
     },
   });
@@ -27,5 +28,8 @@ export async function GET(request: NextRequest) {
     console.error("auth.google.start", error?.status, error?.code);
     return NextResponse.redirect(new URL("/login?error=oauth", appUrl));
   }
-  return NextResponse.redirect(data.url);
+  const res = NextResponse.redirect(data.url);
+  // El destino posterior viaja en una cookie corta (no en la URL) para que redirectTo sea exactamente /auth/callback.
+  res.cookies.set(NEXT_COOKIE, next, { httpOnly: true, sameSite: "lax", secure: appUrl.startsWith("https://"), path: "/auth", maxAge: 600 });
+  return res;
 }

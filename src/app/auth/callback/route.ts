@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getPublicEnv } from "@/lib/env.public";
-import { safeNext } from "@/lib/auth/routes";
+import { NEXT_COOKIE, safeNext } from "@/lib/auth/routes";
 
 /**
  * Callback de OAuth (Supabase → aplicación). Flujo PKCE: el verificador viaja en una cookie httpOnly puesta al iniciar el
@@ -13,7 +13,11 @@ import { safeNext } from "@/lib/auth/routes";
  */
 export async function GET(request: NextRequest) {
   const appUrl = getPublicEnv().NEXT_PUBLIC_APP_URL;
-  const to = (path: string) => NextResponse.redirect(new URL(path, appUrl));
+  const to = (path: string) => {
+    const res = NextResponse.redirect(new URL(path, appUrl));
+    res.cookies.delete({ name: NEXT_COOKIE, path: "/auth" });
+    return res;
+  };
   const sp = request.nextUrl.searchParams;
 
   if (sp.get("error")) {
@@ -22,7 +26,7 @@ export async function GET(request: NextRequest) {
   }
   const code = sp.get("code");
   if (!code || code.length > 2048) return to("/login?error=oauth");
-  const next = safeNext(sp.get("next"), "/");
+  const next = safeNext(request.cookies.get(NEXT_COOKIE)?.value ?? sp.get("next"), "/");
 
   const supabase = await createClient();
   const { error } = await supabase.auth.exchangeCodeForSession(code);

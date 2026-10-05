@@ -15,6 +15,9 @@ export const isAuthPage = (pathname: string) => AUTH_PAGES.some((p) => matches(p
 /**
  * Anti open-redirect: solo rutas internas absolutas ("/algo"). Rechaza "//host", "/\host", esquemas y control chars.
  */
+/** Cookie httpOnly con el destino posterior al login OAuth (evita poner `?next=` en redirectTo). */
+export const NEXT_COOKIE = "tu_next";
+
 export function safeNext(next: string | null | undefined, fallback = "/"): string {
   if (!next || typeof next !== "string") return fallback;
   if (next.length > 300) return fallback;
