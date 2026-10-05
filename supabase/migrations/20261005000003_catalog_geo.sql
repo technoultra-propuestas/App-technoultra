@@ -138,7 +138,7 @@ declare v_stock int;
 begin
   select stock_on_hand into v_stock from public.inventory where product_id = new.product_id for update;
   if coalesce(v_stock, 0) + new.delta < 0 then raise exception 'insufficient_stock' using errcode = '23514'; end if;
-  insert into public.inventory (product_id, stock_on_hand) values (new.product_id, new.delta)
+  insert into public.inventory (product_id, stock_on_hand) values (new.product_id, greatest(new.delta, 0))
   on conflict (product_id) do update set stock_on_hand = public.inventory.stock_on_hand + new.delta, updated_at = now();
   return new;
 end $$;

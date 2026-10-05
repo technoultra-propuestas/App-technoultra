@@ -9,6 +9,8 @@ const ITEMS: Item[] = [
   { href: "/b/tickets", label: "Tickets" },
   { href: "/b/solicitudes", label: "Solicitudes", admin: true },
   { href: "/b/servicios", label: "Servicios", admin: true },
+  { href: "/b/tienda", label: "Productos", admin: true },
+  { href: "/b/pedidos", label: "Pedidos", admin: true },
   { href: "/b/cobertura", label: "Cobertura", admin: true },
   { href: "/b/usuarios", label: "Usuarios", admin: true },
 ];

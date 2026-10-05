@@ -8,6 +8,7 @@ const ITEMS = [
   { href: "/c/solicitar", label: "Servicios" },
   { href: "/c/tickets", label: "Tickets" },
   { href: "/c/equipos", label: "Equipos" },
+  { href: "/c/tienda", label: "Tienda" },
   { href: "/c/documentos", label: "Docs" },
   { href: "/c/perfil", label: "Perfil" },
 ];
