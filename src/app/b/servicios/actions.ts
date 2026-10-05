@@ -12,7 +12,7 @@ const friendly = (code?: string) =>
   code === "23505" ? "Ya existe un servicio con ese nombre/slug." : code === "42501" ? "No tienes permiso para esta acción." : "No pudimos guardar el servicio.";
 
 export async function createServiceAction(_p: ActionState, fd: FormData): Promise<ActionState> {
-  await assertRole(["admin"]);
+  await assertRole(["superadmin"]);
   const parsed = serviceSchema.safeParse(formToObject(fd));
   if (!parsed.success) return zodToState(parsed.error);
   const supabase = await createClient();
@@ -23,7 +23,7 @@ export async function createServiceAction(_p: ActionState, fd: FormData): Promis
 }
 
 export async function updateServiceAction(_p: ActionState, fd: FormData): Promise<ActionState> {
-  await assertRole(["admin"]);
+  await assertRole(["superadmin"]);
   const id = z.string().uuid().safeParse(fd.get("id"));
   if (!id.success) return { ok: false, error: "Servicio no válido." };
   const parsed = serviceSchema.safeParse(formToObject(fd));
@@ -40,7 +40,7 @@ const catSchema = z.object({
   kind: z.enum(["technical", "digital"]),
 });
 export async function createCategoryAction(_p: ActionState, fd: FormData): Promise<ActionState> {
-  await assertRole(["admin"]);
+  await assertRole(["superadmin"]);
   const parsed = catSchema.safeParse(Object.fromEntries(fd.entries()));
   if (!parsed.success) return zodToState(parsed.error);
   const { slugify } = await import("@/lib/domain/service");
@@ -53,7 +53,7 @@ export async function createCategoryAction(_p: ActionState, fd: FormData): Promi
 
 /** Elimina de forma segura: si el servicio tiene historial el servidor lo archiva (borrado lógico) en lugar de borrarlo. */
 export async function deleteServiceAction(_p: ActionState, fd: FormData): Promise<ActionState> {
-  await assertRole(["admin"]);
+  await assertRole(["superadmin"]);
   const id = z.string().uuid().safeParse(fd.get("id"));
   if (!id.success) return { ok: false, error: "Servicio no válido." };
   const supabase = await createClient();
@@ -68,7 +68,7 @@ const subSchema = z.object({
   name: z.string().trim().min(2, "Escribe el nombre.").max(80),
 });
 export async function createSubcategoryAction(_p: ActionState, fd: FormData): Promise<ActionState> {
-  await assertRole(["admin"]);
+  await assertRole(["superadmin"]);
   const parsed = subSchema.safeParse(Object.fromEntries(fd.entries()));
   if (!parsed.success) return zodToState(parsed.error);
   const { slugify } = await import("@/lib/domain/service");
@@ -81,7 +81,7 @@ export async function createSubcategoryAction(_p: ActionState, fd: FormData): Pr
 
 /** Activa/desactiva una categoría o subcategoría (visibilidad en el catálogo). */
 export async function toggleCatalogNodeAction(fd: FormData): Promise<void> {
-  await assertRole(["admin"]);
+  await assertRole(["superadmin"]);
   const parsed = z.object({ table: z.enum(["service_categories", "service_subcategories"]), id: z.string().uuid(), active: z.enum(["true", "false"]) }).safeParse(Object.fromEntries(fd.entries()));
   if (!parsed.success) return;
   const supabase = await createClient();
@@ -91,7 +91,7 @@ export async function toggleCatalogNodeAction(fd: FormData): Promise<void> {
 
 /** Elimina una categoría/subcategoría solo si no tiene servicios (lo valida la base de datos). */
 export async function deleteCatalogNodeAction(fd: FormData): Promise<void> {
-  await assertRole(["admin"]);
+  await assertRole(["superadmin"]);
   const parsed = z.object({ kind: z.enum(["category", "subcategory"]), id: z.string().uuid() }).safeParse(Object.fromEntries(fd.entries()));
   if (!parsed.success) return;
   const supabase = await createClient();

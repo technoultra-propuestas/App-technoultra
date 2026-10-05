@@ -27,7 +27,7 @@ const schema = z.object({
  * Todo con la sesión del personal: RLS decide qué puede insertar; el estado inicial lo fija la base de datos ("Recibido").
  */
 export async function createWalkinAction(_p: ActionState, fd: FormData): Promise<ActionState> {
-  const staff = await assertRole(["technician", "admin"]);
+  const staff = await assertRole(["technician", "superadmin"]);
   const parsed = schema.safeParse(Object.fromEntries(fd.entries()));
   if (!parsed.success) return zodToState(parsed.error);
   const v = parsed.data;

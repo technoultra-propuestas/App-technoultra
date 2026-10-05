@@ -20,7 +20,7 @@ const schema = z.object({
 });
 
 export async function updateProjectAction(_p: ActionState, fd: FormData): Promise<ActionState> {
-  await assertRole(["admin"]);
+  await assertRole(["superadmin"]);
   const parsed = schema.safeParse(Object.fromEntries(fd.entries()));
   if (!parsed.success) return zodToState(parsed.error);
   const v = parsed.data;
@@ -38,7 +38,7 @@ export async function updateProjectAction(_p: ActionState, fd: FormData): Promis
 
 const commentSchema = z.object({ projectId: z.string().uuid(), body: z.string().trim().min(1, "Escribe el comentario.").max(2000), visibility: z.enum(["client", "internal"]) });
 export async function addProjectCommentAction(_p: ActionState, fd: FormData): Promise<ActionState> {
-  await assertRole(["admin"]);
+  await assertRole(["superadmin"]);
   const parsed = commentSchema.safeParse(Object.fromEntries(fd.entries()));
   if (!parsed.success) return zodToState(parsed.error);
   const { error } = await (await createClient()).from("project_comments").insert({ project_id: parsed.data.projectId, body: parsed.data.body, visibility: parsed.data.visibility });

@@ -12,7 +12,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 const inviteSchema = z.object({
   email: z.string().trim().toLowerCase().email("Escribe un correo válido.").max(254),
   fullName: z.string().trim().min(3, "Escribe el nombre completo.").max(120),
-  role: z.enum(["technician", "admin"], { message: "Elige un rol." }),
+  role: z.literal("technician"),
   phone: z.union([z.literal(""), phoneCO]).optional(),
   title: z.string().trim().max(80).optional(),
 });
@@ -23,7 +23,7 @@ const inviteSchema = z.object({
  * deja auditoría. El acceso se entrega con un enlace propio por correo (crear contraseña) y luego la persona configura su MFA.
  */
 export async function inviteStaffAction(_p: ActionState, fd: FormData): Promise<ActionState> {
-  const actor = await assertRole(["admin"]);
+  const actor = await assertRole(["superadmin"]);
   const parsed = inviteSchema.safeParse(Object.fromEntries(fd.entries()));
   if (!parsed.success) return zodToState(parsed.error);
   const { email, fullName, role, phone, title } = parsed.data;
@@ -71,7 +71,7 @@ export async function inviteStaffAction(_p: ActionState, fd: FormData): Promise<
       email,
       {
         title: "Tu acceso a TechnoUltra Gestión",
-        body: `Hola ${first}, te dimos acceso como ${role === "admin" ? "administrador" : "técnico"}. Crea tu contraseña con el botón; después configurarás tu verificación en dos pasos con una app autenticadora. Si no esperabas este correo, ignóralo.`,
+        body: `Hola ${first}, te dimos acceso como técnico de TechnoUltra. Crea tu contraseña con el botón; después configurarás tu verificación en dos pasos con una app autenticadora. Si no esperabas este correo, ignóralo.`,
         ctaLabel: "Crear mi contraseña",
         ctaUrl: url,
       },
@@ -92,7 +92,7 @@ export async function inviteStaffAction(_p: ActionState, fd: FormData): Promise<
 
 const toggleSchema = z.object({ userId: z.string().uuid(), active: z.enum(["true", "false"]) });
 export async function setUserActiveAction(fd: FormData): Promise<void> {
-  const actor = await assertRole(["admin"]);
+  const actor = await assertRole(["superadmin"]);
   const parsed = toggleSchema.safeParse(Object.fromEntries(fd.entries()));
   if (!parsed.success) return;
   const { error } = await createAdminClient().rpc("admin_set_user_active", {
@@ -110,7 +110,7 @@ const resetSchema = z.object({ userId: z.string().uuid() });
  * uno mismo. Elimina los factores en Supabase Auth: en su próximo ingreso deberá configurarlo de nuevo. Queda auditado.
  */
 export async function resetStaffMfaAction(fd: FormData): Promise<void> {
-  const actor = await assertRole(["admin"]);
+  const actor = await assertRole(["superadmin"]);
   const parsed = resetSchema.safeParse(Object.fromEntries(fd.entries()));
   if (!parsed.success || parsed.data.userId === actor.id) return;
   if (!(await allow("mfa-reset", actor.id, 10, 3600))) return;
@@ -119,6 +119,6 @@ export async function resetStaffMfaAction(fd: FormData): Promise<void> {
   if (!target || target.role === "client") return;
   const { data: factors } = await admin.auth.admin.mfa.listFactors({ userId: target.id });
   for (const f of factors?.factors ?? []) await admin.auth.admin.mfa.deleteFactor({ id: f.id, userId: target.id });
-  await admin.rpc("log_admin_event", { p_actor: actor.id, p_event: "admin.security_changed", p_target: target.id, p_metadata: { scope: "mfa_reset" } });
+  await admin.rpc("log_admin_event", { p_actor: actor.id, p_event: "superadmin.security_changed", p_target: target.id, p_metadata: { scope: "mfa_reset" } });
   revalidatePath("/b/usuarios");
 }

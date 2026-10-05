@@ -48,7 +48,7 @@ const transitionSchema = z.object({
 
 /** El estado solo cambia por la función de base de datos: valida rol, asignación, transición y precondiciones. */
 export async function transitionAction(_p: ActionState, fd: FormData): Promise<ActionState> {
-  const actor = await assertRole(["technician", "admin"]);
+  const actor = await assertRole(["technician", "superadmin"]);
   const parsed = transitionSchema.safeParse(Object.fromEntries(fd.entries()));
   if (!parsed.success) return zodToState(parsed.error);
   const supabase = await createClient();
@@ -63,7 +63,7 @@ export async function transitionAction(_p: ActionState, fd: FormData): Promise<A
 
 const assignSchema = z.object({ ticketId: z.string().uuid(), staffId: z.string().uuid() });
 export async function assignAction(_p: ActionState, fd: FormData): Promise<ActionState> {
-  await assertRole(["admin"]);
+  await assertRole(["superadmin"]);
   const parsed = assignSchema.safeParse(Object.fromEntries(fd.entries()));
   if (!parsed.success) return { ok: false, error: "Elige a quién asignar." };
   const supabase = await createClient();
@@ -79,7 +79,7 @@ const noteSchema = z.object({
   visibility: z.enum(["internal", "customer"]),
 });
 export async function addNoteAction(_p: ActionState, fd: FormData): Promise<ActionState> {
-  await assertRole(["technician", "admin"]);
+  await assertRole(["technician", "superadmin"]);
   const parsed = noteSchema.safeParse(Object.fromEntries(fd.entries()));
   if (!parsed.success) return zodToState(parsed.error);
   const supabase = await createClient();
@@ -91,7 +91,7 @@ export async function addNoteAction(_p: ActionState, fd: FormData): Promise<Acti
 
 /** Convierte una solicitud pendiente en ticket (recepción del equipo). Solo administración. */
 export async function receiveRequestAction(fd: FormData): Promise<void> {
-  const admin = await assertRole(["admin"]);
+  const admin = await assertRole(["superadmin"]);
   const id = z.string().uuid().safeParse(fd.get("requestId"));
   if (!id.success) return;
   const supabase = await createClient();

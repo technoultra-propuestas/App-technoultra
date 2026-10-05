@@ -10,7 +10,7 @@ import { DeleteServiceForm, ServiceForm } from "../service-form";
 export const metadata: Metadata = { title: "Editar servicio", robots: { index: false } };
 
 export default async function EditServicePage({ params }: { params: Promise<{ id: string }> }) {
-  await requireRole(["admin"]);
+  await requireRole(["superadmin"]);
   const id = z.string().uuid().safeParse((await params).id);
   if (!id.success) notFound();
   const supabase = await createClient();

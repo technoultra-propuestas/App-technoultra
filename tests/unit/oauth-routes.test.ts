@@ -76,14 +76,14 @@ describe("GET /auth/callback", () => {
     expect(loc(r)).toBe("https://app.technoultra.com/login?error=link");
     expect(supabase.auth.exchangeCodeForSession).not.toHaveBeenCalled();
   });
-  it.each(["admin", "technician"])("el personal (%s) NO puede entrar por Google/enlace: se cierra la sesión", async (role) => {
+  it.each(["superadmin", "technician"])("el personal (%s) NO puede entrar por Google/enlace: se cierra la sesión", async (role) => {
     supabase.from.mockReturnValue(profileQuery({ data: { id: "u1", is_active: true, role }, error: null }));
     const r = await callback(req("/auth/callback?code=abc&next=/b"));
     expect(supabase.auth.signOut).toHaveBeenCalled();
     expect(loc(r)).toBe("https://app.technoultra.com/login?error=staff");
   });
   it("personal que llega por enlace de recuperación (cookie de gestión + sesión de correo) → solo a /gestion/restablecer", async () => {
-    supabase.from.mockReturnValue(profileQuery({ data: { id: "u1", is_active: true, role: "admin" }, error: null }));
+    supabase.from.mockReturnValue(profileQuery({ data: { id: "u1", is_active: true, role: "superadmin" }, error: null }));
     supabase.auth.getClaims.mockResolvedValue({ data: { claims: { amr: [{ method: "otp" }] } } });
     const r = await callback(req("/auth/callback?code=abc", { cookie: "tu_next=/gestion/restablecer" }));
     expect(loc(r)).toBe("https://app.technoultra.com/gestion/restablecer");
@@ -94,7 +94,7 @@ describe("GET /auth/callback", () => {
     ["enlace de correo SIN cookie de gestión", [{ method: "otp" }], "tu_next=/b"],
     ["sesión de contraseña con cookie de gestión", [{ method: "password" }], "tu_next=/gestion/restablecer"],
   ])("el personal NO entra por el callback: %s", async (_n, amr, cookie) => {
-    supabase.from.mockReturnValue(profileQuery({ data: { id: "u1", is_active: true, role: "admin" }, error: null }));
+    supabase.from.mockReturnValue(profileQuery({ data: { id: "u1", is_active: true, role: "superadmin" }, error: null }));
     supabase.auth.getClaims.mockResolvedValue({ data: { claims: { amr } } });
     const r = await callback(req("/auth/callback?code=abc", { cookie }));
     expect(supabase.auth.signOut).toHaveBeenCalled();

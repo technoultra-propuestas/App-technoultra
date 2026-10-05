@@ -40,7 +40,7 @@ describe("rutas protegidas y por rol", () => {
   it("cada rol aterriza en su zona", () => {
     expect(roleHome("client")).toBe("/c");
     expect(roleHome("technician")).toBe("/b");
-    expect(roleHome("admin")).toBe("/b");
+    expect(roleHome("superadmin")).toBe("/b");
   });
 });
 

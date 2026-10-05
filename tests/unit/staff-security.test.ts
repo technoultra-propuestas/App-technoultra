@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const state = {
   user: { id: "u1" } as { id: string } | null,
-  profile: { id: "u1", role: "admin", email: "admin@technoultra.com", full_name: "Admin", is_active: true } as Record<string, unknown> | null,
+  profile: { id: "u1", role: "superadmin", email: "admin@technoultra.com", full_name: "Admin", is_active: true } as Record<string, unknown> | null,
   claims: { aal: "aal2", amr: [{ method: "totp" }, { method: "password" }] } as Record<string, unknown> | null,
 };
 const supabase = {
@@ -49,7 +49,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   allow.mockResolvedValue(true);
   state.user = { id: "u1" };
-  state.profile = { id: "u1", role: "admin", email: "admin@technoultra.com", full_name: "Admin", is_active: true };
+  state.profile = { id: "u1", role: "superadmin", email: "admin@technoultra.com", full_name: "Admin", is_active: true };
   state.claims = { aal: "aal2", amr: [{ method: "totp" }, { method: "password" }] };
   supabase.auth.mfa.listFactors.mockResolvedValue({ data: { totp: [{ id: FACTOR, status: "verified" }] } });
   supabase.auth.mfa.challengeAndVerify.mockResolvedValue({ error: null });
@@ -112,18 +112,18 @@ describe("cambio de contraseña del personal (reautenticación)", () => {
 describe("autorización: el personal exige MFA (aal2) en el servidor", () => {
   it("assertRole: técnico/admin con aal1 → 401; con aal2 → ok; cliente no necesita MFA", async () => {
     state.claims = { aal: "aal1", amr: [{ method: "password" }] };
-    await expect(assertRole(["admin"])).rejects.toMatchObject({ status: 401 });
+    await expect(assertRole(["superadmin"])).rejects.toMatchObject({ status: 401 });
     state.profile = { ...state.profile, role: "technician" };
-    await expect(assertRole(["technician", "admin"])).rejects.toMatchObject({ status: 401 });
+    await expect(assertRole(["technician", "superadmin"])).rejects.toMatchObject({ status: 401 });
     state.claims = { aal: "aal2", amr: [] };
-    await expect(assertRole(["technician", "admin"])).resolves.toMatchObject({ role: "technician" });
+    await expect(assertRole(["technician", "superadmin"])).resolves.toMatchObject({ role: "technician" });
     state.profile = { ...state.profile, role: "client" };
     state.claims = { aal: "aal1", amr: [] };
     await expect(assertRole(["client"])).resolves.toMatchObject({ role: "client" });
   });
   it("assertRole: rol incorrecto → 403 aunque tenga aal2; sin sesión o inactivo → 401", async () => {
     state.profile = { ...state.profile, role: "technician" };
-    await expect(assertRole(["admin"])).rejects.toMatchObject({ status: 403 });
+    await expect(assertRole(["superadmin"])).rejects.toMatchObject({ status: 403 });
     state.profile = { ...state.profile, is_active: false };
     await expect(assertRole(["technician"])).rejects.toMatchObject({ status: 401 });
     state.user = null;
@@ -131,16 +131,16 @@ describe("autorización: el personal exige MFA (aal2) en el servidor", () => {
   });
   it("un aal declarado fuera del JWT verificado no existe: sin claims se trata como aal1", async () => {
     state.claims = null;
-    await expect(assertRole(["admin"])).rejects.toMatchObject({ status: 401 });
+    await expect(assertRole(["superadmin"])).rejects.toMatchObject({ status: 401 });
   });
   it("requireRole en páginas de gestión: sin sesión → /gestion/login; sin MFA → /gestion/mfa; cliente → /c", async () => {
     state.user = null;
-    await expect(requireRole(["admin"])).rejects.toThrow("REDIRECT:/gestion/login");
+    await expect(requireRole(["superadmin"])).rejects.toThrow("REDIRECT:/gestion/login");
     state.user = { id: "u1" };
     state.claims = { aal: "aal1", amr: [{ method: "password" }] };
-    await expect(requireRole(["technician", "admin"])).rejects.toThrow("REDIRECT:/gestion/mfa");
+    await expect(requireRole(["technician", "superadmin"])).rejects.toThrow("REDIRECT:/gestion/mfa");
     state.profile = { ...state.profile, role: "client" };
-    await expect(requireRole(["technician", "admin"])).rejects.toThrow("REDIRECT:/c");
+    await expect(requireRole(["technician", "superadmin"])).rejects.toThrow("REDIRECT:/c");
   });
   it("requireRole en páginas de cliente: sin sesión → /login; el personal es llevado a su panel", async () => {
     state.user = null;

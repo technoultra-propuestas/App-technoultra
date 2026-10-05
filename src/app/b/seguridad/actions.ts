@@ -24,7 +24,7 @@ async function audit(supabase: Awaited<ReturnType<typeof createClient>>, event: 
  * guarda únicamente Supabase Auth (nunca nuestras tablas ni logs). Al terminar se revocan las demás sesiones.
  */
 export async function changePasswordAction(_p: ActionState, fd: FormData): Promise<ActionState> {
-  const actor = await assertRole(["technician", "admin"]);
+  const actor = await assertRole(["technician", "superadmin"]);
   const parsed = schema.safeParse(Object.fromEntries(fd.entries()));
   if (!parsed.success) return zodToState(parsed.error);
   const v = parsed.data;
@@ -61,7 +61,7 @@ export async function changePasswordAction(_p: ActionState, fd: FormData): Promi
 
 /** Cierra la sesión en todos los demás dispositivos (la actual se mantiene). */
 export async function revokeOtherSessionsAction(): Promise<void> {
-  await assertRole(["technician", "admin"]);
+  await assertRole(["technician", "superadmin"]);
   const supabase = await createClient();
   const { error } = await supabase.auth.signOut({ scope: "others" });
   if (error) console.error("staff.revoke", error.status);

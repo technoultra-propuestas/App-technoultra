@@ -18,7 +18,7 @@ export default async function NotificationsPage() {
   const unread = list.filter((n) => !n.read_at).length;
   return (
     <div className="min-h-screen-dvh">
-      <AppHeader home={home} name={profile.full_name} roleLabel={profile.role === "admin" ? "Administración" : profile.role === "technician" ? "Técnico" : "Cliente"} unread={unread} />
+      <AppHeader home={home} name={profile.full_name} roleLabel={profile.role === "superadmin" ? "Superadmin" : profile.role === "technician" ? "Técnico" : "Cliente"} unread={unread} />
       <section className="mx-auto flex max-w-[640px] flex-col gap-6 px-5 pb-10 pt-6">
         <PageTitle
           title="Avisos"

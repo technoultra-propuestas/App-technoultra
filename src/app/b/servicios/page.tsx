@@ -15,7 +15,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const inputCls = "h-11 rounded-xl border border-[#D9D9D5] px-3 text-[15px]";
 
 export default async function ServicesAdminPage({ searchParams }: { searchParams: Promise<Sp> }) {
-  await requireRole(["admin"]);
+  await requireRole(["superadmin"]);
   const sp = await searchParams;
   const page = Math.max(1, Number.parseInt(sp.pagina ?? "1", 10) || 1);
   const supabase = await createClient();

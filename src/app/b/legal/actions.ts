@@ -15,7 +15,7 @@ const draftSchema = z.object({
 });
 
 export async function createLegalDraftAction(_p: ActionState, fd: FormData): Promise<ActionState> {
-  await assertRole(["admin"]);
+  await assertRole(["superadmin"]);
   const parsed = draftSchema.safeParse(Object.fromEntries(fd.entries()));
   if (!parsed.success) return zodToState(parsed.error);
   const v = parsed.data;
@@ -30,14 +30,14 @@ export async function createLegalDraftAction(_p: ActionState, fd: FormData): Pro
 
 const idSchema = z.object({ id: z.string().uuid() });
 export async function publishLegalAction(fd: FormData): Promise<void> {
-  await assertRole(["admin"]);
+  await assertRole(["superadmin"]);
   const p = idSchema.safeParse(Object.fromEntries(fd.entries()));
   if (!p.success) return;
   await (await createClient()).rpc("publish_legal_document", { p_id: p.data.id });
   revalidatePath("/b/legal");
 }
 export async function deleteLegalDraftAction(fd: FormData): Promise<void> {
-  await assertRole(["admin"]);
+  await assertRole(["superadmin"]);
   const p = idSchema.safeParse(Object.fromEntries(fd.entries()));
   if (!p.success) return;
   await (await createClient()).from("legal_documents").delete().eq("id", p.data.id).eq("status", "draft");

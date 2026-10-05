@@ -11,7 +11,7 @@ export const metadata: Metadata = { title: "Centro legal", robots: { index: fals
 const STATUS: Record<string, string> = { draft: "Borrador", published: "Publicado", retired: "Retirado" };
 
 export default async function LegalAdminPage() {
-  await requireRole(["admin"]);
+  await requireRole(["superadmin"]);
   const { data } = await (await createClient()).from("legal_documents").select("id, slug, version, title, status, published_at, requires_acceptance").order("slug").order("version", { ascending: false });
   const docs = data ?? [];
   return (

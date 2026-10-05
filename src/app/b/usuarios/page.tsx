@@ -6,15 +6,15 @@ import { resetStaffMfaAction, setUserActiveAction } from "./actions";
 
 export const metadata: Metadata = { title: "Usuarios del equipo", robots: { index: false } };
 
-type Row = { id: string; full_name: string; email: string; role: "technician" | "admin"; is_active: boolean };
+type Row = { id: string; full_name: string; email: string; role: "technician" | "superadmin"; is_active: boolean };
 
 export default async function UsersPage() {
-  const me = await requireRole(["admin"]);
+  const me = await requireRole(["superadmin"]);
   const supabase = await createClient();
   const { data } = await supabase
     .from("profiles")
     .select("id, full_name, email, role, is_active")
-    .in("role", ["technician", "admin"])
+    .in("role", ["technician", "superadmin"])
     .is("deleted_at", null)
     .order("role")
     .order("full_name");
@@ -39,7 +39,7 @@ export default async function UsersPage() {
               <div className="min-w-0">
                 <div className="truncate text-[16px] font-extrabold">{u.full_name || u.email}</div>
                 <div className="truncate text-[13px] font-semibold text-muted">
-                  {u.email} · {u.role === "admin" ? "Administración" : "Técnico"} ·{" "}
+                  {u.email} · {u.role === "superadmin" ? "Superadmin" : "Técnico"} ·{" "}
                   {u.is_active ? "Activo" : "Desactivado"}
                 </div>
               </div>

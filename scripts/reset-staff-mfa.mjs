@@ -2,7 +2,7 @@
 // pueda hacerlo desde /b/usuarios. Uso (desde la carpeta del proyecto, con las variables de .env.local):
 //   node --env-file=.env.local scripts/reset-staff-mfa.mjs correo@dominio.com
 // Solo borra factores en Supabase Auth (no toca contraseñas). En su próximo ingreso la persona configura un autenticador nuevo.
-// No imprime secretos. Queda registrado en la auditoría (admin.security_changed) si existe otro administrador activo como actor.
+// No imprime secretos. Queda registrado en la auditoría (superadmin.security_changed) si existe otro administrador activo como actor.
 import { createClient } from "@supabase/supabase-js";
 
 const email = (process.argv[2] ?? "").trim().toLowerCase();
@@ -24,6 +24,6 @@ if (error) {
   process.exit(1);
 }
 for (const f of factors?.factors ?? []) await sb.auth.admin.mfa.deleteFactor({ id: f.id, userId: target.id });
-const { data: actor } = await sb.from("profiles").select("id").eq("role", "admin").eq("is_active", true).limit(1).maybeSingle();
-if (actor) await sb.rpc("log_admin_event", { p_actor: actor.id, p_event: "admin.security_changed", p_target: target.id, p_metadata: { scope: "mfa_reset", method: "cli" } });
+const { data: actor } = await sb.from("profiles").select("id").eq("role", "superadmin").eq("is_active", true).limit(1).maybeSingle();
+if (actor) await sb.rpc("log_admin_event", { p_actor: actor.id, p_event: "superadmin.security_changed", p_target: target.id, p_metadata: { scope: "mfa_reset", method: "cli" } });
 console.log(`Listo: ${(factors?.factors ?? []).length} factor(es) eliminados para ${email}. Deberá configurar su autenticador al iniciar sesión.`);

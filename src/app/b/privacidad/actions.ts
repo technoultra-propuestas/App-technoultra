@@ -13,7 +13,7 @@ const schema = z.object({ id: z.string().uuid(), confirm: z.literal("ANONIMIZAR"
  * bloquea si hay trabajo abierto) y aquí se bloquea la cuenta de acceso para que no pueda volver a iniciar sesión.
  */
 export async function anonymizeCustomerAction(fd: FormData): Promise<void> {
-  await assertRole(["admin"]);
+  await assertRole(["superadmin"]);
   const parsed = schema.safeParse(Object.fromEntries(fd.entries()));
   if (!parsed.success) return;
   const supabase = await createClient();

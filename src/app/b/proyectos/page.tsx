@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 export const metadata: Metadata = { title: "Proyectos digitales", robots: { index: false } };
 
 export default async function ProjectsAdminPage() {
-  await requireRole(["admin"]);
+  await requireRole(["superadmin"]);
   const { data } = await (await createClient())
     .from("digital_projects")
     .select("id, code, title, status, progress, due_on, customers(full_name), services(name)")

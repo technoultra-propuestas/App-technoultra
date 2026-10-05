@@ -19,7 +19,7 @@ const signSchema = z.object({
 
 /** Solo el personal que puede gestionar ESTE ticket (RLS: técnico asignado o administrador) y con el ticket abierto. */
 async function canUpload(ticketId: string) {
-  const profile = await assertRole(["technician", "admin"]);
+  const profile = await assertRole(["technician", "superadmin"]);
   const supabase = await createClient();
   const { data: t } = await supabase.from("tickets").select("id, status, assigned_to").eq("id", ticketId).is("deleted_at", null).maybeSingle();
   if (!t || ["delivered", "cancelled"].includes(t.status)) return null;
@@ -92,6 +92,6 @@ export async function removeEvidenceAction(fd: FormData): Promise<void> {
   const admin = createAdminClient();
   const q = admin.from("evidence").update({ deleted_at: new Date().toISOString() }).eq("id", p.data.evidenceId).eq("ticket_id", p.data.ticketId);
   // El técnico solo retira lo que él mismo subió; el administrador puede retirar cualquiera.
-  await (ctx.profile.role === "admin" ? q : q.eq("uploaded_by", ctx.profile.id));
+  await (ctx.profile.role === "superadmin" ? q : q.eq("uploaded_by", ctx.profile.id));
   revalidatePath(`/b/tickets/${p.data.ticketId}`);
 }

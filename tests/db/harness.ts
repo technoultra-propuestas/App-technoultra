@@ -84,7 +84,7 @@ export async function createUser(db: Db, email: string, meta: Record<string, unk
 
 /** Bootstrap del primer administrador: solo posible como propietario de la base de datos (no desde la API). */
 export async function makeAdmin(db: Db, id: string) {
-  await db.query(`update public.profiles set role = 'admin' where id = $1`, [id]);
+  await db.query(`update public.profiles set role = 'superadmin' where id = $1`, [id]);
 }
 export async function makeTechnician(db: Db, adminId: string, id: string) {
   await db.query(`select public.admin_provision_staff($1, $2, 'technician', 'Técnico', null, 'Técnico')`, [

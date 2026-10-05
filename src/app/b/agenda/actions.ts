@@ -17,7 +17,7 @@ const schema = z.object({
 
 /** Eventos manuales de agenda (los de recogida, entrega y mantenimiento los crea el flujo). Solo CRM/administración. */
 export async function createEventAction(_p: ActionState, fd: FormData): Promise<ActionState> {
-  await assertRole(["admin"]);
+  await assertRole(["superadmin"]);
   const parsed = schema.safeParse(Object.fromEntries(fd.entries()));
   if (!parsed.success) return zodToState(parsed.error);
   const v = parsed.data;

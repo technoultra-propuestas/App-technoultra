@@ -7,7 +7,7 @@ import { receiveRequestAction } from "../tickets/actions";
 export const metadata: Metadata = { title: "Solicitudes", robots: { index: false } };
 
 export default async function RequestsAdminPage() {
-  await requireRole(["admin"]);
+  await requireRole(["superadmin"]);
   const supabase = await createClient();
   const { data } = await supabase
     .from("service_requests")

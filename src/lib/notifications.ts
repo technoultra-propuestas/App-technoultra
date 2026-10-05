@@ -1,5 +1,5 @@
 /** Destino al abrir un aviso, según el tipo de entidad y el rol. Solo rutas internas fijas (nunca URLs de la base de datos). */
-export function notificationHref(role: "client" | "technician" | "admin", entityType: string | null, entityId: string | null): string | null {
+export function notificationHref(role: "client" | "technician" | "superadmin", entityType: string | null, entityId: string | null): string | null {
   const staff = role !== "client";
   if (!entityType) return null;
   switch (entityType) {

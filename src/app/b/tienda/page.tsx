@@ -8,7 +8,7 @@ import { ProductCategoryForm } from "./forms";
 export const metadata: Metadata = { title: "Productos", robots: { index: false } };
 
 export default async function ProductsAdminPage() {
-  await requireRole(["admin"]);
+  await requireRole(["superadmin"]);
   const supabase = await createClient();
   const [{ data: products }, { data: inventory }] = await Promise.all([
     supabase.from("products").select("id, name, sku, price, is_active").is("deleted_at", null).order("name"),

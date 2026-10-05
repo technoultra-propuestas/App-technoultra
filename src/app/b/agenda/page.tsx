@@ -26,12 +26,12 @@ function agendaWindow() {
 }
 
 export default async function AgendaPage() {
-  const profile = await requireRole(["technician", "admin"]);
+  const profile = await requireRole(["technician", "superadmin"]);
   const supabase = await createClient();
   const { from, to } = agendaWindow();
   const [{ data }, staffRes] = await Promise.all([
     supabase.from("calendar_events").select("id, event_type, title, starts_at, duration_minutes, ticket_id, customers(full_name)").gte("starts_at", from).lte("starts_at", to).order("starts_at"),
-    profile.role === "admin" ? supabase.from("profiles").select("id, full_name, email").in("role", ["technician", "admin"]).eq("is_active", true).order("full_name") : Promise.resolve({ data: [] as { id: string; full_name: string; email: string }[] }),
+    profile.role === "superadmin" ? supabase.from("profiles").select("id, full_name, email").in("role", ["technician", "superadmin"]).eq("is_active", true).order("full_name") : Promise.resolve({ data: [] as { id: string; full_name: string; email: string }[] }),
   ]);
   const events = data ?? [];
   const groups = new Map<string, typeof events>();
@@ -39,7 +39,7 @@ export default async function AgendaPage() {
   return (
     <section className="flex flex-col gap-6">
       <PageTitle title="Agenda" subtitle="Recogidas, visitas, entregas y mantenimientos de los próximos 45 días." />
-      <div className={`grid gap-6 ${profile.role === "admin" ? "md:grid-cols-[1fr_340px]" : ""}`}>
+      <div className={`grid gap-6 ${profile.role === "superadmin" ? "md:grid-cols-[1fr_340px]" : ""}`}>
         {events.length === 0 ? (
           <EmptyState title="No hay eventos programados" />
         ) : (
@@ -79,7 +79,7 @@ export default async function AgendaPage() {
             ))}
           </div>
         )}
-        {profile.role === "admin" ? (
+        {profile.role === "superadmin" ? (
           <Card className="h-fit">
             <h2 className="m-0 mb-4 text-[19px] font-extrabold">Nuevo evento</h2>
             <EventForm staff={(staffRes.data ?? []).map((s) => ({ id: s.id, name: s.full_name || s.email }))} />

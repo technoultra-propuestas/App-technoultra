@@ -13,7 +13,7 @@ const schema = z.object({
 
 /** La función de base de datos verifica que el solicitante pueda gestionar el ticket y registra quién validó y cuándo. */
 export async function reviewAiAction(fd: FormData): Promise<void> {
-  await assertRole(["technician", "admin"]);
+  await assertRole(["technician", "superadmin"]);
   const p = schema.safeParse(Object.fromEntries(fd.entries()));
   if (!p.success) return;
   const supabase = await createClient();

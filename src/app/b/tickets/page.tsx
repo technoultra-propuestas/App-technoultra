@@ -18,7 +18,7 @@ const FILTERS = [
 ] as const;
 
 export default async function StaffTicketsPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
-  const profile = await requireRole(["technician", "admin"]);
+  const profile = await requireRole(["technician", "superadmin"]);
   const f = (await searchParams).estado ?? "open";
   const supabase = await createClient();
   // RLS: el técnico solo recibe los tickets que tiene asignados; el administrador, todos.
@@ -34,7 +34,7 @@ export default async function StaffTicketsPage({ searchParams }: { searchParams:
   const rows = data ?? [];
   return (
     <section className="flex flex-col gap-6">
-      <PageTitle title={profile.role === "admin" ? "Tickets" : "Mis tickets"} action={<LinkButton href="/b/tickets/nuevo">Nuevo ticket</LinkButton>} />
+      <PageTitle title={profile.role === "superadmin" ? "Tickets" : "Mis tickets"} action={<LinkButton href="/b/tickets/nuevo">Nuevo ticket</LinkButton>} />
       <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
         {FILTERS.map(([k, label]) => (
           <Link

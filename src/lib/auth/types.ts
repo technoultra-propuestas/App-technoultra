@@ -1,4 +1,4 @@
-export type AppRole = "client" | "technician" | "admin";
+export type AppRole = "client" | "technician" | "superadmin";
 
 export type Profile = {
   id: string;

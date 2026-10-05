@@ -18,7 +18,7 @@ const schema = z.object({
 const pick = (fd: FormData, key: string, allowed: string[]) => fd.getAll(key).map(String).filter((v) => allowed.includes(v));
 
 export async function saveReceptionAction(_p: ActionState, fd: FormData): Promise<ActionState> {
-  await assertRole(["technician", "admin"]);
+  await assertRole(["technician", "superadmin"]);
   const parsed = schema.safeParse(Object.fromEntries(fd.entries()));
   if (!parsed.success) return zodToState(parsed.error);
   const v = parsed.data;

@@ -27,7 +27,7 @@ const rangeFor = (days: number) => {
 };
 
 export default async function ReportsPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
-  await requireRole(["admin"]);
+  await requireRole(["superadmin"]);
   const days = [7, 30, 90, 365].includes(Number((await searchParams).dias)) ? Number((await searchParams).dias) : 30;
   const { from, to } = rangeFor(days);
   const { data, error } = await (await createClient()).rpc("admin_report", { p_from: from, p_to: to });

@@ -88,3 +88,8 @@ apuntaba a otra cuenta y tiene prioridad sobre el login: hay que quitarla o usar
 - **D-062 Contraseñas del personal:** cambio autenticado con reautenticación (contraseña actual + TOTP) y revocación de otras sesiones; recuperación solo por enlace de correo con MFA previo; sin sistema paralelo de contraseñas.
 - **D-063 Alta de personal por backend** con enlace propio (Resend) en lugar de plantillas de Auth; un admin no cambia su propio rol ni deja al sistema sin administradores; «Restablecer MFA» de otra persona (auditado) y script de emergencia.
 - **D-064 Google solo clientes;** el callback rechaza al personal salvo recuperación por enlace.
+
+## Jerarquía definitiva de usuarios (2026-10-05; sustituye lo dicho sobre «admin» en D-060…D-064)
+- **D-065 SUPERADMIN = propietario único de TechnoUltra.** Jerarquía `SUPERADMIN > TECHNICIAN > CLIENT`; no existen ADMIN, OWNER ni ROOT. El valor `admin` del enum `app_role` se renombró a `superadmin` (migración 25) sin tocar filas: UUID, historial, relaciones y auditoría del propietario se conservan. `private.is_admin()` pasó a `private.is_superadmin()`.
+- **D-066 Propietario único garantizado por la BD** (índice único parcial). El personal que se crea desde la app es siempre técnico; nadie puede crear, modificar, degradar ni desactivar al SUPERADMIN desde la aplicación; el bootstrap es de una sola vez (`bootstrap_first_superadmin`, solo service_role).
+- **D-067 Auditoría con los nombres definitivos:** `superadmin.*` para el propietario y `staff.*` para técnicos; los cambios de rol registran actor, usuario, rol anterior y nuevo. Los eventos históricos `admin.*` no se reescriben.

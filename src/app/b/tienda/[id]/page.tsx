@@ -10,7 +10,7 @@ import { ProductForm, StockForm } from "../forms";
 export const metadata: Metadata = { title: "Producto", robots: { index: false } };
 
 export default async function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
-  await requireRole(["admin"]);
+  await requireRole(["superadmin"]);
   const id = z.string().uuid().safeParse((await params).id);
   if (!id.success) notFound();
   const supabase = await createClient();

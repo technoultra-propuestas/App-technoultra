@@ -14,7 +14,7 @@ const NEXT: Record<string, [string, string][]> = {
 };
 
 export default async function OrdersAdminPage() {
-  await requireRole(["admin"]);
+  await requireRole(["superadmin"]);
   const { data } = await (await createClient())
     .from("orders")
     .select("id, code, status, total, paid_at, delivery_method, needs_installation, created_at, customers(full_name, phone)")

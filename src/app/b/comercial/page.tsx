@@ -14,7 +14,7 @@ const hhmm = (t: string | null) => (t ? t.slice(0, 5) : "");
 
 /** Impuestos y recargos. Todo vive en Supabase; el domicilio se configura por municipio en Cobertura. Solo administración. */
 export default async function CommercialPage({ searchParams }: { searchParams: Promise<{ ok?: string; error?: string }> }) {
-  await requireRole(["admin"]);
+  await requireRole(["superadmin"]);
   const sp = await searchParams;
   const supabase = await createClient();
   const [{ data: settings }, { data: levels }, { data: links }, { data: services }, { data: areas }] = await Promise.all([

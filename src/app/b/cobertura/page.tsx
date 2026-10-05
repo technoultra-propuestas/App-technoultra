@@ -8,7 +8,7 @@ import { AreaForm } from "./area-form";
 export const metadata: Metadata = { title: "Cobertura", robots: { index: false } };
 
 export default async function CoveragePage() {
-  await requireRole(["admin"]);
+  await requireRole(["superadmin"]);
   const supabase = await createClient();
   const { data } = await supabase.from("coverage_areas").select("id, department, city_name, dane_code, is_active, pickup_fee, home_fee").order("city_name");
   return (

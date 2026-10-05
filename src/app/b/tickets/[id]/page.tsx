@@ -16,7 +16,7 @@ import { DocumentsSection } from "./documents-section";
 export const metadata: Metadata = { title: "Ticket", robots: { index: false } };
 
 export default async function StaffTicketPage({ params }: { params: Promise<{ id: string }> }) {
-  const me = await requireRole(["technician", "admin"]);
+  const me = await requireRole(["technician", "superadmin"]);
   const id = z.string().uuid().safeParse((await params).id);
   if (!id.success) notFound();
   const supabase = await createClient();
@@ -32,8 +32,8 @@ export default async function StaffTicketPage({ params }: { params: Promise<{ id
     supabase.from("ticket_status_history").select("id, to_status, reason, created_at").eq("ticket_id", t.id).order("created_at"),
     supabase.from("ticket_notes").select("id, body, visibility, kind, created_at").eq("ticket_id", t.id).order("created_at", { ascending: false }),
     supabase.from("ticket_transitions").select("to_status, allowed_roles, requires_reason").eq("from_status", t.status),
-    me.role === "admin"
-      ? supabase.from("profiles").select("id, full_name, email").in("role", ["technician", "admin"]).eq("is_active", true).order("full_name")
+    me.role === "superadmin"
+      ? supabase.from("profiles").select("id, full_name, email").in("role", ["technician", "superadmin"]).eq("is_active", true).order("full_name")
       : Promise.resolve({ data: [] as { id: string; full_name: string; email: string }[] }),
   ]);
 
@@ -106,7 +106,7 @@ export default async function StaffTicketPage({ params }: { params: Promise<{ id
         ) : null}
         <ReceptionSection ticketId={t.id} problem={t.problem} open={!["delivered", "cancelled"].includes(t.status) && ["received", "diagnosing"].includes(t.status)} />
         <WorkSection ticketId={t.id} status={t.status} />
-        <DiagnosisBox ticketId={t.id} isAdmin={me.role === "admin"} />
+        <DiagnosisBox ticketId={t.id} isAdmin={me.role === "superadmin"} />
         <QuoteSection ticketId={t.id} canQuote ticketOpen={!(["delivered", "cancelled"] as string[]).includes(t.status)} />
         <DocumentsSection ticketId={t.id} status={t.status} />
         <Card className="flex flex-col gap-3">
@@ -141,7 +141,7 @@ export default async function StaffTicketPage({ params }: { params: Promise<{ id
           <h2 className="m-0 text-[17px] font-extrabold">Cambiar estado</h2>
           <TransitionForm ticketId={t.id} options={options} />
         </Card>
-        {me.role === "admin" ? (
+        {me.role === "superadmin" ? (
           <Card>
             <AssignForm ticketId={t.id} current={t.assigned_to} staff={(staffRes.data ?? []).map((s) => ({ id: s.id, name: s.full_name || s.email }))} />
           </Card>

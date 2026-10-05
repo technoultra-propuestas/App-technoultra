@@ -50,3 +50,6 @@ Migraciones 21, 22 y 23 aplicadas al remoto y verificadas (RLS, grants, tarifas,
 
 ## Acceso del personal con MFA (2026-10-05)
 Portal `/gestion/*` con TOTP obligatorio (migración 24 aplicada), `/b/seguridad`, alta/recuperación seguras y auditoría de accesos. Probado en producción de punta a punta (88 comprobaciones, incluidas RLS con JWT aal1/aal2 reales). **La cuenta administradora real debe configurar su autenticador en el próximo ingreso** (`/gestion/login`). Ver `docs/ACCESO-Y-MFA.md`.
+
+## Jerarquía SUPERADMIN (2026-10-05)
+Migración 25: `admin` → `superadmin` (propietario único), `is_admin` → `is_superadmin`, índice de propietario único, alta de personal solo técnicos, auditoría `superadmin.*`. Ver `docs/ACCESO-Y-MFA.md` y D-065…D-067.

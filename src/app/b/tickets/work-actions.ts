@@ -21,7 +21,7 @@ const diagSchema = z.object({
 
 /** Un diagnóstico vigente por ticket (se actualiza). Los componentes salen de una lista cerrada. */
 export async function saveDiagnosisAction(_p: ActionState, fd: FormData): Promise<ActionState> {
-  await assertRole(["technician", "admin"]);
+  await assertRole(["technician", "superadmin"]);
   const parsed = diagSchema.safeParse(Object.fromEntries(fd.entries()));
   if (!parsed.success) return zodToState(parsed.error);
   const v = parsed.data;
@@ -56,7 +56,7 @@ export async function saveDiagnosisAction(_p: ActionState, fd: FormData): Promis
 }
 
 export async function startChecklistAction(fd: FormData): Promise<void> {
-  await assertRole(["technician", "admin"]);
+  await assertRole(["technician", "superadmin"]);
   const id = uuid.safeParse(fd.get("ticketId"));
   if (!id.success) return;
   await (await createClient()).rpc("start_checklist", { p_ticket: id.data });
@@ -65,7 +65,7 @@ export async function startChecklistAction(fd: FormData): Promise<void> {
 
 const itemSchema = z.object({ ticketId: uuid, itemId: uuid, state: z.enum(["pending", "pass", "fail", "na"]), note: z.string().trim().max(300).optional() });
 export async function setChecklistItemAction(fd: FormData): Promise<void> {
-  await assertRole(["technician", "admin"]);
+  await assertRole(["technician", "superadmin"]);
   const p = itemSchema.safeParse(Object.fromEntries(fd.entries()));
   if (!p.success) return;
   await (await createClient()).from("checklist_items").update({ state: p.data.state, note: p.data.note || null }).eq("id", p.data.itemId);
@@ -73,7 +73,7 @@ export async function setChecklistItemAction(fd: FormData): Promise<void> {
 }
 
 export async function completeChecklistAction(_p: ActionState, fd: FormData): Promise<ActionState> {
-  await assertRole(["technician", "admin"]);
+  await assertRole(["technician", "superadmin"]);
   const p = z.object({ ticketId: uuid, runId: uuid }).safeParse(Object.fromEntries(fd.entries()));
   if (!p.success) return { ok: false, error: "Datos no válidos." };
   const { error } = await (await createClient()).rpc("complete_checklist", { p_run: p.data.runId });
@@ -89,7 +89,7 @@ const deliverySchema = z.object({
   nextMaintenance: z.union([z.literal(""), z.string().regex(/^\d{4}-\d{2}-\d{2}$/)]).optional(),
 });
 export async function saveDeliveryAction(_p: ActionState, fd: FormData): Promise<ActionState> {
-  await assertRole(["technician", "admin"]);
+  await assertRole(["technician", "superadmin"]);
   const parsed = deliverySchema.safeParse(Object.fromEntries(fd.entries()));
   if (!parsed.success) return zodToState(parsed.error);
   const v = parsed.data;

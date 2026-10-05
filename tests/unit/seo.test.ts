@@ -40,7 +40,7 @@ describe("destinos de avisos", () => {
     expect(notificationHref("technician", "ticket", "abc")).toBe("/b/tickets/abc");
     expect(notificationHref("client", "document", "d1")).toBe("/c/documentos/d1");
     expect(notificationHref("technician", "document", "d1")).toBeNull();
-    expect(notificationHref("admin", "payment", "p1")).toBe("/b/pedidos");
+    expect(notificationHref("superadmin", "payment", "p1")).toBe("/b/pedidos");
   });
   it("tipos desconocidos o sin entidad no generan destino (nunca una URL arbitraria)", () => {
     expect(notificationHref("client", "https://evil.com", "x")).toBeNull();

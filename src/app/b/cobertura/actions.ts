@@ -23,7 +23,7 @@ const areaSchema = z.object({
 
 /** Administración: la cobertura se gestiona aquí sin tocar código. RLS + permiso `catalog.manage` lo vuelven a exigir. */
 export async function addAreaAction(_p: ActionState, fd: FormData): Promise<ActionState> {
-  await assertRole(["admin"]);
+  await assertRole(["superadmin"]);
   const parsed = areaSchema.safeParse(Object.fromEntries(fd.entries()));
   if (!parsed.success) return zodToState(parsed.error);
   const v = parsed.data;
@@ -42,7 +42,7 @@ export async function addAreaAction(_p: ActionState, fd: FormData): Promise<Acti
 
 const toggleSchema = z.object({ id: z.string().uuid(), active: z.enum(["true", "false"]) });
 export async function toggleAreaAction(fd: FormData): Promise<void> {
-  await assertRole(["admin"]);
+  await assertRole(["superadmin"]);
   const p = toggleSchema.safeParse(Object.fromEntries(fd.entries()));
   if (!p.success) return;
   const supabase = await createClient();
@@ -52,7 +52,7 @@ export async function toggleAreaAction(fd: FormData): Promise<void> {
 
 const feesSchema = z.object({ id: z.string().uuid(), pickupFee: money, homeFee: money });
 export async function updateFeesAction(fd: FormData): Promise<void> {
-  await assertRole(["admin"]);
+  await assertRole(["superadmin"]);
   const p = feesSchema.safeParse(Object.fromEntries(fd.entries()));
   if (!p.success) return;
   const supabase = await createClient();

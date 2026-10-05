@@ -12,7 +12,7 @@ const TYPE: Record<string, string> = { maintenance: "Mantenimiento", warranty: "
 const FILTERS = [["open", "Abiertas"], ...Object.entries(CRM_LABEL).filter(([k]) => k !== "pending")] as const;
 
 export default async function CrmPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
-  const profile = await requireRole(["technician", "admin"]);
+  const profile = await requireRole(["technician", "superadmin"]);
   const f = (await searchParams).estado ?? "open";
   const supabase = await createClient();
   let q = supabase.from("crm_tasks").select("id, task_type, status, due_at, note, customers(full_name, phone), equipment(brand, model)").order("due_at").limit(100);
@@ -24,7 +24,7 @@ export default async function CrmPage({ searchParams }: { searchParams: Promise<
   const { data: inter } = ids.length ? await supabase.from("crm_interactions").select("id, task_id, channel, result, note, created_at").in("task_id", ids).order("created_at", { ascending: false }) : { data: [] };
   return (
     <section className="flex flex-col gap-6">
-      <PageTitle title={profile.role === "admin" ? "CRM · seguimiento" : "Mis tareas de seguimiento"} subtitle="Mantenimientos, garantías por vencer y proyectos. Cada contacto queda registrado y no se puede editar." />
+      <PageTitle title={profile.role === "superadmin" ? "CRM · seguimiento" : "Mis tareas de seguimiento"} subtitle="Mantenimientos, garantías por vencer y proyectos. Cada contacto queda registrado y no se puede editar." />
       <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
         {FILTERS.map(([k, label]) => (
           <Link key={k} href={`/b/crm?estado=${k}`} className={`flex-none rounded-full px-4 py-2 text-[14px] font-extrabold no-underline ${f === k ? "bg-ink text-white" : "border border-line bg-white text-ink-2"}`}>

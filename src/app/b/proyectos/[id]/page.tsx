@@ -10,7 +10,7 @@ import { ProjectCommentForm, ProjectForm } from "./forms";
 export const metadata: Metadata = { title: "Proyecto", robots: { index: false } };
 
 export default async function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  await requireRole(["admin"]);
+  await requireRole(["superadmin"]);
   const id = z.string().uuid().safeParse((await params).id);
   if (!id.success) notFound();
   const supabase = await createClient();
@@ -19,7 +19,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   const [{ data: comments }, { data: history }, { data: staff }] = await Promise.all([
     supabase.from("project_comments").select("id, body, visibility, created_at").eq("project_id", p.id).order("created_at", { ascending: false }),
     supabase.from("project_status_history").select("id, to_status, created_at").eq("project_id", p.id).order("created_at"),
-    supabase.from("profiles").select("id, full_name, email").in("role", ["technician", "admin"]).eq("is_active", true).order("full_name"),
+    supabase.from("profiles").select("id, full_name, email").in("role", ["technician", "superadmin"]).eq("is_active", true).order("full_name"),
   ]);
   const c = p.customers as unknown as { full_name: string; phone: string | null; email: string | null } | null;
   return (

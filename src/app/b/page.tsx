@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 export const metadata: Metadata = { title: "Panel", robots: { index: false } };
 
 export default async function StaffHome() {
-  const profile = await requireRole(["technician", "admin"]);
+  const profile = await requireRole(["technician", "superadmin"]);
   const supabase = await createClient();
   // RLS limita el conteo: el técnico solo cuenta sus tickets asignados; el administrador, todos.
   const open = await supabase
@@ -14,7 +14,7 @@ export default async function StaffHome() {
     .select("id", { count: "exact", head: true })
     .not("status", "in", "(delivered,cancelled)");
   const requests =
-    profile.role === "admin"
+    profile.role === "superadmin"
       ? await supabase
           .from("service_requests")
           .select("id", { count: "exact", head: true })
@@ -24,7 +24,7 @@ export default async function StaffHome() {
     <section className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">
         <h1 className="m-0 text-[30px] font-extrabold tracking-[-0.025em]">
-          {profile.role === "admin" ? "Panel de administración" : "Mis tickets"}
+          {profile.role === "superadmin" ? "Panel de administración" : "Mis tickets"}
         </h1>
         <div className="h-1 w-10 rounded-sm bg-brand" />
       </div>
@@ -40,7 +40,7 @@ export default async function StaffHome() {
           </div>
         ) : null}
       </div>
-      {profile.role === "admin" ? (
+      {profile.role === "superadmin" ? (
         <Link
           href="/b/usuarios"
           className="w-fit rounded-2xl bg-brand px-5 py-3.5 text-[16px] font-extrabold text-ink no-underline"

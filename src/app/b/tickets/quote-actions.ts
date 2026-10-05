@@ -30,7 +30,7 @@ const uuid = z.string().uuid();
 const refresh = (ticketId: string) => revalidatePath(`/b/tickets/${ticketId}`);
 
 export async function createQuoteAction(_p: ActionState, fd: FormData): Promise<ActionState> {
-  await assertRole(["technician", "admin"]);
+  await assertRole(["technician", "superadmin"]);
   const ticketId = uuid.safeParse(fd.get("ticketId"));
   if (!ticketId.success) return { ok: false, error: "Ticket no válido." };
   const supabase = await createClient();
@@ -63,7 +63,7 @@ const itemSchema = z
 
 /** El precio de productos y de servicios fijos lo fija la base de datos desde el catálogo. En servicios "Desde" se puede indicar un valor ≥ al mínimo y en "a cotizar" es obligatorio (la BD valida). */
 export async function addItemAction(_p: ActionState, fd: FormData): Promise<ActionState> {
-  await assertRole(["technician", "admin"]);
+  await assertRole(["technician", "superadmin"]);
   const parsed = itemSchema.safeParse(Object.fromEntries(fd.entries()));
   if (!parsed.success) return zodToState(parsed.error);
   const v = parsed.data;
@@ -98,7 +98,7 @@ export async function addItemAction(_p: ActionState, fd: FormData): Promise<Acti
 
 const rm = z.object({ ticketId: uuid, itemId: uuid });
 export async function removeItemAction(fd: FormData): Promise<void> {
-  await assertRole(["technician", "admin"]);
+  await assertRole(["technician", "superadmin"]);
   const p = rm.safeParse(Object.fromEntries(fd.entries()));
   if (!p.success) return;
   const supabase = await createClient();
@@ -108,7 +108,7 @@ export async function removeItemAction(fd: FormData): Promise<void> {
 
 const act = z.object({ ticketId: uuid, quoteId: uuid, message: z.string().trim().max(1000).optional() });
 async function run(fd: FormData, fn: "send_quote" | "record_in_person_approval" | "answer_quote_question" | "revise_quote"): Promise<ActionState> {
-  await assertRole(["technician", "admin"]);
+  await assertRole(["technician", "superadmin"]);
   const p = act.safeParse(Object.fromEntries(fd.entries()));
   if (!p.success) return { ok: false, error: "Datos no válidos." };
   const supabase = await createClient();
@@ -128,7 +128,7 @@ export const reviseQuoteAction = async (_p: ActionState, fd: FormData) => run(fd
 
 const needsPart = z.object({ ticketId: uuid, quoteId: uuid, needsPart: z.string().optional() });
 export async function setNeedsPartAction(fd: FormData): Promise<void> {
-  await assertRole(["technician", "admin"]);
+  await assertRole(["technician", "superadmin"]);
   const p = needsPart.safeParse(Object.fromEntries(fd.entries()));
   if (!p.success) return;
   const supabase = await createClient();
@@ -139,7 +139,7 @@ export async function setNeedsPartAction(fd: FormData): Promise<void> {
 const urgencySchema = z.object({ ticketId: uuid, quoteId: uuid, levelId: z.union([z.literal(""), uuid]) });
 /** Nivel de urgencia de la cotización en borrador. El recargo lo calcula la base de datos con los valores congelados del nivel. */
 export async function setUrgencyAction(fd: FormData): Promise<void> {
-  await assertRole(["technician", "admin"]);
+  await assertRole(["technician", "superadmin"]);
   const p = urgencySchema.safeParse(Object.fromEntries(fd.entries()));
   if (!p.success) return;
   const supabase = await createClient();
@@ -151,7 +151,7 @@ export async function setUrgencyAction(fd: FormData): Promise<void> {
 const deliverySchema = z.object({ ticketId: uuid, quoteId: uuid, apply: z.enum(["true", "false"]) });
 /** Domicilio como concepto aparte; la tarifa sale de la cobertura del municipio de la dirección. */
 export async function setDeliveryAction(fd: FormData): Promise<void> {
-  await assertRole(["technician", "admin"]);
+  await assertRole(["technician", "superadmin"]);
   const p = deliverySchema.safeParse(Object.fromEntries(fd.entries()));
   if (!p.success) return;
   const supabase = await createClient();

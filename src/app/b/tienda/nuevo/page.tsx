@@ -7,7 +7,7 @@ import { ProductForm } from "../forms";
 export const metadata: Metadata = { title: "Nuevo producto", robots: { index: false } };
 
 export default async function NewProductPage() {
-  await requireRole(["admin"]);
+  await requireRole(["superadmin"]);
   const { data } = await (await createClient()).from("product_categories").select("id, name").order("sort_order");
   return (
     <section className="mx-auto flex w-full max-w-[600px] flex-col gap-6">

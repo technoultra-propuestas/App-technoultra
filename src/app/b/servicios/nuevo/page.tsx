@@ -7,7 +7,7 @@ import { ServiceForm } from "../service-form";
 export const metadata: Metadata = { title: "Nuevo servicio", robots: { index: false } };
 
 export default async function NewServicePage() {
-  await requireRole(["admin"]);
+  await requireRole(["superadmin"]);
   const supabase = await createClient();
   const [{ data: cats }, { data: subs }] = await Promise.all([
     supabase.from("service_categories").select("id, name, kind").order("sort_order"),

@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "Privacidad y datos personales", robo
 
 /** Solicitudes de supresión (Ley 1581). Solo administración; la base de datos vuelve a validar el rol. */
 export default async function PrivacyPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
-  await requireRole(["admin"]);
+  await requireRole(["superadmin"]);
   const q = ((await searchParams).q ?? "").replace(/[%_,()*\\]/g, " ").trim().slice(0, 60);
   let rows: { id: string; full_name: string; email: string | null; phone: string | null }[] = [];
   if (q.length >= 3) {

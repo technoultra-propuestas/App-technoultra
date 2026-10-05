@@ -35,10 +35,10 @@ describe("bootstrap del primer administrador", () => {
   it("funciona una sola vez y solo para service_role", async () => {
     const a = await createUser(db, "primero@technoultra.com");
     const b = await createUser(db, "segundo@technoultra.com");
-    await expect(as(db, a, () => q(`select public.bootstrap_first_admin($1)`, [a]))).rejects.toThrow(denied);
-    await q(`select public.bootstrap_first_admin($1)`, [a]);
-    expect((await q<{ role: string }>(`select role from profiles where id = $1`, [a]))[0].role).toBe("admin");
-    await expect(q(`select public.bootstrap_first_admin($1)`, [b])).rejects.toThrow(/admin_already_exists/);
+    await expect(as(db, a, () => q(`select public.bootstrap_first_superadmin($1)`, [a]))).rejects.toThrow(denied);
+    await q(`select public.bootstrap_first_superadmin($1)`, [a]);
+    expect((await q<{ role: string }>(`select role from profiles where id = $1`, [a]))[0].role).toBe("superadmin");
+    await expect(q(`select public.bootstrap_first_superadmin($1)`, [b])).rejects.toThrow(/superadmin_already_exists/);
     expect((await q<{ role: string }>(`select role from profiles where id = $1`, [b]))[0].role).toBe(
       "client",
     );
@@ -107,14 +107,13 @@ describe("onboarding persistente", () => {
   });
 
   it("el personal no puede completar onboarding de cliente", async () => {
-    const [{ id }] = await q<{ id: string }>(`select id from profiles where role = 'admin' limit 1`);
+    const [{ id }] = await q<{ id: string }>(`select id from profiles where role = 'superadmin' limit 1`);
     await expect(as(db, id, () => q(`select public.complete_onboarding()`))).rejects.toThrow(denied);
   });
 
-  it("se puede preparar un administrador de pruebas sin pasar por la API", async () => {
+  it("solo puede existir un SUPERADMIN: un segundo se rechaza en la base de datos", async () => {
     const x = await createUser(db, "otro@technoultra.com");
-    await makeAdmin(db, x);
-    expect((await q<{ role: string }>(`select role from profiles where id = $1`, [x]))[0].role).toBe("admin");
+    await expect(makeAdmin(db, x)).rejects.toThrow(/profiles_single_superadmin/);
   });
 });
 
@@ -126,11 +125,11 @@ describe("registro con Google y anti-escalada de rol", () => {
       email_verified: true,
       full_name: "Usuario Google",
       avatar_url: "https://lh3.googleusercontent.com/a/x",
-      role: "admin",
-      app_role: "admin",
+      role: "superadmin",
+      app_role: "superadmin",
       is_admin: true,
       user_role: "technician",
-      invited_role: "admin",
+      invited_role: "superadmin",
     });
     const [p] = await q<{ role: string; full_name: string; is_active: boolean }>(`select role, full_name, is_active from profiles where id = $1`, [id]);
     expect(p).toEqual({ role: "client", full_name: "Usuario Google", is_active: true });
@@ -140,7 +139,7 @@ describe("registro con Google y anti-escalada de rol", () => {
 
   it("un inicio de sesión posterior (actualización de metadatos) no cambia el rol ni reactiva cuentas", async () => {
     const id = await createUser(db, "ya.existe@gmail.com", { full_name: "Ya Existe" });
-    await q(`update auth.users set raw_user_meta_data = $2::jsonb where id = $1`, [id, JSON.stringify({ role: "admin", full_name: "Otro Nombre" })]);
+    await q(`update auth.users set raw_user_meta_data = $2::jsonb where id = $1`, [id, JSON.stringify({ role: "superadmin", full_name: "Otro Nombre" })]);
     expect((await q<{ role: string }>(`select role from profiles where id = $1`, [id]))[0].role).toBe("client");
     await q(`update profiles set is_active = false where id = $1`, [id]);
     await q(`update auth.users set raw_user_meta_data = '{"is_active": true}'::jsonb where id = $1`, [id]);
@@ -150,14 +149,14 @@ describe("registro con Google y anti-escalada de rol", () => {
   it("el cliente autenticado con Google no puede ejecutar funciones de administración", async () => {
     const id = await createUser(db, "g2@gmail.com", { iss: "https://accounts.google.com" });
     for (const sql of [
-      `select public.admin_provision_staff('${id}', '${id}', 'admin', 'x')`,
-      `select public.bootstrap_first_admin('${id}')`,
+      `select public.admin_provision_staff('${id}', '${id}', 'superadmin', 'x')`,
+      `select public.bootstrap_first_superadmin('${id}')`,
       `select public.admin_set_user_active('${id}', '${id}', true)`,
       `select public.assign_ticket(gen_random_uuid(), '${id}')`,
     ]) {
       await expect(as(db, id, () => q(sql))).rejects.toThrow(denied);
     }
-    await expect(as(db, id, () => q(`update profiles set role = 'admin' where id = $1`, [id]))).rejects.toThrow(denied);
+    await expect(as(db, id, () => q(`update profiles set role = 'superadmin' where id = $1`, [id]))).rejects.toThrow(denied);
     await expect(as(db, id, () => q(`insert into staff_members (profile_id) values ($1)`, [id]))).rejects.toThrow(denied);
   });
 
@@ -168,7 +167,7 @@ describe("registro con Google y anti-escalada de rol", () => {
 
 describe("publicación de versiones legales", () => {
   it("solo quien gestiona lo legal publica; la versión anterior queda retirada y el histórico intacto", async () => {
-    const admin = (await q<{ id: string }>(`select id from profiles where role = 'admin' limit 1`))[0].id;
+    const admin = (await q<{ id: string }>(`select id from profiles where role = 'superadmin' limit 1`))[0].id;
     const cli = await createUser(db, "legal.cli@gmail.com");
     const [{ v }] = await as(db, admin, () => q<{ v: number }>(`select public.next_legal_version('privacy') v`));
     expect(v).toBe(1);

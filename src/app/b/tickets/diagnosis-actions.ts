@@ -12,7 +12,7 @@ const schema = z.object({ ticketId: z.string().uuid(), method: z.enum(["cash", "
  * el crédito abonable a la reparación; el cliente no puede enviar ni el monto ni el crédito.
  */
 export async function recordDiagnosisPaymentAction(fd: FormData): Promise<void> {
-  const actor = await assertRole(["admin"]);
+  const actor = await assertRole(["superadmin"]);
   const p = schema.safeParse(Object.fromEntries(fd.entries()));
   if (!p.success) return;
   const { error } = await createAdminClient().rpc("record_diagnosis_payment", { p_actor: actor.id, p_ticket: p.data.ticketId, p_method: p.data.method });

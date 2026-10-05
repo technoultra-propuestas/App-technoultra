@@ -9,13 +9,13 @@ export const metadata: Metadata = { title: "Seguridad de la cuenta", robots: { i
 
 /** Seguridad del personal: estado del MFA, sesiones y cambio de contraseña con reautenticación. */
 export default async function SecurityPage() {
-  const profile = await requireRole(["technician", "admin"]);
+  const profile = await requireRole(["technician", "superadmin"]);
   const supabase = await createClient();
   const { data: factors } = await supabase.auth.mfa.listFactors();
   const totp = (factors?.totp ?? []).filter((f) => f.status === "verified");
   return (
     <section className="mx-auto flex w-full max-w-[640px] flex-col gap-6">
-      <PageTitle title="Seguridad de la cuenta" subtitle={`${profile.email} · ${profile.role === "admin" ? "Administración" : "Técnico"}`} />
+      <PageTitle title="Seguridad de la cuenta" subtitle={`${profile.email} · ${profile.role === "superadmin" ? "Superadmin" : "Técnico"}`} />
       <Card className="flex flex-col gap-2">
         <h2 className="m-0 text-[19px] font-extrabold">Verificación en dos pasos</h2>
         {totp.length ? (

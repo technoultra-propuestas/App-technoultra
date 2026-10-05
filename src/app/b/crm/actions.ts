@@ -17,7 +17,7 @@ const schema = z.object({
 
 /** Registra el contacto (inmutable) y mueve la tarea al estado resultante. Solo quien gestiona CRM (RLS + permiso). */
 export async function logInteractionAction(_p: ActionState, fd: FormData): Promise<ActionState> {
-  const profile = await assertRole(["technician", "admin"]);
+  const profile = await assertRole(["technician", "superadmin"]);
   const parsed = schema.safeParse(Object.fromEntries(fd.entries()));
   if (!parsed.success) return zodToState(parsed.error);
   const v = parsed.data;
@@ -31,7 +31,7 @@ export async function logInteractionAction(_p: ActionState, fd: FormData): Promi
     next_action_at: v.nextActionAt ? `${v.nextActionAt}T09:00:00-05:00` : null,
   });
   if (error) return { ok: false, error: "No pudimos registrar el contacto." };
-  if (profile.role === "admin") {
+  if (profile.role === "superadmin") {
     await supabase.from("crm_tasks").update({ status: v.result, ...(v.nextActionAt ? { due_at: `${v.nextActionAt}T09:00:00-05:00` } : {}) }).eq("id", v.taskId);
   }
   revalidatePath("/b/crm");

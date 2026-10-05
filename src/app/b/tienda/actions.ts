@@ -36,7 +36,7 @@ const row = (v: z.infer<typeof productSchema>) => ({
 });
 
 export async function createProductAction(_p: ActionState, fd: FormData): Promise<ActionState> {
-  await assertRole(["admin"]);
+  await assertRole(["superadmin"]);
   const parsed = productSchema.safeParse(Object.fromEntries(fd.entries()));
   if (!parsed.success) return zodToState(parsed.error);
   const { data, error } = await (await createClient()).from("products").insert(row(parsed.data)).select("id").single();
@@ -46,7 +46,7 @@ export async function createProductAction(_p: ActionState, fd: FormData): Promis
 }
 
 export async function updateProductAction(_p: ActionState, fd: FormData): Promise<ActionState> {
-  await assertRole(["admin"]);
+  await assertRole(["superadmin"]);
   const id = z.string().uuid().safeParse(fd.get("id"));
   const parsed = productSchema.safeParse(Object.fromEntries(fd.entries()));
   if (!id.success) return { ok: false, error: "Producto no válido." };
@@ -65,7 +65,7 @@ const stockSchema = z.object({
 });
 /** El stock solo cambia con movimientos (libro mayor inmutable); la base de datos impide saldos negativos. */
 export async function adjustStockAction(_p: ActionState, fd: FormData): Promise<ActionState> {
-  await assertRole(["admin"]);
+  await assertRole(["superadmin"]);
   const parsed = stockSchema.safeParse(Object.fromEntries(fd.entries()));
   if (!parsed.success) return zodToState(parsed.error);
   const v = parsed.data;
@@ -77,14 +77,14 @@ export async function adjustStockAction(_p: ActionState, fd: FormData): Promise<
 
 const linkSchema = z.object({ productId: z.string().uuid(), serviceId: z.string().uuid() });
 export async function linkInstallationAction(fd: FormData): Promise<void> {
-  await assertRole(["admin"]);
+  await assertRole(["superadmin"]);
   const p = linkSchema.safeParse(Object.fromEntries(fd.entries()));
   if (!p.success) return;
   await (await createClient()).from("product_service_links").insert({ product_id: p.data.productId, service_id: p.data.serviceId, link_kind: "installation" });
   revalidatePath(`/b/tienda/${p.data.productId}`);
 }
 export async function unlinkInstallationAction(fd: FormData): Promise<void> {
-  await assertRole(["admin"]);
+  await assertRole(["superadmin"]);
   const p = linkSchema.safeParse(Object.fromEntries(fd.entries()));
   if (!p.success) return;
   await (await createClient()).from("product_service_links").delete().eq("product_id", p.data.productId).eq("service_id", p.data.serviceId);
@@ -93,7 +93,7 @@ export async function unlinkInstallationAction(fd: FormData): Promise<void> {
 
 const catSchema = z.object({ name: z.string().trim().min(2, "Escribe el nombre.").max(80) });
 export async function createProductCategoryAction(_p: ActionState, fd: FormData): Promise<ActionState> {
-  await assertRole(["admin"]);
+  await assertRole(["superadmin"]);
   const parsed = catSchema.safeParse(Object.fromEntries(fd.entries()));
   if (!parsed.success) return zodToState(parsed.error);
   const { error } = await (await createClient()).from("product_categories").insert({ name: parsed.data.name, slug: slugify(parsed.data.name) });
@@ -105,7 +105,7 @@ export async function createProductCategoryAction(_p: ActionState, fd: FormData)
 // ---------------------------------------------------------------- pedidos
 const orderStatus = z.object({ orderId: z.string().uuid(), status: z.enum(["preparing", "shipped", "delivered", "cancelled"]) });
 export async function setOrderStatusAction(fd: FormData): Promise<void> {
-  await assertRole(["admin"]);
+  await assertRole(["superadmin"]);
   const p = orderStatus.safeParse(Object.fromEntries(fd.entries()));
   if (!p.success) return;
   const supabase = await createClient();
@@ -118,7 +118,7 @@ export async function setOrderStatusAction(fd: FormData): Promise<void> {
 const manual = z.object({ orderId: z.string().uuid(), method: z.enum(["cash", "bank_transfer", "cash_on_delivery", "other"]) });
 /** Pago manual: solo administración, con verificación del actor en base de datos y registro de auditoría. */
 export async function manualPaymentAction(fd: FormData): Promise<void> {
-  const actor = await assertRole(["admin"]);
+  const actor = await assertRole(["superadmin"]);
   const p = manual.safeParse(Object.fromEntries(fd.entries()));
   if (!p.success) return;
   await createAdminClient().rpc("record_manual_payment", { p_actor: actor.id, p_order: p.data.orderId, p_method: p.data.method });

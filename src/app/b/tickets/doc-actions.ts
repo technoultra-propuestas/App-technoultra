@@ -16,7 +16,7 @@ const schema = z.object({
 
 /** Solo personal que gestiona ESTE ticket (RLS: asignado o administrador). Cada llamada crea una versión nueva. */
 export async function generateDocumentAction(_p: ActionState, fd: FormData): Promise<ActionState> {
-  const profile = await assertRole(["technician", "admin"]);
+  const profile = await assertRole(["technician", "superadmin"]);
   const parsed = schema.safeParse(Object.fromEntries(fd.entries()));
   if (!parsed.success) return { ok: false, error: "Datos no válidos." };
   const supabase = await createClient();

@@ -8,7 +8,7 @@ import { SettingForm } from "./setting-form";
 export const metadata: Metadata = { title: "Configuración", robots: { index: false } };
 
 export default async function SettingsPage() {
-  await requireRole(["admin"]);
+  await requireRole(["superadmin"]);
   const { data } = await (await createClient()).from("app_settings").select("key, value").in("key", SETTINGS.map((s) => s.key));
   const values = new Map((data ?? []).map((r) => [r.key, r.value]));
   const sections = [...new Set(SETTINGS.map((s) => s.section))];

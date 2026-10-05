@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "Reglas de precios y fuentes", robots
 
 /** Referencia interna de la carga inicial del catálogo (solo administración). No automatiza cobros: son recomendaciones del tarifario. */
 export default async function PricingRulesPage() {
-  await requireRole(["admin"]);
+  await requireRole(["superadmin"]);
   const supabase = await createClient();
   const [{ data: rules }, { data: sources }] = await Promise.all([
     supabase.from("catalog_pricing_rules").select("id, position, rule, recommendation").order("position"),

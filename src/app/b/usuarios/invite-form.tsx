@@ -31,17 +31,9 @@ export function InviteStaffForm() {
         error={state.fieldErrors?.phone}
       />
       <Field label="Cargo (opcional)" name="title" />
-      <label className="flex flex-col gap-2 text-[15px] font-bold">
-        Rol
-        <select
-          name="role"
-          defaultValue="technician"
-          className="h-14 rounded-[14px] border-[1.5px] border-line-strong bg-white px-4 text-[17px] font-semibold"
-        >
-          <option value="technician">Técnico</option>
-          <option value="admin">Administración</option>
-        </select>
-      </label>
+      {/* El personal que se crea aquí es siempre TÉCNICO: el SUPERADMIN es único y no se asigna desde la aplicación. */}
+      <input type="hidden" name="role" value="technician" />
+      <p className="m-0 text-[13px] font-semibold text-muted">Se crea como técnico. Recibe un correo para crear su contraseña y configurar la verificación en dos pasos.</p>
       {state.error && !state.fieldErrors ? <Alert>{state.error}</Alert> : null}
       {state.ok && state.message ? <Alert tone="ok">{state.message}</Alert> : null}
       <SubmitButton pendingText="Enviando…">Enviar invitación</SubmitButton>

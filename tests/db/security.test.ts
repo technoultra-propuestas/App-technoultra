@@ -28,7 +28,7 @@ beforeAll(async () => {
   techB = await createUser(db, "tecB@technoultra.com");
   await makeTechnician(db, admin, techA);
   await makeTechnician(db, admin, techB);
-  cliA = await createUser(db, "a@gmail.com", { full_name: "Cliente A", role: "admin" }); // intento de auto-asignar rol vía metadata
+  cliA = await createUser(db, "a@gmail.com", { full_name: "Cliente A", role: "superadmin" }); // intento de auto-asignar rol vía metadata
   cliB = await createUser(db, "b@gmail.com", { full_name: "Cliente B" });
   custA = (await q<{ id: string }>(`select id from customers where profile_id = $1`, [cliA]))[0].id;
   custB = (await q<{ id: string }>(`select id from customers where profile_id = $1`, [cliB]))[0].id;
@@ -94,7 +94,7 @@ describe("identidad y anti-escalada de privilegios", () => {
 
   it("el cliente no puede cambiarse el rol ni reactivarse", async () => {
     await expect(
-      as(db, cliA, () => q(`update profiles set role = 'admin' where id = $1`, [cliA])),
+      as(db, cliA, () => q(`update profiles set role = 'superadmin' where id = $1`, [cliA])),
     ).rejects.toThrow(denied);
     await expect(
       as(db, cliA, () => q(`update profiles set is_active = true where id = $1`, [cliA])),
@@ -116,20 +116,16 @@ describe("identidad y anti-escalada de privilegios", () => {
 
   it("un cliente no puede provisionar personal ni desactivar usuarios (funciones solo service_role)", async () => {
     await expect(
-      as(db, cliA, () => q(`select public.admin_provision_staff($1,$2,'admin','x')`, [cliA, cliA])),
+      as(db, cliA, () => q(`select public.admin_provision_staff($1,$2,'superadmin','x')`, [cliA, cliA])),
     ).rejects.toThrow(denied);
     await expect(
       as(db, admin, () => q(`select public.admin_set_user_active($1,$2,false)`, [admin, cliA])),
     ).rejects.toThrow(denied);
   });
 
-  it("no se puede desactivar al último administrador ni a uno mismo", async () => {
-    await expect(q(`select public.admin_set_user_active($1,$1,false)`, [admin])).rejects.toThrow(
-      /cannot_deactivate_self/,
-    );
-    await expect(q(`select public.admin_set_user_active($1,$2,false)`, [techA, admin])).rejects.toThrow(
-      /forbidden/,
-    );
+  it("el SUPERADMIN no se puede desactivar (ni a sí mismo ni por nadie) y el personal no gestiona usuarios", async () => {
+    await expect(q(`select public.admin_set_user_active($1,$1,false)`, [admin])).rejects.toThrow(/cannot_modify_superadmin/);
+    await expect(q(`select public.admin_set_user_active($1,$2,false)`, [techA, admin])).rejects.toThrow(/forbidden/);
   });
 
   it("un cliente no puede reasignar su ficha a otro perfil", async () => {
@@ -667,7 +663,7 @@ describe("superficie de API", () => {
     ).rejects.toThrow(denied);
     await expect(
       as(db, cliA, () =>
-        q(`select private.apply_transition(gen_random_uuid(),'diagnosing',null,'admin',null,true)`),
+        q(`select private.apply_transition(gen_random_uuid(),'diagnosing',null,'superadmin',null,true)`),
       ),
     ).rejects.toThrow(denied);
     await expect(

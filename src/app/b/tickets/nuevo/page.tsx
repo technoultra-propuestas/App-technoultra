@@ -7,10 +7,10 @@ import { WalkinForm } from "./walkin-form";
 export const metadata: Metadata = { title: "Nuevo ticket", robots: { index: false } };
 
 export default async function NewTicketPage() {
-  const profile = await requireRole(["technician", "admin"]);
+  const profile = await requireRole(["technician", "superadmin"]);
   const supabase = await createClient();
   // RLS: el administrador ve a todos los clientes; el técnico solo puede crear clientes nuevos (no los busca).
-  const isAdmin = profile.role === "admin";
+  const isAdmin = profile.role === "superadmin";
   const [customers, equipment, services] = await Promise.all([
     isAdmin ? supabase.from("customers").select("id, full_name, phone").is("deleted_at", null).order("full_name").limit(500) : Promise.resolve({ data: [] as { id: string; full_name: string; phone: string | null }[] }),
     isAdmin ? supabase.from("equipment").select("id, customer_id, brand, model").is("deleted_at", null).limit(1000) : Promise.resolve({ data: [] as { id: string; customer_id: string; brand: string; model: string }[] }),
