@@ -36,7 +36,7 @@
 - Web Push (VAPID), WhatsApp, y creación automática de ticket de instalación al pagar un pedido (hoy se marca `needs_installation` y administración lo gestiona).
 - Catálogo completo de municipios DANE (hoy: coberturas configuradas + "otra ciudad" = solo remoto).
 - Imágenes de productos/servicios (Cloudinary) en tienda y catálogo; archivos de proyectos digitales.
-- Procedimiento de supresión/anonimización de datos personales (Ley 1581) y política de retención.
+- Política de retención escrita (la supresión ya existe: `anonymize_customer` + /b/privacidad; migración 21 pendiente de aplicar al remoto).
 
 ## Catálogo oficial (2026-10-05)
 Migración 20, importador validado (161 servicios/13 categorías), CRM ampliado (filtros, subcategorías, historial, eliminación segura), catálogo público con subcategorías y precio "Desde"/"+ repuesto". Detalle en `docs/CATALOGO_IMPORTACION.md`.
