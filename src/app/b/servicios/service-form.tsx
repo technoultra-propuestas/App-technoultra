@@ -4,7 +4,7 @@ import { useActionState } from "react";
 import { Alert, Field, SubmitButton } from "@/components/ui/form";
 import { MODALITY_LABEL, Select, Textarea } from "@/components/ui/layout";
 import { initialState } from "@/lib/auth/schemas";
-import { createCategoryAction, createServiceAction, updateServiceAction } from "./actions";
+import { createCategoryAction, createServiceAction, createSubcategoryAction, deleteServiceAction, updateServiceAction } from "./actions";
 
 export type ServiceValues = {
   id?: string;
@@ -12,6 +12,15 @@ export type ServiceValues = {
   slug?: string;
   kind?: string;
   category_id?: string | null;
+  subcategory_id?: string | null;
+  price_type_label?: string | null;
+  parts_extra?: boolean;
+  includes_text?: string | null;
+  excludes_text?: string | null;
+  price_treatment?: string | null;
+  estimated_time?: string | null;
+  modality_label?: string | null;
+  sort_order?: number | null;
   short_description?: string | null;
   description?: string | null;
   price_mode?: string;
@@ -36,7 +45,15 @@ const Check = ({ name, label, checked }: { name: string; label: string; checked:
   </label>
 );
 
-export function ServiceForm({ values, categories }: { values?: ServiceValues; categories: { id: string; name: string; kind: string }[] }) {
+export function ServiceForm({
+  values,
+  categories,
+  subcategories = [],
+}: {
+  values?: ServiceValues;
+  categories: { id: string; name: string; kind: string }[];
+  subcategories?: { id: string; name: string; category_id: string }[];
+}) {
   const editing = Boolean(values?.id);
   const [state, action] = useActionState(editing ? updateServiceAction : createServiceAction, initialState);
   const v = values ?? {};
@@ -60,6 +77,14 @@ export function ServiceForm({ values, categories }: { values?: ServiceValues; ca
           ))}
         </Select>
       </div>
+      <Select label="Subcategoría" name="subcategoryId" defaultValue={v.subcategory_id ?? ""}>
+        <option value="">Sin subcategoría</option>
+        {subcategories.map((sc) => (
+          <option key={sc.id} value={sc.id}>
+            {categories.find((c) => c.id === sc.category_id)?.name ?? "—"} › {sc.name}
+          </option>
+        ))}
+      </Select>
       <Field label="Descripción corta" name="shortDescription" defaultValue={v.short_description ?? ""} />
       <Textarea label="Descripción" name="description" defaultValue={v.description ?? ""} />
       <div className="grid grid-cols-3 gap-3">
@@ -70,6 +95,17 @@ export function ServiceForm({ values, categories }: { values?: ServiceValues; ca
         </Select>
         <Field label="Valor base (COP)" name="basePrice" inputMode="numeric" defaultValue={v.base_price ?? ""} error={state.fieldErrors?.basePrice} />
         <Field label="Unidad" name="priceUnit" defaultValue={v.price_unit ?? ""} placeholder="/mes" />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Etiqueta del tipo de precio" name="priceTypeLabel" defaultValue={v.price_type_label ?? ""} hint='Ej.: "Por punto", "Mano de obra".' />
+        <Field label="Tiempo estimado" name="estimatedTime" defaultValue={v.estimated_time ?? ""} placeholder="1 a 2 h" />
+      </div>
+      <Textarea label="Incluye en el valor" name="includesText" defaultValue={v.includes_text ?? ""} />
+      <Textarea label="No incluye / adicionales" name="excludesText" defaultValue={v.excludes_text ?? ""} />
+      <Textarea label="Tratamiento del valor total" name="priceTreatment" defaultValue={v.price_treatment ?? ""} />
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Modalidad (texto comercial)" name="modalityLabel" defaultValue={v.modality_label ?? ""} />
+        <Field label="Orden en el catálogo" name="sortOrder" inputMode="numeric" defaultValue={v.sort_order ?? ""} />
       </div>
       <Field label="Duración (minutos)" name="durationMinutes" inputMode="numeric" defaultValue={v.duration_minutes ?? ""} />
       <fieldset className="flex flex-col gap-2 border-0 p-0">
@@ -83,6 +119,7 @@ export function ServiceForm({ values, categories }: { values?: ServiceValues; ca
         {state.fieldErrors?.modalities ? <span className="text-[13px] font-bold text-[#9A2B1E]">{state.fieldErrors.modalities}</span> : null}
       </fieldset>
       <div className="flex flex-col gap-2">
+        <Check name="partsExtra" label="El repuesto se cotiza aparte (+ repuesto)" checked={v.parts_extra ?? false} />
         <Check name="requiresEquipment" label="Requiere un equipo registrado" checked={v.requires_equipment ?? true} />
         <Check name="requiresDiagnosis" label="Requiere diagnóstico previo" checked={v.requires_diagnosis ?? true} />
         <Check name="requiresQuote" label="Requiere cotización y aprobación" checked={v.requires_quote ?? true} />
@@ -116,6 +153,42 @@ export function CategoryForm() {
       {state.error && !state.fieldErrors ? <Alert>{state.error}</Alert> : null}
       {state.ok && state.message ? <Alert tone="ok">{state.message}</Alert> : null}
       <SubmitButton pendingText="Guardando…">Crear categoría</SubmitButton>
+    </form>
+  );
+}
+
+export function SubcategoryForm({ categories }: { categories: { id: string; name: string }[] }) {
+  const [state, action] = useActionState(createSubcategoryAction, initialState);
+  return (
+    <form action={action} className="flex flex-col gap-3" noValidate>
+      <Select label="Categoría" name="categoryId" defaultValue="" error={state.fieldErrors?.categoryId}>
+        <option value="" disabled>
+          Elige una categoría
+        </option>
+        {categories.map((c) => (
+          <option key={c.id} value={c.id}>
+            {c.name}
+          </option>
+        ))}
+      </Select>
+      <Field label="Nombre de la subcategoría" name="name" required error={state.fieldErrors?.name} />
+      {state.error && !state.fieldErrors ? <Alert>{state.error}</Alert> : null}
+      {state.ok && state.message ? <Alert tone="ok">{state.message}</Alert> : null}
+      <SubmitButton pendingText="Guardando…">Crear subcategoría</SubmitButton>
+    </form>
+  );
+}
+
+export function DeleteServiceForm({ id }: { id: string }) {
+  const [state, action] = useActionState(deleteServiceAction, initialState);
+  return (
+    <form action={action} className="flex flex-col gap-3" noValidate>
+      <input type="hidden" name="id" value={id} />
+      <p className="m-0 text-[14px] font-semibold text-ink-2">
+        Si el servicio tiene cotizaciones, tickets o pedidos se archiva (queda oculto y se conserva el historial); si no, se elimina.
+      </p>
+      {state.error ? <Alert>{state.error}</Alert> : null}
+      <SubmitButton pendingText="Eliminando…">Eliminar servicio</SubmitButton>
     </form>
   );
 }

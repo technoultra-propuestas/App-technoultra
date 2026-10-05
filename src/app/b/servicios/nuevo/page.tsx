@@ -8,11 +8,15 @@ export const metadata: Metadata = { title: "Nuevo servicio", robots: { index: fa
 
 export default async function NewServicePage() {
   await requireRole(["admin"]);
-  const { data } = await (await createClient()).from("service_categories").select("id, name, kind").order("sort_order");
+  const supabase = await createClient();
+  const [{ data: cats }, { data: subs }] = await Promise.all([
+    supabase.from("service_categories").select("id, name, kind").order("sort_order"),
+    supabase.from("service_subcategories").select("id, name, category_id").order("sort_order"),
+  ]);
   return (
     <section className="mx-auto flex w-full max-w-[600px] flex-col gap-6">
       <PageTitle title="Nuevo servicio" />
-      <ServiceForm categories={data ?? []} />
+      <ServiceForm categories={cats ?? []} subcategories={subs ?? []} />
     </section>
   );
 }
