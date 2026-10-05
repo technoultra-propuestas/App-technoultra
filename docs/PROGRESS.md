@@ -47,3 +47,6 @@ IVA configurable, recargo por urgencia, domicilio, crédito de diagnóstico y sn
 
 ## Migraciones 21–23 y verificación de correo (2026-10-05)
 Migraciones 21, 22 y 23 aplicadas al remoto y verificadas (RLS, grants, tarifas, niveles de urgencia inactivos en 0 %, duplicado archivado). Flujo de registro probado de punta a punta en producción (registro → correo con enlace → callback → onboarding; enlace usado → aviso; volver a `/verificar` y refresh) con un buzón desechable y limpieza posterior del usuario de prueba. Onboarding responsive validado en 9 tamaños (360×800 … 1920×1080) sin overflow horizontal.
+
+## Acceso del personal con MFA (2026-10-05)
+Portal `/gestion/*` con TOTP obligatorio (migración 24 aplicada), `/b/seguridad`, alta/recuperación seguras y auditoría de accesos. Probado en producción de punta a punta (88 comprobaciones, incluidas RLS con JWT aal1/aal2 reales). **La cuenta administradora real debe configurar su autenticador en el próximo ingreso** (`/gestion/login`). Ver `docs/ACCESO-Y-MFA.md`.

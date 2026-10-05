@@ -60,7 +60,7 @@ export function LoginForm({
       />
       <Link
         href="/recuperar"
-        className="w-fit py-1 text-[15px] font-bold underline decoration-brand underline-offset-[3px]"
+        className="flex min-h-11 w-fit items-center text-[15px] font-bold underline decoration-brand underline-offset-[3px]"
       >
         ¿Olvidaste tu contraseña?
       </Link>

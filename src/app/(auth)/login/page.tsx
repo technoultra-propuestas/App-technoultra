@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AuthShell } from "@/components/ui/AuthShell";
-import { IconBadge } from "@/components/ui/icons";
 import { safeNext } from "@/lib/auth/routes";
 import { GoogleButton, LoginForm } from "../forms";
 
@@ -31,27 +30,15 @@ export default async function LoginPage({
         <span className="h-px flex-1 bg-line" /> o con tu correo <span className="h-px flex-1 bg-line" />
       </div>
       <LoginForm next={next || undefined} notice={sp.error ? NOTICES[sp.error] : undefined} />
-      <p className="m-0 text-center text-[15px] font-semibold text-muted">
+      <p className="m-0 flex flex-wrap items-center justify-center gap-x-1 text-center text-[15px] font-semibold text-muted">
         ¿No tienes cuenta?{" "}
         <Link
           href="/registro"
-          className="font-extrabold text-ink underline decoration-brand underline-offset-[3px]"
+          className="flex min-h-11 items-center font-extrabold text-ink underline decoration-brand underline-offset-[3px]"
         >
           Crear cuenta
         </Link>
       </p>
-      <div className="mt-auto flex flex-col gap-2.5 border-t border-[#E2E2DF] pt-5">
-        <div className="text-[13px] font-bold tracking-[0.04em] text-muted">
-          ACCESO DEL EQUIPO TECHNOULTRA
-        </div>
-        <Link
-          href="/equipo"
-          className="flex min-h-[52px] items-center justify-center gap-2 rounded-[14px] bg-ink text-[15px] font-extrabold text-white no-underline"
-        >
-          <IconBadge width={20} height={20} className="text-brand" />
-          Ingresar como equipo TechnoUltra
-        </Link>
-      </div>
     </AuthShell>
   );
 }
