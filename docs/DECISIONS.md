@@ -19,3 +19,9 @@ estática estricta para páginas públicas/SEO (Fase 14), para no perder rendimi
 ## D-004 — Íconos
 
 El diseño usa la fuente Material Symbols por CDN. En producción se usarán SVG/íconos autoalojados (PWA offline y privacidad).
+
+## D-001 — RESUELTA (2026-10-05)
+Proyecto Supabase de TechnoUltra: `agosikmonvjujxzokdlc` ("App-technoultra", us-west-2, Postgres 17, creado 2026-10-05).
+Vinculado con la CLI (`supabase link`) usando el login de la cuenta dueña. La variable de entorno `SUPABASE_ACCESS_TOKEN` del sistema
+apuntaba a otra cuenta y tiene prioridad sobre el login: hay que quitarla o usar `env -u SUPABASE_ACCESS_TOKEN` al ejecutar la CLI.
+`supabase migration list --linked`: sin migraciones remotas (proyecto nuevo).
