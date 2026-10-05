@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Manrope } from "next/font/google";
+import { connection } from "next/server";
 import "./globals.css";
 
 const manrope = Manrope({
@@ -24,7 +25,9 @@ export const viewport: Viewport = {
   themeColor: "#121212",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // CSP con nonce por petición ⇒ todas las rutas se renderizan en servidor (un HTML estático no puede llevar nonce).
+  await connection();
   return (
     <html lang="es-CO" className={manrope.variable}>
       <body>{children}</body>

@@ -39,3 +39,15 @@ apuntaba a otra cuenta y tiene prioridad sobre el login: hay que quitarla o usar
 - **D-017 Políticas SELECT de la propia tabla** evalúan columnas directamente: una función STABLE no ve la fila recién insertada en `INSERT … RETURNING`.
 - **D-018 Auditoría.** Cadena SHA-256 con bloqueo consultivo (serializa escrituras de auditoría; aceptable al volumen esperado). Registro por trigger en tablas críticas, modo `keys` para PII y `values` para precios/estados.
 - **D-019 Validación local sin Docker.** Se usa PGlite (Postgres 17 WASM) con emulación de roles `anon/authenticated/service_role` y `auth.uid()`. Pendiente confirmar en el remoto tras `db push`.
+
+## Decisiones de la Fase 2 (2026-10-05)
+
+- **D-020 Códigos de verificación.** Se usa el OTP nativo de Supabase Auth (6 dígitos, generado en servidor, un solo uso, expira a los 10 min, límites propios) mediante plantillas de correo con `{{ .Token }}`. Capa adicional: limitador en BD (`check_rate_limit`) por IP y por correo, que falla cerrado.
+- **D-021 Registro de clientes.** Correo + contraseña (mín. 10, mayúscula/minúscula/número) con verificación por código, o Google OAuth (PKCE). El celular pasa a ser dato del onboarding (el diseño original lo pedía en el registro con OTP por SMS; se evita SMS por costo y porque no fue solicitado).
+- **D-022 Proxy (Next 16).** `src/proxy.ts` refresca sesión (`getClaims`, valida firma del JWT), aplica CSP con nonce y redirige rutas protegidas. Autorización real: `requireRole` en layouts + `assertRole` en acciones + RLS. Como el nonce exige render dinámico, todo el sitio es dinámico (ver D-003; las páginas públicas de SEO podrán usar una política distinta en la Fase 14).
+- **D-023 Anti open-redirect.** Todo `next`/`redirectTo` pasa por `safeNext` (solo rutas internas; rechaza `//`, `\`, esquemas, controles y versiones codificadas).
+- **D-024 Anti-enumeración.** El registro y la recuperación responden igual exista o no el correo; el login devuelve un mensaje genérico.
+- **D-025 Personal.** Sin registro público. El administrador invita (`inviteUserByEmail`) o promueve una cuenta existente; `admin_provision_staff` (solo `service_role`) vuelve a verificar que el actor sea admin activo. Primer administrador: `scripts/bootstrap-admin.mjs` → `bootstrap_first_admin` (una sola vez).
+- **D-026 Onboarding.** Pasos en `profiles.onboarding_step` (backend, reanudable). La finalización solo ocurre con `complete_onboarding()` (valida celular y aceptación de todos los documentos legales publicados). El permiso de notificaciones guarda el resultado REAL del navegador; un error o falta de soporte nunca cuenta como concedido.
+- **D-027 Dirección fuera de cobertura.** Se permite guardar una ciudad "otra" con DANE `00000` (solo soporte remoto). Pendiente: catálogo completo de municipios para validar mejor.
+- **D-028 Íconos y fuentes autoalojados.** Se reemplaza Material Symbols (CDN) por SVG en `src/components/ui/icons.tsx`; Manrope vía `next/font`.
