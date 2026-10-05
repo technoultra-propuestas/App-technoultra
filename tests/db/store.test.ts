@@ -150,3 +150,19 @@ describe("pagos (confirmación solo desde el servidor)", () => {
     await expect(q(`select * from public.begin_payment($1,$2)`, [id, cliB])).rejects.toThrow(/order_not_payable/);
   });
 });
+
+describe("tareas periódicas", () => {
+  it("avisa del mantenimiento una sola vez, vence garantías y cotizaciones, y solo service_role la ejecuta", async () => {
+    await expect(as(db, cliA, () => q(`select public.run_housekeeping()`))).rejects.toThrow(denied);
+    const [{ id: eqId }] = await q<{ id: string }>(`insert into equipment (customer_id, type, brand, model) values ($1,'laptop','HP','x') returning id`, [custA]);
+    await q(`insert into maintenance_plans (customer_id, equipment_id, due_at) values ($1,$2, now() + interval '3 days')`, [custA, eqId]);
+    await q(`insert into warranties (kind, customer_id, equipment_id, order_item_id, description, start_date, end_date)
+             select 'product', $1, $2, oi.id, 'SSD', current_date - 400, current_date - 1 from order_items oi limit 1`, [custA, eqId]);
+    const [{ r }] = await q<{ r: { maintenance_reminders: number; warranties_expired: number } }>(`select public.run_housekeeping() r`);
+    expect(r.maintenance_reminders).toBe(1);
+    expect(r.warranties_expired).toBeGreaterThanOrEqual(1);
+    expect((await as(db, cliA, () => q(`select id from notifications where type = 'maintenance.due'`))).length).toBe(1);
+    const [{ r: again }] = await q<{ r: { maintenance_reminders: number } }>(`select public.run_housekeeping() r`);
+    expect(again.maintenance_reminders).toBe(0); // idempotente
+  });
+});

@@ -60,7 +60,7 @@ export const config = {
   matcher: [
     {
       source:
-        "/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|icons/|.*\\.(?:png|jpg|jpeg|svg|webp|avif|ico|woff2?)$).*)",
+        "/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|offline.html|offline.css|icons/|.*\\.(?:png|jpg|jpeg|svg|webp|avif|ico|woff2?)$).*)",
       missing: [
         { type: "header", key: "next-router-prefetch" },
         { type: "header", key: "purpose", value: "prefetch" },
