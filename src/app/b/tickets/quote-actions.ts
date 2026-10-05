@@ -53,7 +53,7 @@ const itemSchema = z
     path: ["description"],
   });
 
-/** El precio de servicios y productos lo fija la base de datos desde el catálogo (unit_price vacío). */
+/** El precio de productos y de servicios fijos lo fija la base de datos desde el catálogo. En servicios "Desde" se puede indicar un valor ≥ al mínimo y en "a cotizar" es obligatorio (la BD valida). */
 export async function addItemAction(_p: ActionState, fd: FormData): Promise<ActionState> {
   await assertRole(["technician", "admin"]);
   const parsed = itemSchema.safeParse(Object.fromEntries(fd.entries()));
@@ -78,7 +78,7 @@ export async function addItemAction(_p: ActionState, fd: FormData): Promise<Acti
     product_id: v.kind === "product" ? v.refId : null,
     description,
     qty: v.qty,
-    unit_price: v.kind === "custom" ? v.unitPrice : null,
+    unit_price: v.kind === "custom" || v.kind === "service" ? v.unitPrice : null,
     discount: v.discount,
     warranty_days: v.warrantyDays,
     warranty_kind: v.kind === "product" ? "product" : v.warrantyKind,

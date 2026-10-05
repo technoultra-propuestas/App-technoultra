@@ -15,9 +15,10 @@ export const metadata: Metadata = {
 
 export default async function ServicesIndex() {
   const sb = createPublicClient();
-  const [{ data: services }, { data: cats }] = await Promise.all([
-    sb.from("services").select("slug, name, kind, short_description, price_mode, base_price, price_unit, price_type_label, parts_extra, category_id").order("sort_order").order("name"),
+  const [{ data: services }, { data: cats }, { data: subs }] = await Promise.all([
+    sb.from("services").select("slug, name, kind, short_description, price_mode, base_price, price_unit, price_type_label, parts_extra, requires_diagnosis, category_id, subcategory_id").order("sort_order").order("name"),
     sb.from("service_categories").select("id, name, kind").order("sort_order"),
+    sb.from("service_subcategories").select("id, name, category_id").order("sort_order"),
   ]);
   const list = services ?? [];
   const groups = (cats ?? []).map((c) => ({ ...c, items: list.filter((s) => s.category_id === c.id) })).filter((g) => g.items.length);
@@ -33,19 +34,27 @@ export default async function ServicesIndex() {
       {groups.map((g) => (
         <section key={g.id} className="mb-8 flex flex-col gap-3">
           <h2 className="m-0 text-[20px] font-extrabold">{g.name}</h2>
-          <ul className="m-0 grid list-none grid-cols-[repeat(auto-fit,minmax(min(100%,300px),1fr))] gap-3 p-0">
-            {g.items.map((s) => (
-              <li key={s.slug}>
-                <Link href={`/servicios/${s.slug}`} className="block h-full no-underline">
-                  <Card className="flex h-full flex-col gap-1.5">
-                    <span className="text-[17px] font-extrabold text-ink">{s.name}</span>
-                    {s.short_description ? <span className="text-[14px] leading-snug text-muted">{s.short_description}</span> : null}
-                    <span className="mt-auto pt-2 text-[15px] font-extrabold text-ink">{priceText(s)}</span>
-                  </Card>
-                </Link>
-              </li>
-            ))}
-          </ul>
+          {[...new Set(g.items.map((s) => s.subcategory_id ?? ""))].map((subId) => (
+            <div key={subId || "sin"} className="flex flex-col gap-2">
+              {subId ? <h3 className="m-0 text-[15px] font-extrabold text-ink-2">{(subs ?? []).find((x) => x.id === subId)?.name}</h3> : null}
+              <ul className="m-0 grid list-none grid-cols-[repeat(auto-fit,minmax(min(100%,300px),1fr))] gap-3 p-0">
+                {g.items
+                  .filter((s) => (s.subcategory_id ?? "") === subId)
+                  .map((s) => (
+                    <li key={s.slug}>
+                      <Link href={`/servicios/${s.slug}`} className="block h-full no-underline">
+                        <Card className="flex h-full flex-col gap-1.5">
+                          <span className="text-[17px] font-extrabold text-ink">{s.name}</span>
+                          {s.short_description ? <span className="text-[14px] leading-snug text-muted">{s.short_description}</span> : null}
+                          <span className="mt-auto pt-2 text-[15px] font-extrabold text-ink">{priceText(s)}</span>
+                          {s.requires_diagnosis ? <span className="text-[12px] font-bold text-muted">Requiere diagnóstico</span> : null}
+                        </Card>
+                      </Link>
+                    </li>
+                  ))}
+              </ul>
+            </div>
+          ))}
         </section>
       ))}
     </SiteShell>

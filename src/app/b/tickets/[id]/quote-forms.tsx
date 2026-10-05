@@ -64,12 +64,14 @@ export function AddItemForm({
             </option>
           ))}
         </Select>
-      ) : (
+      ) : null}
+      {kind === "service" ? <Field label="Valor final (COP)" name="unitPrice" inputMode="numeric" hint='Opcional. En servicios "Desde" debe ser igual o mayor al mínimo; en "a cotizar" es obligatorio.' /> : null}
+      {kind === "custom" ? (
         <>
           <Field label="Descripción" name="description" error={state.fieldErrors?.description} />
           <Field label="Precio unitario (COP)" name="unitPrice" inputMode="numeric" />
         </>
-      )}
+      ) : null}
       <div className="grid grid-cols-3 gap-3">
         <Field label="Cantidad" name="qty" inputMode="decimal" defaultValue="1" />
         <Field label="Descuento" name="discount" inputMode="numeric" defaultValue="0" />

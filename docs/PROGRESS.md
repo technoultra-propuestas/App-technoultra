@@ -37,3 +37,7 @@
 - Catálogo completo de municipios DANE (hoy: coberturas configuradas + "otra ciudad" = solo remoto).
 - Imágenes de productos/servicios (Cloudinary) en tienda y catálogo; archivos de proyectos digitales.
 - Procedimiento de supresión/anonimización de datos personales (Ley 1581) y política de retención.
+
+## Catálogo oficial (2026-10-05)
+Migración 20, importador validado (161 servicios/13 categorías), CRM ampliado (filtros, subcategorías, historial, eliminación segura), catálogo público con subcategorías y precio "Desde"/"+ repuesto". Detalle en `docs/CATALOGO_IMPORTACION.md`.
+**Pendiente:** aplicar migración 20 al remoto (`db push`) y ejecutar `--apply`; la app nueva requiere esas columnas, así que no desplegar antes. El `db push` fue bloqueado por el clasificador de permisos de la sesión y queda para aprobación del propietario.

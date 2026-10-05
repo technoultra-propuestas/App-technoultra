@@ -14,7 +14,7 @@ async function load(slug: string) {
   if (!/^[a-z0-9-]{2,80}$/.test(slug)) return null;
   const { data } = await createPublicClient()
     .from("services")
-    .select("slug, name, kind, short_description, description, price_mode, base_price, price_unit, price_type_label, parts_extra, allowed_modalities, default_warranty_days, seo_title, seo_description, duration_minutes")
+    .select("slug, name, kind, short_description, description, price_mode, base_price, price_unit, price_type_label, parts_extra, includes_text, excludes_text, price_treatment, estimated_time, requires_diagnosis, allowed_modalities, default_warranty_days, seo_title, seo_description, duration_minutes")
     .eq("slug", slug)
     .maybeSingle();
   return data;
@@ -59,6 +59,19 @@ export default async function ServicePage({ params }: { params: Promise<{ slug: 
         <div className="flex flex-col gap-4">
           {s.short_description ? <p className="m-0 text-[17px] font-semibold leading-snug">{s.short_description}</p> : null}
           {s.description ? <p className="m-0 whitespace-pre-line text-base leading-relaxed text-ink-2">{s.description}</p> : null}
+          {s.includes_text ? (
+            <>
+              <h2 className="m-0 mt-2 text-[20px] font-extrabold">Qué incluye</h2>
+              <p className="m-0 text-[15px] leading-relaxed text-ink-2">{s.includes_text}</p>
+            </>
+          ) : null}
+          {s.excludes_text ? (
+            <>
+              <h2 className="m-0 mt-2 text-[20px] font-extrabold">Qué no incluye</h2>
+              <p className="m-0 text-[15px] leading-relaxed text-ink-2">{s.excludes_text}</p>
+            </>
+          ) : null}
+          {s.price_treatment ? <p className="m-0 text-[14px] font-semibold text-muted">{s.price_treatment}</p> : null}
           <h2 className="m-0 mt-2 text-[20px] font-extrabold">¿Dónde y cómo?</h2>
           <ul className="m-0 flex list-none flex-col gap-1.5 p-0 text-[15px] font-semibold">
             {(s.allowed_modalities as string[]).map((m) => (
@@ -83,7 +96,10 @@ export default async function ServicePage({ params }: { params: Promise<{ slug: 
           <div className="text-[13px] font-bold text-muted">Precio de referencia</div>
           <div className="text-[26px] font-extrabold">{priceText(s)}</div>
           {s.default_warranty_days > 0 ? <div className="text-[14px] font-semibold">Garantía de {s.default_warranty_days} días</div> : null}
-          {s.duration_minutes ? <div className="text-[14px] text-muted">Duración aproximada: {Math.round(s.duration_minutes / 60 * 10) / 10} h</div> : null}
+          {s.estimated_time ? <div className="text-[14px] text-muted">Tiempo estimado: {s.estimated_time}</div> : null}
+          {s.requires_diagnosis ? <div className="text-[14px] font-semibold">Requiere diagnóstico previo.</div> : null}
+          {s.price_mode === "from" ? <div className="text-[13px] text-muted">&quot;Desde&quot; es el valor mínimo: el precio final depende del modelo y el alcance.</div> : null}
+          {s.duration_minutes && !s.estimated_time ?<div className="text-[14px] text-muted">Duración aproximada: {Math.round(s.duration_minutes / 60 * 10) / 10} h</div> : null}
           <Link href={`/c/solicitar/${s.slug}`} className="inline-flex min-h-[52px] items-center justify-center rounded-2xl bg-brand px-5 text-[16px] font-extrabold text-ink no-underline">
             Solicitar este servicio
           </Link>
