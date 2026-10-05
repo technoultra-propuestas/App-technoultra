@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Card, EmptyState, fmtDate, MODALITY_LABEL, PageTitle, StatusBadge } from "@/components/ui/layout";
+import { Card, EmptyState, fmtDate, LinkButton, MODALITY_LABEL, PageTitle, StatusBadge } from "@/components/ui/layout";
 import { requireRole } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 
@@ -34,7 +34,7 @@ export default async function StaffTicketsPage({ searchParams }: { searchParams:
   const rows = data ?? [];
   return (
     <section className="flex flex-col gap-6">
-      <PageTitle title={profile.role === "admin" ? "Tickets" : "Mis tickets"} />
+      <PageTitle title={profile.role === "admin" ? "Tickets" : "Mis tickets"} action={<LinkButton href="/b/tickets/nuevo">Nuevo ticket</LinkButton>} />
       <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
         {FILTERS.map(([k, label]) => (
           <Link

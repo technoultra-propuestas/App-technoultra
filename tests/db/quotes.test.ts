@@ -200,3 +200,22 @@ describe("documentos: vista, rechazo y numeración", () => {
     expect((await q<{ s: string; h: string }>(`select status s, sha256 h from documents where id = $1`, [signed]))[0]).toEqual({ s: "superseded", h: hash });
   });
 });
+
+describe("ticket de mostrador creado por un técnico", () => {
+  it("puede crear el cliente, su equipo y el ticket; no ve a otros clientes", async () => {
+    const [{ id: c }] = await as(db, tech, () => q<{ id: string }>(`insert into customers (full_name, phone) values ('Cliente Mostrador','3105551234') returning id`));
+    const [{ id: e }] = await as(db, tech, () => q<{ id: string }>(`insert into equipment (customer_id, type, brand, model) values ($1,'laptop','Acer','Aspire') returning id`, [c]));
+    const [{ id: t }] = await as(db, tech, () => q<{ id: string }>(`insert into tickets (customer_id, equipment_id, modality, problem, assigned_to) values ($1,$2,'store','No enciende nunca',$3) returning id`, [c, e, tech]));
+    expect(await status(t)).toBe("received");
+    // otro cliente (con cuenta) sigue invisible para el técnico
+    const [{ id: custB }] = await q<{ id: string }>(`select id from customers where profile_id = $1`, [cliB]);
+    expect((await as(db, tech, () => q(`select id from customers where id = $1`, [custB]))).length).toBe(0);
+    // otro técnico no ve al cliente de mostrador de este técnico
+    const other = await createUser(db, "tec3@technoultra.com");
+    await makeTechnician(db, admin, other);
+    expect((await as(db, other, () => q(`select id from customers where id = $1`, [c]))).length).toBe(0);
+    expect((await as(db, other, () => q(`select id from equipment where id = $1`, [e]))).length).toBe(0);
+    // el cliente de mostrador no puede asignarse a cuentas ajenas
+    await expect(as(db, tech, () => q(`update customers set profile_id = $2 where id = $1`, [c, cliA]))).rejects.toThrow(denied);
+  });
+});
