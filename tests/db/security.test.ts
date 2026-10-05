@@ -762,3 +762,49 @@ describe("regresiones de escritura por rol", () => {
     }
   });
 });
+
+describe("revisión Zero Trust automática de funciones", () => {
+  it("toda función SECURITY DEFINER fija search_path vacío", async () => {
+    const rows = await q<{ proname: string }>(
+      `select p.proname from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+       where n.nspname in ('public','private') and p.prosecdef
+         and not coalesce(p.proconfig::text ilike '%search_path=""%' or p.proconfig::text ilike '%search_path=%', false)`,
+    );
+    expect(rows).toEqual([]);
+  });
+  it("toda RPC pública expuesta a authenticated/anon valida identidad o es de solo lectura pública explícita", async () => {
+    const publicByDesign = new Set(["check_coverage", "track_ticket"]);
+    const rows = await q<{ proname: string; prosrc: string }>(
+      `select p.proname, p.prosrc from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+       where n.nspname = 'public' and p.prosecdef
+         and (has_function_privilege('authenticated', p.oid, 'execute') or has_function_privilege('anon', p.oid, 'execute'))`,
+    );
+    const unguarded = rows.filter(
+      (r) => !publicByDesign.has(r.proname) && !/auth\.uid\(\)|private\.(is_|my_|can_)/.test(r.prosrc),
+    );
+    expect(unguarded.map((r) => r.proname)).toEqual([]);
+  });
+  it("las funciones administrativas de personal son exclusivas de service_role", async () => {
+    for (const fn of [
+      "admin_provision_staff(uuid,uuid,app_role,text,text,text)",
+      "admin_set_user_active(uuid,uuid,boolean)",
+    ]) {
+      const [r] = await q<{ a: boolean; b: boolean; c: boolean }>(
+        `select has_function_privilege('authenticated','public.${fn}','execute') a, has_function_privilege('anon','public.${fn}','execute') b, has_function_privilege('service_role','public.${fn}','execute') c`,
+      );
+      expect(r).toEqual({ a: false, b: false, c: true });
+    }
+  });
+  it("las políticas de escritura siempre incluyen WITH CHECK o son solo INSERT/DELETE", async () => {
+    const rows = await q<{ tablename: string; policyname: string }>(
+      `select tablename, policyname from pg_policies where schemaname = 'public' and cmd in ('UPDATE','ALL') and with_check is null`,
+    );
+    expect(rows).toEqual([]);
+  });
+  it("ninguna política concede acceso incondicional (USING true) sobre datos privados", async () => {
+    const rows = await q<{ tablename: string; policyname: string }>(
+      `select tablename, policyname from pg_policies where schemaname = 'public' and (qual = 'true' or with_check = 'true')`,
+    );
+    expect(rows).toEqual([]);
+  });
+});
