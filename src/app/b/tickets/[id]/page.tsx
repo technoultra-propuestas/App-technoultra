@@ -1,0 +1,128 @@
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { z } from "zod";
+import { Card, EQUIPMENT_LABEL, fmtDateTime, MODALITY_LABEL, PageTitle, StatusBadge, statusLabel } from "@/components/ui/layout";
+import { requireRole } from "@/lib/auth/session";
+import { createClient } from "@/lib/supabase/server";
+import { AssignForm, NoteForm, TransitionForm } from "./forms";
+
+export const metadata: Metadata = { title: "Ticket", robots: { index: false } };
+
+export default async function StaffTicketPage({ params }: { params: Promise<{ id: string }> }) {
+  const me = await requireRole(["technician", "admin"]);
+  const id = z.string().uuid().safeParse((await params).id);
+  if (!id.success) notFound();
+  const supabase = await createClient();
+  // RLS: un técnico no asignado recibe 0 filas → 404.
+  const { data: t } = await supabase
+    .from("tickets")
+    .select("id, code, status, modality, problem, assigned_to, received_at, cancelled_reason, customers(full_name, phone, email), equipment(type, brand, model, serial), services(name)")
+    .eq("id", id.data)
+    .maybeSingle();
+  if (!t) notFound();
+
+  const [{ data: history }, { data: notes }, { data: transitions }, { data: reception }, staffRes] = await Promise.all([
+    supabase.from("ticket_status_history").select("id, to_status, reason, created_at").eq("ticket_id", t.id).order("created_at"),
+    supabase.from("ticket_notes").select("id, body, visibility, kind, created_at").eq("ticket_id", t.id).order("created_at", { ascending: false }),
+    supabase.from("ticket_transitions").select("to_status, allowed_roles, requires_reason").eq("from_status", t.status),
+    supabase.from("receptions").select("reason, accessories, visible_damage, observations").eq("ticket_id", t.id).maybeSingle(),
+    me.role === "admin"
+      ? supabase.from("profiles").select("id, full_name, email").in("role", ["technician", "admin"]).eq("is_active", true).order("full_name")
+      : Promise.resolve({ data: [] as { id: string; full_name: string; email: string }[] }),
+  ]);
+
+  const options = (transitions ?? [])
+    .filter((x) => (x.allowed_roles as string[]).includes(me.role))
+    .map((x) => ({ to: x.to_status as string, label: statusLabel(x.to_status), requiresReason: x.requires_reason as boolean }));
+  const customer = t.customers as unknown as { full_name: string; phone: string | null; email: string | null } | null;
+  const eq = t.equipment as unknown as { type: string; brand: string; model: string; serial: string | null } | null;
+  const svc = t.services as unknown as { name: string } | null;
+
+  return (
+    <section className="grid gap-6 md:grid-cols-[1fr_380px]">
+      <div className="flex flex-col gap-6">
+        <PageTitle title={t.code} subtitle={`${svc?.name ?? "Servicio"} · ${MODALITY_LABEL[t.modality]}`} />
+        <Card className="flex flex-col gap-3">
+          <div className="flex items-center justify-between gap-3">
+            <StatusBadge status={t.status} />
+            <span className="text-[13px] font-semibold text-muted">Recibido {fmtDateTime(t.received_at)}</span>
+          </div>
+          <p className="m-0 text-[15px] leading-normal">{t.problem}</p>
+          {t.cancelled_reason ? <p className="m-0 text-[14px] text-muted">Motivo de cancelación: {t.cancelled_reason}</p> : null}
+        </Card>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Card className="flex flex-col gap-1">
+            <h2 className="m-0 text-[15px] font-extrabold">Cliente</h2>
+            <span className="text-[15px] font-semibold">{customer?.full_name}</span>
+            {customer?.phone ? <a href={`tel:${customer.phone}`} className="text-[14px] font-semibold underline decoration-brand underline-offset-[3px]">{customer.phone}</a> : null}
+            {customer?.email ? <span className="text-[13px] text-muted">{customer.email}</span> : null}
+          </Card>
+          <Card className="flex flex-col gap-1">
+            <h2 className="m-0 text-[15px] font-extrabold">Equipo</h2>
+            {eq ? (
+              <>
+                <span className="text-[15px] font-semibold">
+                  {eq.brand} {eq.model}
+                </span>
+                <span className="text-[13px] text-muted">
+                  {EQUIPMENT_LABEL[eq.type] ?? eq.type}
+                  {eq.serial ? ` · Serial ${eq.serial}` : ""}
+                </span>
+              </>
+            ) : (
+              <span className="text-[14px] text-muted">Sin equipo (servicio remoto o digital)</span>
+            )}
+          </Card>
+        </div>
+        {reception ? (
+          <Card className="flex flex-col gap-1">
+            <h2 className="m-0 text-[15px] font-extrabold">Recepción</h2>
+            <span className="text-[14px]">Motivo: {reception.reason}</span>
+            {(reception.accessories as string[]).length ? <span className="text-[14px] text-muted">Accesorios: {(reception.accessories as string[]).join(", ")}</span> : null}
+            {(reception.visible_damage as string[]).length ? <span className="text-[14px] text-muted">Daños visibles: {(reception.visible_damage as string[]).join(", ")}</span> : null}
+          </Card>
+        ) : null}
+        <Card className="flex flex-col gap-3">
+          <h2 className="m-0 text-[17px] font-extrabold">Historial</h2>
+          <ol className="m-0 flex list-none flex-col gap-2 p-0">
+            {(history ?? []).map((h) => (
+              <li key={h.id} className="flex flex-col gap-0.5 text-[15px] font-semibold">
+                <div className="flex justify-between gap-3">
+                  <span>{statusLabel(h.to_status)}</span>
+                  <span className="text-[13px] text-muted">{fmtDateTime(h.created_at)}</span>
+                </div>
+                {h.reason ? <span className="text-[13px] font-normal text-muted">{h.reason}</span> : null}
+              </li>
+            ))}
+          </ol>
+        </Card>
+        <Card className="flex flex-col gap-3">
+          <h2 className="m-0 text-[17px] font-extrabold">Notas</h2>
+          {(notes ?? []).length === 0 ? <p className="m-0 text-[14px] text-muted">Sin notas todavía.</p> : null}
+          {(notes ?? []).map((n) => (
+            <p key={n.id} className="m-0 text-[15px] leading-normal">
+              {n.body}{" "}
+              <span className="text-[12px] text-muted">
+                · {n.visibility === "customer" ? "visible al cliente" : "interna"} · {fmtDateTime(n.created_at)}
+              </span>
+            </p>
+          ))}
+        </Card>
+      </div>
+      <aside className="flex flex-col gap-4">
+        <Card className="flex flex-col gap-3">
+          <h2 className="m-0 text-[17px] font-extrabold">Cambiar estado</h2>
+          <TransitionForm ticketId={t.id} options={options} />
+        </Card>
+        {me.role === "admin" ? (
+          <Card>
+            <AssignForm ticketId={t.id} current={t.assigned_to} staff={(staffRes.data ?? []).map((s) => ({ id: s.id, name: s.full_name || s.email }))} />
+          </Card>
+        ) : null}
+        <Card>
+          <NoteForm ticketId={t.id} />
+        </Card>
+      </aside>
+    </section>
+  );
+}

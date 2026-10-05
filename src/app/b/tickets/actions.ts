@@ -1,0 +1,100 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { z } from "zod";
+import { assertRole } from "@/lib/auth/session";
+import { zodToState, type ActionState } from "@/lib/auth/schemas";
+import { createClient } from "@/lib/supabase/server";
+
+const TRANSITION_ERRORS: [RegExp, string][] = [
+  [/forbidden/, "No tienes permiso para esta acción."],
+  [/invalid_transition/, "Ese cambio de estado no está permitido desde el estado actual."],
+  [/reason_required/, "Escribe el motivo del cambio."],
+  [/reception_missing/, "Primero registra la recepción del equipo."],
+  [/reception_photos_missing/, "Faltan fotografías de recepción obligatorias."],
+  [/quote_not_sent/, "Primero envía la cotización al cliente."],
+  [/quote_not_approved/, "La cotización todavía no está aprobada."],
+  [/checklist_missing/, "Primero inicia el checklist de pruebas."],
+  [/checklist_incomplete/, "Hay pruebas obligatorias pendientes o fallidas en el checklist."],
+  [/delivery_record_missing/, "Primero registra los datos de la entrega."],
+];
+const friendlyTransitionError = (m?: string) =>
+  TRANSITION_ERRORS.find(([re]) => m && re.test(m))?.[1] ?? "No pudimos cambiar el estado. Inténtalo de nuevo.";
+
+const transitionSchema = z.object({
+  ticketId: z.string().uuid(),
+  to: z.enum(["received", "diagnosing", "awaiting_approval", "awaiting_part", "in_service", "testing", "ready", "delivered", "cancelled"]),
+  reason: z.string().trim().max(500).optional(),
+});
+
+/** El estado solo cambia por la función de base de datos: valida rol, asignación, transición y precondiciones. */
+export async function transitionAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  await assertRole(["technician", "admin"]);
+  const parsed = transitionSchema.safeParse(Object.fromEntries(fd.entries()));
+  if (!parsed.success) return zodToState(parsed.error);
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("transition_ticket", { p_ticket: parsed.data.ticketId, p_to: parsed.data.to, p_reason: parsed.data.reason || null });
+  if (error) return { ok: false, error: friendlyTransitionError(error.message) };
+  revalidatePath(`/b/tickets/${parsed.data.ticketId}`);
+  revalidatePath("/b/tickets");
+  return { ok: true, message: "Estado actualizado." };
+}
+
+const assignSchema = z.object({ ticketId: z.string().uuid(), staffId: z.string().uuid() });
+export async function assignAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  await assertRole(["admin"]);
+  const parsed = assignSchema.safeParse(Object.fromEntries(fd.entries()));
+  if (!parsed.success) return { ok: false, error: "Elige a quién asignar." };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("assign_ticket", { p_ticket: parsed.data.ticketId, p_staff: parsed.data.staffId });
+  if (error) return { ok: false, error: "No pudimos asignar el ticket." };
+  revalidatePath(`/b/tickets/${parsed.data.ticketId}`);
+  return { ok: true, message: "Ticket asignado." };
+}
+
+const noteSchema = z.object({
+  ticketId: z.string().uuid(),
+  body: z.string().trim().min(1, "Escribe la nota.").max(2000),
+  visibility: z.enum(["internal", "customer"]),
+});
+export async function addNoteAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  await assertRole(["technician", "admin"]);
+  const parsed = noteSchema.safeParse(Object.fromEntries(fd.entries()));
+  if (!parsed.success) return zodToState(parsed.error);
+  const supabase = await createClient();
+  const { error } = await supabase.from("ticket_notes").insert({ ticket_id: parsed.data.ticketId, body: parsed.data.body, visibility: parsed.data.visibility });
+  if (error) return { ok: false, error: "No pudimos guardar la nota." };
+  revalidatePath(`/b/tickets/${parsed.data.ticketId}`);
+  return { ok: true, message: "Nota guardada." };
+}
+
+/** Convierte una solicitud pendiente en ticket (recepción del equipo). Solo administración. */
+export async function receiveRequestAction(fd: FormData): Promise<void> {
+  const admin = await assertRole(["admin"]);
+  const id = z.string().uuid().safeParse(fd.get("requestId"));
+  if (!id.success) return;
+  const supabase = await createClient();
+  const { data: r } = await supabase
+    .from("service_requests")
+    .select("id, customer_id, equipment_id, service_id, modality, problem_description, status")
+    .eq("id", id.data)
+    .maybeSingle();
+  if (!r || !["pending", "scheduled"].includes(r.status)) return;
+  const { data: t, error } = await supabase
+    .from("tickets")
+    .insert({
+      customer_id: r.customer_id,
+      equipment_id: r.equipment_id,
+      service_request_id: r.id,
+      service_id: r.service_id,
+      modality: r.modality,
+      problem: r.problem_description,
+      assigned_to: admin.id,
+    })
+    .select("id")
+    .single();
+  if (error || !t) return;
+  revalidatePath("/b/solicitudes");
+  redirect(`/b/tickets/${t.id}`);
+}
