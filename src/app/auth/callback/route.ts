@@ -10,6 +10,7 @@ import { NEXT_COOKIE, safeNext } from "@/lib/auth/routes";
  *  - `next` pasa por safeNext (solo rutas internas): sin open redirect.
  *  - Cancelación o error del proveedor → /login con aviso; nunca se refleja el texto del error recibido.
  *  - Una sesión sin perfil activo se cierra de inmediato (el rol sale SIEMPRE de la base de datos, nunca de Google).
+ *  - El personal NO puede entrar por este camino (Google/enlace): se cierra la sesión y debe usar correo y contraseña.
  */
 export async function GET(request: NextRequest) {
   const appUrl = getPublicEnv().NEXT_PUBLIC_APP_URL;
@@ -39,11 +40,16 @@ export async function GET(request: NextRequest) {
 
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) return to("/login?error=oauth");
-  const { data: profile, error: pErr } = await supabase.from("profiles").select("id, is_active").eq("id", auth.user.id).maybeSingle();
+  const { data: profile, error: pErr } = await supabase.from("profiles").select("id, is_active, role").eq("id", auth.user.id).maybeSingle();
   if (pErr || !profile) {
     console.error("auth.callback.profile", pErr?.code ?? "missing");
     await supabase.auth.signOut();
     return to("/login?error=profile");
+  }
+  // Zero Trust: el personal (admin/técnico) solo entra con correo y contraseña; una cuenta de Google comprometida no debe dar acceso al CRM.
+  if (profile.role !== "client") {
+    await supabase.auth.signOut();
+    return to("/login?error=staff");
   }
   if (!profile.is_active) {
     await supabase.auth.signOut();

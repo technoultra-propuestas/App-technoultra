@@ -31,7 +31,7 @@ beforeEach(() => {
   supabase.auth.exchangeCodeForSession.mockResolvedValue({ error: null });
   supabase.auth.getUser.mockResolvedValue({ data: { user: { id: "u1" } } });
   supabase.auth.signOut.mockResolvedValue({});
-  supabase.from.mockReturnValue(profileQuery({ data: { id: "u1", is_active: true }, error: null }));
+  supabase.from.mockReturnValue(profileQuery({ data: { id: "u1", is_active: true, role: "client" }, error: null }));
 });
 
 describe("GET /auth/callback", () => {
@@ -74,6 +74,12 @@ describe("GET /auth/callback", () => {
     expect(loc(r)).toBe("https://app.technoultra.com/login?error=link");
     expect(supabase.auth.exchangeCodeForSession).not.toHaveBeenCalled();
   });
+  it.each(["admin", "technician"])("el personal (%s) NO puede entrar por Google/enlace: se cierra la sesión", async (role) => {
+    supabase.from.mockReturnValue(profileQuery({ data: { id: "u1", is_active: true, role }, error: null }));
+    const r = await callback(req("/auth/callback?code=abc&next=/b"));
+    expect(supabase.auth.signOut).toHaveBeenCalled();
+    expect(loc(r)).toBe("https://app.technoultra.com/login?error=staff");
+  });
   it("usuario autenticado SIN perfil → se cierra la sesión", async () => {
     supabase.from.mockReturnValue(profileQuery({ data: null, error: null }));
     const r = await callback(req("/auth/callback?code=abc"));
@@ -87,7 +93,7 @@ describe("GET /auth/callback", () => {
     expect(loc(r)).toContain("error=profile");
   });
   it("perfil desactivado → se cierra la sesión", async () => {
-    supabase.from.mockReturnValue(profileQuery({ data: { id: "u1", is_active: false }, error: null }));
+    supabase.from.mockReturnValue(profileQuery({ data: { id: "u1", is_active: false, role: "client" }, error: null }));
     const r = await callback(req("/auth/callback?code=abc"));
     expect(supabase.auth.signOut).toHaveBeenCalled();
     expect(loc(r)).toBe("https://app.technoultra.com/login?error=inactive");
