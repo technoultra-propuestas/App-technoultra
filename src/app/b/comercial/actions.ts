@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { auditAdmin } from "@/lib/auth/audit";
 import { assertRole } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 
@@ -20,13 +21,14 @@ const taxSchema = z.object({
 
 /** Configuración fiscal (solo administración; la BD valida los valores y audita el cambio). No toca ningún precio existente. */
 export async function saveTaxAction(fd: FormData): Promise<void> {
-  await assertRole(["admin"]);
+  const actor = await assertRole(["admin"]);
   const p = taxSchema.safeParse(Object.fromEntries(fd.entries()));
   if (!p.success) redirect("/b/comercial?error=impuestos");
   const supabase = await createClient();
   const a = await supabase.from("app_settings").update({ value: p.data.responsible === "on" }).eq("key", "tax.vat_responsible");
   const b = await supabase.from("app_settings").update({ value: p.data.rate }).eq("key", "tax.vat_rate");
   if (a.error || b.error) redirect("/b/comercial?error=impuestos");
+  await auditAdmin(actor.id, "admin.settings_changed", undefined, { setting: "tax" });
   revalidatePath("/b/comercial");
   redirect("/b/comercial?ok=impuestos");
 }
@@ -49,7 +51,7 @@ const urgencySchema = z.object({
 
 /** Nivel de urgencia: porcentaje, valor fijo, mínimo, horario, días, modalidades y servicios a los que aplica. */
 export async function saveUrgencyAction(fd: FormData): Promise<void> {
-  await assertRole(["admin"]);
+  const actor = await assertRole(["admin"]);
   const p = urgencySchema.safeParse(Object.fromEntries(fd.entries()));
   const days = fd.getAll("days").map(Number).filter((d) => Number.isInteger(d) && d >= 1 && d <= 7);
   const modalities = fd.getAll("modalities").map(String).filter((m): m is "store" | "pickup" | "home" | "remote" => ["store", "pickup", "home", "remote"].includes(m));
@@ -75,6 +77,7 @@ export async function saveUrgencyAction(fd: FormData): Promise<void> {
   if (error || !data?.length) redirect("/b/comercial?error=urgencia");
   await supabase.from("urgency_level_services").delete().eq("level_id", v.id);
   if (services.length) await supabase.from("urgency_level_services").insert(services.map((service_id) => ({ level_id: v.id, service_id })));
+  await auditAdmin(actor.id, "admin.settings_changed", undefined, { setting: "urgency" });
   revalidatePath("/b/comercial");
   redirect("/b/comercial?ok=urgencia");
 }

@@ -21,6 +21,7 @@ const ITEMS: Item[] = [
   { href: "/b/privacidad", label: "Privacidad", admin: true },
   { href: "/b/configuracion", label: "Ajustes", admin: true },
   { href: "/b/usuarios", label: "Usuarios", admin: true },
+  { href: "/b/seguridad", label: "Seguridad" },
 ];
 
 /** Los enlaces administrativos solo se ocultan por comodidad: cada ruta y acción valida el rol en el servidor. */

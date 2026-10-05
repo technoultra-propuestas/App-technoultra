@@ -1,10 +1,16 @@
 import type { AppRole } from "@/lib/auth/types";
 
 export const roleHome = (role: AppRole): string => (role === "client" ? "/c" : "/b");
+export const isStaffRole = (role: AppRole): boolean => role !== "client";
 
 /** Prefijos que exigen sesión (el proxy hace el control grueso; layouts y acciones hacen el control real). */
-export const PROTECTED_PREFIXES = ["/c", "/b", "/onboarding", "/restablecer", "/avisos"] as const;
-export const AUTH_PAGES = ["/login", "/registro", "/equipo", "/recuperar", "/verificar"] as const;
+export const PROTECTED_PREFIXES = ["/c", "/b", "/onboarding", "/restablecer", "/avisos", "/gestion/mfa", "/gestion/restablecer"] as const;
+export const AUTH_PAGES = ["/login", "/registro", "/equipo", "/recuperar", "/verificar", "/gestion/login", "/gestion/recuperar"] as const;
+
+/** Zona de gestión (personal): exige MFA (aal2) y tiene su propia puerta de entrada. */
+export const isStaffArea = (pathname: string) => pathname === "/b" || pathname.startsWith("/b/") || pathname === "/gestion" || pathname.startsWith("/gestion/");
+/** Puerta de entrada según la zona: el personal entra por /gestion/login, los clientes por /login. */
+export const loginPathFor = (pathname: string) => (isStaffArea(pathname) ? "/gestion/login" : "/login");
 
 const matches = (pathname: string, prefix: string) =>
   pathname === prefix || pathname.startsWith(prefix + "/");

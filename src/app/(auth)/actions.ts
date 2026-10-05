@@ -101,6 +101,11 @@ export async function signInAction(_prev: ActionState, fd: FormData): Promise<Ac
     .select("role, is_active")
     .eq("id", data.user.id)
     .maybeSingle();
+  if (profile && profile.role !== "client") {
+    // El personal tiene su propia puerta (con verificación en dos pasos): no se abre sesión por el acceso de clientes.
+    await supabase.auth.signOut();
+    return { ok: false, error: "Esta cuenta pertenece al equipo. Ingresa desde el acceso de personal." };
+  }
   if (!profile || !profile.is_active) {
     await supabase.auth.signOut();
     return { ok: false, error: "Esta cuenta está desactivada. Habla con administración." };
@@ -110,8 +115,16 @@ export async function signInAction(_prev: ActionState, fd: FormData): Promise<Ac
 
 export async function signOutAction(): Promise<void> {
   const supabase = await createClient();
+  // Personal: queda constancia del cierre de sesión y vuelve a su propia puerta de entrada.
+  const { data: auth } = await supabase.auth.getUser();
+  let staff = false;
+  if (auth.user) {
+    const { data: p } = await supabase.from("profiles").select("role").eq("id", auth.user.id).maybeSingle();
+    staff = Boolean(p && p.role !== "client");
+    if (staff) await supabase.rpc("log_staff_event", { p_event: "staff.logout", p_metadata: {} });
+  }
   await supabase.auth.signOut();
-  redirect("/login");
+  redirect(staff ? "/gestion/login" : "/login");
 }
 
 export async function requestPasswordResetAction(_prev: ActionState, fd: FormData): Promise<ActionState> {

@@ -25,7 +25,7 @@ export default async function LoginPage({
   const sp = await searchParams;
   const next = sp.next ? safeNext(sp.next, "") : "";
   return (
-    <AuthShell title="Inicia sesión" back="/">
+    <AuthShell title="Inicia sesión" subtitle="Soluciones tecnológicas para ti." back="/">
       <GoogleButton next={next || undefined} />
       <div className="flex items-center gap-3 text-[13px] font-bold text-muted" aria-hidden>
         <span className="h-px flex-1 bg-line" /> o con tu correo <span className="h-px flex-1 bg-line" />

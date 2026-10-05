@@ -15,7 +15,9 @@ export async function GET(request: NextRequest) {
   if (!(await allow("oauth-ip", await clientIp(), 30, 600))) {
     return NextResponse.redirect(new URL("/login?error=rate", appUrl));
   }
-  const next = safeNext(request.nextUrl.searchParams.get("next"), "/");
+  let next = safeNext(request.nextUrl.searchParams.get("next"), "/");
+  // Google es solo para clientes: nunca hacia gestión.
+  if (next === "/b" || next.startsWith("/b/") || next.startsWith("/gestion")) next = "/";
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",

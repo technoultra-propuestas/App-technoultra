@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { buildCsp, newNonce } from "@/lib/security/csp";
-import { isAuthPage, isProtectedPath, safeNext } from "@/lib/auth/routes";
+import { isAuthPage, isProtectedPath, loginPathFor, safeNext } from "@/lib/auth/routes";
 
 /**
  * Proxy (antes "middleware" en Next 14): refresca la sesión, aplica CSP con nonce y hace el control GRUESO de acceso.
@@ -33,6 +33,8 @@ export async function proxy(request: NextRequest) {
   // getClaims valida la firma del JWT (y refresca si expiró) sin una ida y vuelta al servidor en cada navegación.
   const { data } = await supabase.auth.getClaims();
   const signedIn = Boolean(data?.claims?.sub);
+  // aal viene del JWT con firma verificada (getClaims): aal2 solo existe tras verificar un factor TOTP en Supabase Auth.
+  const aal2 = (data?.claims as { aal?: string } | undefined)?.aal === "aal2";
   const { pathname, search } = request.nextUrl;
 
   const redirectTo = (path: string, params?: Record<string, string>) => {
@@ -48,7 +50,9 @@ export async function proxy(request: NextRequest) {
   };
 
   if (!signedIn && isProtectedPath(pathname))
-    return redirectTo("/login", { next: safeNext(pathname + search, "/") });
+    return redirectTo(loginPathFor(pathname), { next: safeNext(pathname + search, "/") });
+  // Control grueso: el panel de gestión exige MFA (aal2). La autorización real sigue en layouts, acciones y RLS.
+  if (signedIn && !aal2 && (pathname === "/b" || pathname.startsWith("/b/"))) return redirectTo("/gestion/mfa");
   if (signedIn && isAuthPage(pathname) && pathname !== "/verificar") return redirectTo("/");
 
   response.headers.set("Content-Security-Policy", csp);

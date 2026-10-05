@@ -32,11 +32,9 @@ export function GoogleButton({ next }: { next?: string }) {
 export function LoginForm({
   next,
   notice,
-  staff = false,
 }: {
   next?: string;
   notice?: string;
-  staff?: boolean;
 }) {
   const [state, action] = useActionState(signInAction, initialState);
   return (
@@ -67,9 +65,10 @@ export function LoginForm({
         ¿Olvidaste tu contraseña?
       </Link>
       {state.error && !state.fieldErrors ? <Alert>{state.error}</Alert> : null}
-      <SubmitButton variant={staff ? "primary" : "primary"} pendingText="Entrando…">
-        Entrar
-      </SubmitButton>
+      <SubmitButton pendingText="Entrando…">Entrar</SubmitButton>
+      <Link href="/gestion/login" className="flex min-h-11 w-fit items-center text-[13px] font-semibold text-muted underline decoration-line-strong underline-offset-[3px]">
+        ¿Eres del equipo? Acceso de personal
+      </Link>
     </form>
   );
 }

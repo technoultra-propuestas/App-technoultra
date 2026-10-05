@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { requireRole } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { InviteStaffForm } from "./invite-form";
-import { setUserActiveAction } from "./actions";
+import { resetStaffMfaAction, setUserActiveAction } from "./actions";
 
 export const metadata: Metadata = { title: "Usuarios del equipo", robots: { index: false } };
 
@@ -44,6 +44,13 @@ export default async function UsersPage() {
                 </div>
               </div>
               {u.id !== me.id ? (
+                <div className="flex flex-wrap justify-end gap-2">
+                <form action={resetStaffMfaAction}>
+                  <input type="hidden" name="userId" value={u.id} />
+                  <button type="submit" className="min-h-11 rounded-[14px] border border-line-strong bg-white px-4 text-[14px] font-extrabold" title="Si perdió su teléfono: deberá configurar el autenticador de nuevo">
+                    Restablecer MFA
+                  </button>
+                </form>
                 <form action={setUserActiveAction}>
                   <input type="hidden" name="userId" value={u.id} />
                   <input type="hidden" name="active" value={u.is_active ? "false" : "true"} />
@@ -54,6 +61,7 @@ export default async function UsersPage() {
                     {u.is_active ? "Desactivar" : "Activar"}
                   </button>
                 </form>
+                </div>
               ) : null}
             </li>
           ))}

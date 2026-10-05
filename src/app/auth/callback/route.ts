@@ -46,8 +46,15 @@ export async function GET(request: NextRequest) {
     await supabase.auth.signOut();
     return to("/login?error=profile");
   }
-  // Zero Trust: el personal (admin/técnico) solo entra con correo y contraseña; una cuenta de Google comprometida no debe dar acceso al CRM.
+  // Zero Trust: el personal (admin/técnico) NO entra por Google ni por este callback salvo para recuperar/establecer contraseña
+  // (cookie de destino /gestion/... y sesión creada por un enlace de correo). Esa sesión es aal1: sin privilegios hasta verificar el
+  // autenticador (la BD no concede rol al personal sin aal2) y GoTrue exige aal2 para cambiar la contraseña si ya hay MFA.
   if (profile.role !== "client") {
+    const cookieNext = request.cookies.get(NEXT_COOKIE)?.value;
+    const { data: c } = await supabase.auth.getClaims();
+    const methods = ((c?.claims as { amr?: { method?: string }[] } | undefined)?.amr ?? []).map((a) => String(a.method));
+    const emailLink = !methods.includes("oauth") && !methods.includes("password");
+    if (cookieNext === "/gestion/restablecer" && emailLink && profile.is_active) return to("/gestion/restablecer");
     await supabase.auth.signOut();
     return to("/login?error=staff");
   }
@@ -55,5 +62,6 @@ export async function GET(request: NextRequest) {
     await supabase.auth.signOut();
     return to("/login?error=inactive");
   }
-  return to(next);
+  // La cookie de recuperación del personal no aplica a clientes.
+  return to(next.startsWith("/gestion") ? "/" : next);
 }

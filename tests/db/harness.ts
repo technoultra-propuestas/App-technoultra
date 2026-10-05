@@ -26,6 +26,9 @@ export async function createDb() {
       select coalesce(nullif(current_setting('request.jwt.claim.sub', true), ''),
                       (nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'sub'))::uuid $$;
     grant execute on function auth.uid() to anon, authenticated, service_role;
+    create function auth.jwt() returns jsonb language sql stable as $$
+      select coalesce(nullif(current_setting('request.jwt.claims', true), '')::jsonb, '{}'::jsonb) $$;
+    grant execute on function auth.jwt() to anon, authenticated, service_role;
     -- privilegios por defecto idénticos a un proyecto Supabase nuevo
     alter default privileges for role postgres in schema public grant all on tables to anon, authenticated, service_role;
     alter default privileges for role postgres in schema public grant all on sequences to anon, authenticated, service_role;
@@ -50,13 +53,14 @@ let seq = 0;
 export const uid = () => `00000000-0000-4000-8000-${String(++seq).padStart(12, "0")}`;
 
 /** Ejecuta como el rol de PostgREST: role authenticated/anon + claims JWT. */
-export async function as<T>(db: Db, userId: string | null, fn: () => Promise<T>): Promise<T> {
+/** aal: nivel de aseguramiento de la sesión (aal2 = MFA verificado). Por defecto aal2 para no alterar pruebas existentes. */
+export async function as<T>(db: Db, userId: string | null, fn: () => Promise<T>, opts: { aal?: "aal1" | "aal2" } = {}): Promise<T> {
   const role = userId ? "authenticated" : "anon";
   await db.exec(`set role ${role}`);
   if (userId) {
     await db.exec(`select set_config('request.jwt.claim.sub', '${userId}', false)`);
     await db.exec(
-      `select set_config('request.jwt.claims', '{"sub":"${userId}","role":"authenticated"}', false)`,
+      `select set_config('request.jwt.claims', '{"sub":"${userId}","role":"authenticated","aal":"${opts.aal ?? "aal2"}"}', false)`,
     );
   }
   try {

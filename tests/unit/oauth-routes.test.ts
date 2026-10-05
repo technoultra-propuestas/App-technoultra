@@ -7,6 +7,7 @@ const supabase = {
     getUser: vi.fn(),
     signOut: vi.fn(),
     signInWithOAuth: vi.fn(),
+    getClaims: vi.fn(),
   },
   from: vi.fn(),
 };
@@ -31,6 +32,7 @@ beforeEach(() => {
   supabase.auth.exchangeCodeForSession.mockResolvedValue({ error: null });
   supabase.auth.getUser.mockResolvedValue({ data: { user: { id: "u1" } } });
   supabase.auth.signOut.mockResolvedValue({});
+  supabase.auth.getClaims.mockResolvedValue({ data: { claims: { amr: [{ method: "oauth" }] } } });
   supabase.from.mockReturnValue(profileQuery({ data: { id: "u1", is_active: true, role: "client" }, error: null }));
 });
 
@@ -80,6 +82,28 @@ describe("GET /auth/callback", () => {
     expect(supabase.auth.signOut).toHaveBeenCalled();
     expect(loc(r)).toBe("https://app.technoultra.com/login?error=staff");
   });
+  it("personal que llega por enlace de recuperación (cookie de gestión + sesión de correo) → solo a /gestion/restablecer", async () => {
+    supabase.from.mockReturnValue(profileQuery({ data: { id: "u1", is_active: true, role: "admin" }, error: null }));
+    supabase.auth.getClaims.mockResolvedValue({ data: { claims: { amr: [{ method: "otp" }] } } });
+    const r = await callback(req("/auth/callback?code=abc", { cookie: "tu_next=/gestion/restablecer" }));
+    expect(loc(r)).toBe("https://app.technoultra.com/gestion/restablecer");
+    expect(supabase.auth.signOut).not.toHaveBeenCalled();
+  });
+  it.each([
+    ["Google con cookie de gestión", [{ method: "oauth" }], "tu_next=/gestion/restablecer"],
+    ["enlace de correo SIN cookie de gestión", [{ method: "otp" }], "tu_next=/b"],
+    ["sesión de contraseña con cookie de gestión", [{ method: "password" }], "tu_next=/gestion/restablecer"],
+  ])("el personal NO entra por el callback: %s", async (_n, amr, cookie) => {
+    supabase.from.mockReturnValue(profileQuery({ data: { id: "u1", is_active: true, role: "admin" }, error: null }));
+    supabase.auth.getClaims.mockResolvedValue({ data: { claims: { amr } } });
+    const r = await callback(req("/auth/callback?code=abc", { cookie }));
+    expect(supabase.auth.signOut).toHaveBeenCalled();
+    expect(loc(r)).toBe("https://app.technoultra.com/login?error=staff");
+  });
+  it("un cliente con la cookie de recuperación de gestión es llevado a su inicio, no a /gestion", async () => {
+    const r = await callback(req("/auth/callback?code=abc", { cookie: "tu_next=/gestion/restablecer" }));
+    expect(loc(r)).toBe("https://app.technoultra.com/");
+  });
   it("usuario autenticado SIN perfil → se cierra la sesión", async () => {
     supabase.from.mockReturnValue(profileQuery({ data: null, error: null }));
     const r = await callback(req("/auth/callback?code=abc"));
@@ -123,6 +147,11 @@ describe("GET /auth/google", () => {
     supabase.auth.signInWithOAuth.mockResolvedValue({ data: { url: "https://x.supabase.co/auth/v1/authorize" }, error: null });
     const r = await startGoogle(req("/auth/google?next=https://evil.com"));
     expect(supabase.auth.signInWithOAuth.mock.calls[0][0].options.redirectTo).toBe("https://app.technoultra.com/auth/callback");
+    expect(r.cookies.get("tu_next")?.value).toBe("/");
+  });
+  it.each(["/b", "/b/usuarios", "/gestion/mfa", "/gestion/restablecer"])("Google nunca apunta a gestión: next=%s → /", async (n) => {
+    supabase.auth.signInWithOAuth.mockResolvedValue({ data: { url: "https://x.supabase.co/auth/v1/authorize" }, error: null });
+    const r = await startGoogle(req(`/auth/google?next=${encodeURIComponent(n)}`));
     expect(r.cookies.get("tu_next")?.value).toBe("/");
   });
   it("error de configuración del proveedor → /login?error=oauth", async () => {
