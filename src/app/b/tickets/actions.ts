@@ -7,6 +7,7 @@ import { assertRole } from "@/lib/auth/session";
 import { zodToState, type ActionState } from "@/lib/auth/schemas";
 import { generateTicketDocument, type DocKind } from "@/lib/documents/generate";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { scheduleEmailFlush } from "@/lib/email/outbox";
 import { createClient } from "@/lib/supabase/server";
 
 const TRANSITION_ERRORS: [RegExp, string][] = [
@@ -54,6 +55,7 @@ export async function transitionAction(_p: ActionState, fd: FormData): Promise<A
   const { error } = await supabase.rpc("transition_ticket", { p_ticket: parsed.data.ticketId, p_to: parsed.data.to, p_reason: parsed.data.reason || null });
   if (error) return { ok: false, error: friendlyTransitionError(error.message) };
   await autoDocuments(parsed.data.ticketId, parsed.data.to, actor.id);
+  scheduleEmailFlush();
   revalidatePath(`/b/tickets/${parsed.data.ticketId}`);
   revalidatePath("/b/tickets");
   return { ok: true, message: "Estado actualizado." };

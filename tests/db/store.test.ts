@@ -166,3 +166,30 @@ describe("tareas periódicas", () => {
     expect(again.maintenance_reminders).toBe(0); // idempotente
   });
 });
+
+describe("cola de correos", () => {
+  it("reclama solo avisos importantes, respeta preferencias, no duplica y solo service_role la usa", async () => {
+    await expect(as(db, cliA, () => q(`select * from public.claim_email_notifications(5)`))).rejects.toThrow(denied);
+    await q(`insert into notifications (recipient_id, type, title) values ($1,'quote.sent','Cotización lista'), ($1,'ticket.assigned','Interno'), ($2,'quote.sent','No quiere correo')`, [cliA, cliB]);
+    await q(`insert into notification_preferences (profile_id, email_enabled) values ($1, false)`, [cliB]);
+    const first = await q<{ to_email: string; title: string }>(`select to_email, title from public.claim_email_notifications(50)`);
+    expect(first.filter((r) => r.title === "Cotización lista")).toEqual([{ to_email: "a@gmail.com", title: "Cotización lista" }]);
+    expect(first.some((r) => r.title === "Interno")).toBe(false);
+    expect(first.some((r) => r.title === "No quiere correo")).toBe(false);
+    const second = await q<{ title: string }>(`select title from public.claim_email_notifications(50)`);
+    expect(second.some((r) => r.title === "Cotización lista")).toBe(false); // ya reclamado: sin duplicados
+    expect((await q<{ n: number }>(`select public.skip_non_email_notifications() n`))[0].n).toBeGreaterThanOrEqual(1);
+  });
+});
+
+describe("reportes", () => {
+  it("solo administración los consulta y devuelve agregados", async () => {
+    await expect(as(db, cliA, () => q(`select public.admin_report(current_date - 30, current_date)`))).rejects.toThrow(denied);
+    await expect(as(db, admin, () => q(`select public.admin_report(current_date, current_date - 1)`))).rejects.toThrow(/invalid_range/);
+    await expect(as(db, admin, () => q(`select public.admin_report(current_date - 800, current_date)`))).rejects.toThrow(/invalid_range/);
+    const [{ r }] = await as(db, admin, () => q<{ r: Record<string, unknown> }>(`select public.admin_report(current_date - 30, current_date + 1) r`));
+    expect(Number(r.revenue_cop)).toBeGreaterThanOrEqual(0);
+    expect(r).toHaveProperty("tickets_by_status");
+    expect(JSON.stringify(r)).not.toMatch(/@|full_name|phone/);
+  });
+});

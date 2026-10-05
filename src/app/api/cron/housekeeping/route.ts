@@ -1,6 +1,7 @@
 import { timingSafeEqual } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
+import { flushEmailOutbox } from "@/lib/email/outbox";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const reply = (status: number, body: Record<string, unknown> = {}) => NextResponse.json(body, { status, headers: { "Cache-Control": "no-store" } });
@@ -21,10 +22,13 @@ export async function GET(request: NextRequest) {
   const header = request.headers.get("authorization") ?? "";
   if (!header.startsWith("Bearer ") || !safeEqual(header.slice(7), secret.data)) return reply(401, { error: "unauthorized" });
 
-  const { data, error } = await createAdminClient().rpc("run_housekeeping");
+  const admin = createAdminClient();
+  const { data, error } = await admin.rpc("run_housekeeping");
   if (error) {
     console.error("cron.housekeeping", error.code);
     return reply(500, { error: "failed" });
   }
-  return reply(200, { ok: true, result: data });
+  await admin.rpc("skip_non_email_notifications");
+  const emails = await flushEmailOutbox(50);
+  return reply(200, { ok: true, result: data, emails });
 }

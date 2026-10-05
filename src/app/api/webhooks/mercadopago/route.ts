@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { serverEnv } from "@/lib/env.server";
 import { fetchPayment, mapStatus, verifyWebhookSignature } from "@/lib/payments/mercadopago";
+import { scheduleEmailFlush } from "@/lib/email/outbox";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const reply = (status: number, body: Record<string, unknown> = {}) => NextResponse.json(body, { status, headers: { "Cache-Control": "no-store" } });
@@ -54,5 +55,6 @@ export async function POST(request: NextRequest) {
     console.error("mp.webhook.apply", error.code);
     return reply(500, { error: "apply_failed" });
   }
+  scheduleEmailFlush();
   return reply(200, { result: data });
 }

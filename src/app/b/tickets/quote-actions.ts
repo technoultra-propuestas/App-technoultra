@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { assertRole } from "@/lib/auth/session";
 import { zodToState, type ActionState } from "@/lib/auth/schemas";
+import { scheduleEmailFlush } from "@/lib/email/outbox";
 import { createClient } from "@/lib/supabase/server";
 
 const QUOTE_ERRORS: [RegExp, string][] = [
@@ -109,6 +110,7 @@ async function run(fd: FormData, fn: "send_quote" | "record_in_person_approval" 
       : await supabase.rpc(fn, { p_quote: p.data.quoteId });
   if (error) return { ok: false, error: friendly(error.message) };
   refresh(p.data.ticketId);
+  scheduleEmailFlush();
   return { ok: true, message: "Listo." };
 }
 export const sendQuoteAction = async (_p: ActionState, fd: FormData) => run(fd, "send_quote");

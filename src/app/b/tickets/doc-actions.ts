@@ -6,6 +6,7 @@ import { assertRole } from "@/lib/auth/session";
 import { allow, TOO_MANY } from "@/lib/auth/rate-limit";
 import type { ActionState } from "@/lib/auth/schemas";
 import { generateTicketDocument } from "@/lib/documents/generate";
+import { scheduleEmailFlush } from "@/lib/email/outbox";
 import { createClient } from "@/lib/supabase/server";
 
 const schema = z.object({
@@ -25,5 +26,6 @@ export async function generateDocumentAction(_p: ActionState, fd: FormData): Pro
   const r = await generateTicketDocument(parsed.data.kind, parsed.data.ticketId, profile.id);
   if (!r.ok) return { ok: false, error: r.error };
   revalidatePath(`/b/tickets/${parsed.data.ticketId}`);
+  scheduleEmailFlush();
   return { ok: true, message: `Documento ${r.code} generado.` };
 }
