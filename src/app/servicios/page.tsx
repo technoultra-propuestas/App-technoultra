@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 export default async function ServicesIndex() {
   const sb = createPublicClient();
   const [{ data: services }, { data: cats }] = await Promise.all([
-    sb.from("services").select("slug, name, kind, short_description, price_mode, base_price, price_unit, category_id").order("sort_order").order("name"),
+    sb.from("services").select("slug, name, kind, short_description, price_mode, base_price, price_unit, price_type_label, parts_extra, category_id").order("sort_order").order("name"),
     sb.from("service_categories").select("id, name, kind").order("sort_order"),
   ]);
   const list = services ?? [];

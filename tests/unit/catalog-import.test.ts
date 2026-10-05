@@ -1,8 +1,6 @@
 import { existsSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-// @ts-expect-error módulo .mjs sin tipos (script de carga inicial)
 import { parseCatalog, parseModalities } from "../../scripts/lib/catalog-map.mjs";
-// @ts-expect-error módulo .mjs sin tipos
 import { readWorkbook } from "../../scripts/lib/read-xlsx.mjs";
 
 const FILE = "data/import/catalogo_servicios_mantenimiento_computadores_cali.xlsx";
@@ -49,7 +47,7 @@ describe("importación de catálogo: reglas de validación", () => {
 
 describe.skipIf(!existsSync(FILE))("importación de catálogo: Excel oficial", () => {
   it("161 servicios, 13 categorías y 41 con diagnóstico, sin errores", async () => {
-    const c = parseCatalog(await readWorkbook(FILE));
+    const c = parseCatalog((await readWorkbook(FILE)) as Parameters<typeof parseCatalog>[0]);
     expect(c.issues.filter((i: { level: string }) => i.level === "error")).toEqual([]);
     expect(c.stats).toMatchObject({ services: 161, categories: 13, withDiagnosis: 41 });
     expect(new Set(c.services.map((s: { slug: string }) => s.slug)).size).toBe(161);

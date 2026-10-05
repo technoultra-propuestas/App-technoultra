@@ -13,7 +13,7 @@ export default async function ServicesAdminPage() {
   const supabase = await createClient();
   const { data } = await supabase
     .from("services")
-    .select("id, name, kind, price_mode, base_price, price_unit, is_active, allowed_modalities")
+    .select("id, name, kind, price_mode, base_price, price_unit, price_type_label, parts_extra, is_active, allowed_modalities")
     .is("deleted_at", null)
     .order("kind")
     .order("sort_order")

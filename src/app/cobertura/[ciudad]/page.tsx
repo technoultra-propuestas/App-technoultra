@@ -34,7 +34,7 @@ export default async function CityPage({ params }: { params: Promise<{ ciudad: s
   const { area, all } = await load(slug);
   if (!area) notFound();
   const sb = createPublicClient();
-  const [{ data: services }, biz] = await Promise.all([sb.from("services").select("slug, name, short_description, price_mode, base_price, price_unit, allowed_modalities").order("sort_order").order("name"), loadBusinessInfo()]);
+  const [{ data: services }, biz] = await Promise.all([sb.from("services").select("slug, name, short_description, price_mode, base_price, price_unit, price_type_label, parts_extra, allowed_modalities").order("sort_order").order("name"), loadBusinessInfo()]);
   const local = (services ?? []).filter((s) => (s.allowed_modalities as string[]).some((m) => area.allowed_modalities.includes(m)));
   const cities = all.map((a) => a.city_name);
   const faq = [

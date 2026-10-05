@@ -22,7 +22,7 @@ const faq = [
 export default async function RemoteSupportPage() {
   const sb = createPublicClient();
   const [{ data: services }, { data: areas }, biz] = await Promise.all([
-    sb.from("services").select("slug, name, short_description, price_mode, base_price, price_unit, allowed_modalities").order("name"),
+    sb.from("services").select("slug, name, short_description, price_mode, base_price, price_unit, price_type_label, parts_extra, allowed_modalities").order("name"),
     sb.from("coverage_areas").select("city_name").eq("is_active", true),
     loadBusinessInfo(),
   ]);

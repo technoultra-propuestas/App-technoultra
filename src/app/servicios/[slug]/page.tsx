@@ -14,7 +14,7 @@ async function load(slug: string) {
   if (!/^[a-z0-9-]{2,80}$/.test(slug)) return null;
   const { data } = await createPublicClient()
     .from("services")
-    .select("slug, name, kind, short_description, description, price_mode, base_price, price_unit, allowed_modalities, default_warranty_days, seo_title, seo_description, duration_minutes")
+    .select("slug, name, kind, short_description, description, price_mode, base_price, price_unit, price_type_label, parts_extra, allowed_modalities, default_warranty_days, seo_title, seo_description, duration_minutes")
     .eq("slug", slug)
     .maybeSingle();
   return data;

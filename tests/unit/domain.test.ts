@@ -112,3 +112,13 @@ describe("ajustes administrables", () => {
     expect(SETTINGS.filter((s) => s.isPublic).every((s) => s.key.startsWith("business."))).toBe(true);
   });
 });
+
+describe("priceText del catálogo oficial", () => {
+  it("respeta Desde, Gratis y + repuesto", async () => {
+    const { priceText } = await import("@/lib/domain/catalog");
+    expect(priceText({ price_mode: "from", base_price: 100000, price_unit: null })).toBe("Desde $100.000");
+    expect(priceText({ price_mode: "fixed", base_price: 0, price_unit: null, price_type_label: "Gratis" })).toBe("Gratis");
+    expect(priceText({ price_mode: "fixed", base_price: 60000, price_unit: null, parts_extra: true })).toBe("$60.000 + repuesto");
+    expect(priceText({ price_mode: "quote", base_price: null, price_unit: null })).toBe("A cotizar");
+  });
+});

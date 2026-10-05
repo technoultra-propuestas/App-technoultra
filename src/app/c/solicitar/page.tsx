@@ -30,7 +30,7 @@ export default async function RequestCatalogPage({
   const [{ data: services }, { data: categories }] = await Promise.all([
     supabase
       .from("services")
-      .select("id, slug, name, kind, short_description, price_mode, base_price, price_unit, category_id")
+      .select("id, slug, name, kind, short_description, price_mode, base_price, price_unit, price_type_label, parts_extra, category_id")
       .eq("kind", tab)
       .order("sort_order")
       .order("name"),
