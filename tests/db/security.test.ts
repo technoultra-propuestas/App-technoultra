@@ -679,6 +679,7 @@ describe("superficie de API", () => {
       `select distinct table_name from information_schema.role_table_grants where grantee = 'authenticated' and table_schema = 'public' and privilege_type = 'DELETE' order by 1`,
     );
     expect(rows.map((r) => r.table_name)).toEqual([
+      "legal_documents",
       "product_service_links",
       "push_subscriptions",
       "quote_items",
@@ -780,7 +781,7 @@ describe("revisión Zero Trust automática de funciones", () => {
          and (has_function_privilege('authenticated', p.oid, 'execute') or has_function_privilege('anon', p.oid, 'execute'))`,
     );
     const unguarded = rows.filter(
-      (r) => !publicByDesign.has(r.proname) && !/auth\.uid\(\)|private\.(is_|my_|can_)/.test(r.prosrc),
+      (r) => !publicByDesign.has(r.proname) && !/auth\.uid\(\)|private\.(is_|my_|can_|has_)/.test(r.prosrc),
     );
     expect(unguarded.map((r) => r.proname)).toEqual([]);
   });

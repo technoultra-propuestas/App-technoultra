@@ -92,3 +92,23 @@ describe("catálogo", () => {
     expect(serviceSchema.safeParse(formToObject(fd)).success).toBe(false);
   });
 });
+
+import { parseSetting, SETTINGS } from "@/lib/domain/settings";
+describe("ajustes administrables", () => {
+  const def = (k: string) => SETTINGS.find((s) => s.key === k)!;
+  it("valida enteros y rangos", () => {
+    expect(parseSetting(def("maintenance.default_months"), "6")).toEqual({ ok: true, value: 6 });
+    expect(parseSetting(def("maintenance.default_months"), "0").ok).toBe(false);
+    expect(parseSetting(def("maintenance.default_months"), "99").ok).toBe(false);
+    expect(parseSetting(def("reception.min_photos"), "4.5").ok).toBe(false);
+    expect(parseSetting(def("reception.min_photos"), "abc").ok).toBe(false);
+  });
+  it("valida el correo y el largo del texto", () => {
+    expect(parseSetting(def("business.email"), "no-es-correo").ok).toBe(false);
+    expect(parseSetting(def("business.email"), "hola@technoultra.com").ok).toBe(true);
+    expect(parseSetting(def("business.address"), "x".repeat(301)).ok).toBe(false);
+  });
+  it("solo los ajustes de negocio son públicos", () => {
+    expect(SETTINGS.filter((s) => s.isPublic).every((s) => s.key.startsWith("business."))).toBe(true);
+  });
+});

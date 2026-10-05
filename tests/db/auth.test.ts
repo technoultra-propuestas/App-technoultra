@@ -165,3 +165,25 @@ describe("registro con Google y anti-escalada de rol", () => {
     await expect(q(`insert into auth.users (id, email) values (gen_random_uuid(), null)`)).rejects.toThrow(/email_required/);
   });
 });
+
+describe("publicación de versiones legales", () => {
+  it("solo quien gestiona lo legal publica; la versión anterior queda retirada y el histórico intacto", async () => {
+    const admin = (await q<{ id: string }>(`select id from profiles where role = 'admin' limit 1`))[0].id;
+    const cli = await createUser(db, "legal.cli@gmail.com");
+    const [{ v }] = await as(db, admin, () => q<{ v: number }>(`select public.next_legal_version('privacy') v`));
+    expect(v).toBe(1);
+    expect((await as(db, cli, () => q<{ v: number | null }>(`select public.next_legal_version('privacy') v`)))[0].v).toBeNull();
+    const [{ id: d1 }] = await as(db, admin, () => q<{ id: string }>(`insert into legal_documents (slug, version, title, content) values ('privacy', 1, 'Privacidad', 'texto v1') returning id`));
+    await expect(as(db, cli, () => q(`select public.publish_legal_document($1)`, [d1]))).rejects.toThrow(denied);
+    await as(db, admin, () => q(`select public.publish_legal_document($1)`, [d1]));
+    await as(db, cli, () => q(`select public.accept_legal_document($1)`, [d1]));
+    const [{ id: d2 }] = await as(db, admin, () => q<{ id: string }>(`insert into legal_documents (slug, version, title, content) values ('privacy', 2, 'Privacidad', 'texto v2') returning id`));
+    await as(db, admin, () => q(`select public.publish_legal_document($1)`, [d2]));
+    const rows = await q<{ version: number; status: string }>(`select version, status from legal_documents where slug = 'privacy' order by version`);
+    expect(rows).toEqual([{ version: 1, status: "retired" }, { version: 2, status: "published" }]);
+    expect((await q(`select 1 from legal_acceptances where legal_document_id = $1 and profile_id = $2`, [d1, cli])).length).toBe(1);
+    await expect(as(db, admin, () => q(`select public.publish_legal_document($1)`, [d2]))).rejects.toThrow(/document_not_draft/);
+    await expect(as(db, admin, () => q(`update legal_documents set content = 'cambio' where id = $1`, [d2]))).rejects.toThrow(/immutable_legal_version/);
+    await expect(as(db, admin, () => q(`delete from legal_documents where id = $1`, [d2]))).rejects.toThrow(/immutable_legal_version/);
+  });
+});
