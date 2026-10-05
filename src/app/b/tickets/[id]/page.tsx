@@ -9,6 +9,8 @@ import { AiDiagnosisCard } from "@/components/ai/AiDiagnosisCard";
 import { reviewAiAction } from "../ai-actions";
 import { QuoteSection } from "./quote-section";
 import { ReceptionSection } from "./reception-section";
+import { WorkSection } from "./work-section";
+import { DocumentsSection } from "./documents-section";
 
 export const metadata: Metadata = { title: "Ticket", robots: { index: false } };
 
@@ -102,7 +104,9 @@ export default async function StaffTicketPage({ params }: { params: Promise<{ id
           </AiDiagnosisCard>
         ) : null}
         <ReceptionSection ticketId={t.id} problem={t.problem} open={!["delivered", "cancelled"].includes(t.status) && ["received", "diagnosing"].includes(t.status)} />
+        <WorkSection ticketId={t.id} status={t.status} />
         <QuoteSection ticketId={t.id} canQuote ticketOpen={!(["delivered", "cancelled"] as string[]).includes(t.status)} />
+        <DocumentsSection ticketId={t.id} status={t.status} />
         <Card className="flex flex-col gap-3">
           <h2 className="m-0 text-[17px] font-extrabold">Historial</h2>
           <ol className="m-0 flex list-none flex-col gap-2 p-0">

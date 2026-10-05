@@ -175,3 +175,28 @@ describe("checklist y revisión de IA", () => {
     expect(row.validated_by).toBe(tech);
   });
 });
+
+describe("documentos: vista, rechazo y numeración", () => {
+  const hash = "d".repeat(64);
+  it("solo el servidor numera documentos; el dueño marca visto y puede rechazar; otro cliente no", async () => {
+    await expect(as(db, cliA, () => q(`select public.next_document_code()`))).rejects.toThrow(denied);
+    const [{ c }] = await q<{ c: string }>(`select public.next_document_code() c`);
+    expect(c).toMatch(/^DOC-\d{4}-\d{5}$/);
+    const [{ id }] = await q<{ id: string }>(`insert into documents (code, doc_type, title, customer_id, storage_path, sha256) values ($1,'quote','Cotización',$2,'p.pdf',$3) returning id`, [c, custA, hash]);
+    await as(db, cliB, () => q(`select public.mark_document_viewed($1)`, [id]));
+    expect((await q<{ s: string }>(`select status s from documents where id = $1`, [id]))[0].s).toBe("generated");
+    await as(db, cliA, () => q(`select public.mark_document_viewed($1)`, [id]));
+    expect((await q<{ s: string }>(`select status s from documents where id = $1`, [id]))[0].s).toBe("viewed");
+    await expect(as(db, cliB, () => q(`select public.reject_document($1)`, [id]))).rejects.toThrow(/document_not_rejectable/);
+    await as(db, cliA, () => q(`select public.reject_document($1)`, [id]));
+    expect((await q<{ s: string }>(`select status s from documents where id = $1`, [id]))[0].s).toBe("rejected");
+    await expect(as(db, cliA, () => q(`select public.reject_document($1)`, [id]))).rejects.toThrow(/document_not_rejectable/);
+  });
+  it("una versión nueva reemplaza la anterior sin tocar un documento firmado", async () => {
+    const [{ id: signed }] = await q<{ id: string }>(`insert into documents (doc_type, title, customer_id, storage_path, sha256) values ('delivery','Acta',$1,'a.pdf',$2) returning id`, [custA, hash]);
+    await q(`insert into document_signatures (document_id, signer_profile_id, signer_name, consent_text, signature_ref, document_sha256) values ($1,$2,'Cliente A','Acepto el documento firmado v1','s.png',$3)`, [signed, cliA, hash]);
+    await expect(q(`update documents set status = 'generated' where id = $1`, [signed])).rejects.toThrow(/signed_document_final/);
+    await q(`update documents set status = 'superseded' where id = $1`, [signed]); // permitido: se conserva el original firmado
+    expect((await q<{ s: string; h: string }>(`select status s, sha256 h from documents where id = $1`, [signed]))[0]).toEqual({ s: "superseded", h: hash });
+  });
+});

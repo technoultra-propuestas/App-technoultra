@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { assertRole } from "@/lib/auth/session";
 import { zodToState, type ActionState } from "@/lib/auth/schemas";
+import { generateTicketDocument, type DocKind } from "@/lib/documents/generate";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -23,6 +24,21 @@ const TRANSITION_ERRORS: [RegExp, string][] = [
 const friendlyTransitionError = (m?: string) =>
   TRANSITION_ERRORS.find(([re]) => m && re.test(m))?.[1] ?? "No pudimos cambiar el estado. Inténtalo de nuevo.";
 
+/** Documentos que se generan solos al llegar a cada etapa (mejor esfuerzo: un fallo no deshace la transición). */
+async function autoDocuments(ticketId: string, to: string, actorId: string) {
+  const wanted: DocKind[] = to === "diagnosing" ? ["reception"] : to === "delivered" ? ["delivery", "warranty_product", "warranty_labor"] : [];
+  if (!wanted.length) return;
+  const admin = createAdminClient();
+  for (const kind of wanted) {
+    try {
+      const { count } = await admin.from("documents").select("id", { count: "exact", head: true }).eq("ticket_id", ticketId).eq("doc_type", kind);
+      if (!count) await generateTicketDocument(kind, ticketId, actorId);
+    } catch (e) {
+      console.error("documents.auto", kind, (e as Error).message);
+    }
+  }
+}
+
 const transitionSchema = z.object({
   ticketId: z.string().uuid(),
   to: z.enum(["received", "diagnosing", "awaiting_approval", "awaiting_part", "in_service", "testing", "ready", "delivered", "cancelled"]),
@@ -31,12 +47,13 @@ const transitionSchema = z.object({
 
 /** El estado solo cambia por la función de base de datos: valida rol, asignación, transición y precondiciones. */
 export async function transitionAction(_p: ActionState, fd: FormData): Promise<ActionState> {
-  await assertRole(["technician", "admin"]);
+  const actor = await assertRole(["technician", "admin"]);
   const parsed = transitionSchema.safeParse(Object.fromEntries(fd.entries()));
   if (!parsed.success) return zodToState(parsed.error);
   const supabase = await createClient();
   const { error } = await supabase.rpc("transition_ticket", { p_ticket: parsed.data.ticketId, p_to: parsed.data.to, p_reason: parsed.data.reason || null });
   if (error) return { ok: false, error: friendlyTransitionError(error.message) };
+  await autoDocuments(parsed.data.ticketId, parsed.data.to, actor.id);
   revalidatePath(`/b/tickets/${parsed.data.ticketId}`);
   revalidatePath("/b/tickets");
   return { ok: true, message: "Estado actualizado." };

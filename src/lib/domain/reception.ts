@@ -13,3 +13,13 @@ export const PHOTO_SLOTS = [
   { slot: "damage", label: "Daños", required: false },
   { slot: "other", label: "Otros", required: false },
 ] as const;
+
+export const DIAGNOSTIC_COMPONENTS = [
+  "Temperaturas",
+  "Almacenamiento (SMART)",
+  "Memoria RAM",
+  "Batería",
+  "Sistema operativo",
+  "Malware",
+  "Drivers",
+] as const;
