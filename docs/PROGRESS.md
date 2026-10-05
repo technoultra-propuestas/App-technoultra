@@ -1,34 +1,39 @@
 # Progreso
 
-## Estado: FASE 1 (BD) completa en local · FASE 2 (Auth + onboarding) implementada en código · remoto PENDIENTE de credenciales
+Última actualización: 2026-10-05. Commit de referencia: ver `git log` en `main`.
 
-### Fase 1 — Supabase + seguridad (hecho y probado en PGlite)
+## Resumen de estado
 
-10 migraciones (`supabase/migrations/`), 55+ tablas con RLS, anti-escalada, cobertura, máquina de estados, auditoría con cadena de hashes, pagos/firma/legal inmutables. Ver `DECISIONS.md` (D-010…D-019).
+| Área | Estado |
+|---|---|
+| Base de datos (18 migraciones) | Implementada y probada en PGlite (Postgres 17). **No aplicada al Supabase remoto** (falta `SUPABASE_DB_PASSWORD`, ver bloqueos). |
+| Auth (correo + código, Google OAuth, staff por invitación) | Implementada y probada con pruebas automáticas. **No probada contra Supabase/Google reales.** |
+| Onboarding persistente + aceptación legal versionada | Implementado. |
+| Servicios, cobertura (Cali/Palmira/Jamundí/Yumbo + remoto nacional), equipos, direcciones, solicitudes | Implementado (cobertura validada en BD). |
+| Tickets (9 estados), recepción con fotos (Cloudinary), diagnóstico, checklist, cotizaciones, entrega, garantías, mantenimiento/CRM | Implementado. Cloudinary sin credenciales aún. |
+| IA (Gemini) preliminar + validación humana | Implementada. Clave en el entorno del equipo; no probada contra Gemini. |
+| Documentos PDF + firma manuscrita + descarga segura | Implementado (bucket privado de Supabase Storage). |
+| Tienda + pedidos + Mercado Pago (webhook verificado/idempotente) + pagos manuales | Implementado. **Sin credenciales de Mercado Pago aún.** |
+| CRM, agenda, proyectos digitales, reportes, avisos, correos (Resend) | Implementado. |
+| PWA (manifest, SW seguro, offline, safe-areas), SEO (sitemap, robots, JSON-LD, páginas locales) | Implementado. |
+| Pruebas | 191 automáticas (unitarias + base de datos). typecheck ✓ lint ✓ build ✓. |
 
-### Fase 2 — Auth + identidad + onboarding (hecho en código; sin probar contra Supabase real)
+## Fases
+- **Fase 0** base · **Fase 1** BD+seguridad · **Fase 2** auth+onboarding · **Fase 3** servicios/cobertura/solicitudes · **Fase 5** recepción/evidencia/diagnóstico/checklist/IA · **Fase 6** cotizaciones · **Fase 7** servicio/entrega/garantías/mantenimiento · **Fase 8** pagos · **Fase 9** tienda · **Fase 10** documentos/firma/legal · **Fase 11** CRM/agenda/avisos/correo · **Fase 12** PWA · **Fase 13** proyectos digitales · **Fase 14** SEO/rendimiento/endurecimiento (parcial): hechas en código.
+- **Fase 15** QA/lanzamiento: **pendiente** (requiere entorno real: ver bloqueos y lista de go-live).
 
-- Registro con código por correo, login, logout, recuperación y cambio de contraseña, Google OAuth (PKCE), `/equipo` (solo login de personal).
-- `proxy.ts` con sesión, CSP con nonce y rutas protegidas; `requireRole`/`assertRole`; límite de intentos en BD.
-- Onboarding persistente en 6 pasos (bienvenida, celular, dirección con cobertura, equipo, avisos, legal) y aceptación legal versionada.
-- Administración de personal en `/b/usuarios` (invitar/promover/activar/desactivar); bootstrap del primer admin.
-- Páginas públicas: bienvenida, `/legal/[slug]`, `/seguimiento` (token no adivinable).
-- Adaptador Resend (opcional, no falla sin credencial) y plantillas escapadas.
-- Pruebas: 88 (unitarias + BD): safeNext, CSP, validaciones, OTP, rate-limit, bootstrap, onboarding, plantillas de correo.
+## BLOQUEOS que requieren acción del propietario
+1. **`.env.local` está vacío (0 bytes)** en disco. Faltan: `SUPABASE_DB_PASSWORD`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_APP_URL`. Sin esto no se pueden aplicar las migraciones al remoto ni ejecutar la app contra Supabase.
+2. La CLI de Supabase devuelve 401 al abrir el rol temporal / leer claves con el token de login actual.
+3. Google OAuth: ver `docs/GOOGLE_OAUTH.md`.
+4. Resend (SMTP de Auth + API key), Cloudinary, Mercado Pago, Gemini: credenciales por cargar en Vercel/Supabase (ver `docs/DEPLOYMENT.md`).
+5. Textos legales reales (revisión por abogado colombiano) y primer administrador (`scripts/bootstrap-admin.mjs`).
+6. Plan de Supabase con copias de seguridad (Pro) antes de producción.
 
-### Validaciones
-
-typecheck OK · lint OK · tests 88/88 · build OK · smoke de `next start`: rutas protegidas redirigen a `/login?next=…`, CSP con nonce presente.
-
-## BLOQUEOS (requieren acción tuya, nada de esto se puede inventar)
-
-1. **`.env.local` está VACÍO en disco (0 bytes).** Posiblemente no se guardó en el editor. Necesita:
-   `SUPABASE_DB_PASSWORD` (para `supabase db push`), `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_APP_URL`.
-2. La CLI devuelve 401 al usar el token de login (login-role y api-keys): no puedo aplicar migraciones ni leer claves por esa vía.
-3. Google OAuth: crear el cliente OAuth en Google Cloud y pegarlo en Supabase → Auth → Providers.
-4. Correo de verificación: configurar SMTP (Resend) en Supabase → Auth → SMTP y aplicar plantillas (`supabase config push` o pegarlas en el panel).
-5. Textos legales: publicar versiones reales (revisión de abogado). Sin ellos el onboarding no tiene qué aceptar.
-
-## Siguiente (cuando se desbloquee)
-
-`supabase db push` → verificar remoto → tipos TS → prueba E2E de registro/login → Fase 3 (servicios, cobertura, equipos, solicitudes).
+## Pendientes técnicos conocidos
+- Aplicar migraciones al remoto y verificar (`supabase db push`), generar tipos TS (`supabase gen types`) y tipar las consultas.
+- Pruebas E2E (Playwright) contra un entorno real; pruebas de carga del limitador y de la cadena de auditoría.
+- Web Push (VAPID), WhatsApp, y creación automática de ticket de instalación al pagar un pedido (hoy se marca `needs_installation` y administración lo gestiona).
+- Catálogo completo de municipios DANE (hoy: coberturas configuradas + "otra ciudad" = solo remoto).
+- Imágenes de productos/servicios (Cloudinary) en tienda y catálogo; archivos de proyectos digitales.
+- Procedimiento de supresión/anonimización de datos personales (Ley 1581) y política de retención.

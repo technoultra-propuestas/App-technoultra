@@ -51,3 +51,18 @@ apuntaba a otra cuenta y tiene prioridad sobre el login: hay que quitarla o usar
 - **D-026 Onboarding.** Pasos en `profiles.onboarding_step` (backend, reanudable). La finalización solo ocurre con `complete_onboarding()` (valida celular y aceptación de todos los documentos legales publicados). El permiso de notificaciones guarda el resultado REAL del navegador; un error o falta de soporte nunca cuenta como concedido.
 - **D-027 Dirección fuera de cobertura.** Se permite guardar una ciudad "otra" con DANE `00000` (solo soporte remoto). Pendiente: catálogo completo de municipios para validar mejor.
 - **D-028 Íconos y fuentes autoalojados.** Se reemplaza Material Symbols (CDN) por SVG en `src/components/ui/icons.tsx`; Manrope vía `next/font`.
+
+## Decisiones de las Fases 3–14 (2026-10-05, tomadas de forma autónoma; revisar en el informe final)
+- **D-030 Cotización: una abierta por ticket** (índice único parcial); revisar crea nueva versión y deja la anterior "reemplazada". El cliente solo envía "qué decide" (aprobar/rechazar/preguntar); el servidor valida dueño, estado y vigencia.
+- **D-031 Rechazo de cotización cancela el ticket** con motivo (comportamiento del prototipo), registrado en historial y auditoría.
+- **D-032 Documentos:** PDFs con `pdf-lib` (sin dependencias nativas), almacenados en bucket privado con SHA-256; la firma ata al hash vigente; una corrección = versión nueva (la firmada se conserva). Firmables: recepción, cotización, entrega.
+- **D-033 Evidencias:** Cloudinary con `type=authenticated`; el servidor firma la subida, verifica el activo por la API de administración y recién entonces inserta (el cliente no tiene INSERT). Miniaturas con URL firmada ≤ 1 h.
+- **D-034 IA:** Gemini en servidor con salida JSON validada; si falla, respaldo por reglas que sigue siendo "preliminar". Todo diagnóstico exige validación humana para dejar de estar "pendiente".
+- **D-035 Tienda:** el stock se **reserva al crear el pedido** (24 h configurables) y se libera al cancelar/vencer; entrega a domicilio solo con cobertura (regla conservadora configurable); fuera de cobertura solo "recoger en local". El pago "aprobado" solo lo establece el webhook verificado o un administrador (pago manual auditado).
+- **D-036 Instalación con pedido:** se marca `needs_installation`; administración crea el ticket (automatizar es pendiente).
+- **D-037 Soluciones digitales:** al "recibir" una solicitud digital nace un proyecto simple (no ticket); sin PM avanzado.
+- **D-038 PWA:** service worker conservador (solo estáticos inmutables y página offline; nunca HTML autenticado ni datos); actualización controlada por el usuario.
+- **D-039 SEO:** páginas públicas de servicios, ciudades con cobertura ACTIVA y soporte remoto, con JSON-LD; `LocalBusiness` solo si el administrador carga una dirección real. El sitio `technoultra.com` (Hostinger) queda intacto: revisar canonicals si ambos indexan contenido similar.
+- **D-040 Correos:** cola con reclamo atómico; tipos importantes únicamente; respeta preferencia; sin Resend configurado no se envía y los avisos siguen en la app.
+- **D-041 Navegación móvil de cliente:** 5 destinos + pantalla "Más" para mantener objetivos táctiles ≥ 44 px.
+- **D-042 Carrito en localStorage:** solo ids y cantidades (no sensible); el servidor recalcula todo.
