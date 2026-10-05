@@ -6,7 +6,7 @@
 
 | Área | Estado |
 |---|---|
-| Base de datos (19 migraciones) | **Aplicada al Supabase remoto `agosikmonvjujxzokdlc` (2026-10-05)** y verificada: 55 tablas con RLS, 104 políticas (0 con `USING true`), funciones administrativas cerradas a `anon`/`authenticated`, bucket privado `documents`, cobertura Cali/Palmira/Jamundí/Yumbo, cadena de auditoría íntegra. |
+| Base de datos (20 migraciones) | **Aplicada al Supabase remoto `agosikmonvjujxzokdlc` (2026-10-05)** y verificada: 55 tablas con RLS, 104 políticas (0 con `USING true`), funciones administrativas cerradas a `anon`/`authenticated`, bucket privado `documents`, cobertura Cali/Palmira/Jamundí/Yumbo, cadena de auditoría íntegra. |
 | Auth (correo + código, Google OAuth, staff por invitación) | Implementada y probada con pruebas automáticas. **No probada contra Supabase/Google reales.** |
 | Onboarding persistente + aceptación legal versionada | Implementado. |
 | Servicios, cobertura (Cali/Palmira/Jamundí/Yumbo + remoto nacional), equipos, direcciones, solicitudes | Implementado (cobertura validada en BD). |
@@ -40,4 +40,4 @@
 
 ## Catálogo oficial (2026-10-05)
 Migración 20, importador validado (161 servicios/13 categorías), CRM ampliado (filtros, subcategorías, historial, eliminación segura), catálogo público con subcategorías y precio "Desde"/"+ repuesto". Detalle en `docs/CATALOGO_IMPORTACION.md`.
-**Pendiente:** aplicar migración 20 al remoto (`db push`) y ejecutar `--apply`; la app nueva requiere esas columnas, así que no desplegar antes. El `db push` fue bloqueado por el clasificador de permisos de la sesión y queda para aprobación del propietario.
+**Estado remoto verificado (2026-10-05):** migración 20 aplicada; 161 servicios, 13 categorías, 107 subcategorías, 41 con diagnóstico, 34 "Desde", 15 "+ repuesto", RLS activo y sin duplicados. Producción (app.technoultra.com y app-technoultra.vercel.app) responde 200; variables de Vercel cargadas por el propietario; redirectTo de Google exacto `/auth/callback`.

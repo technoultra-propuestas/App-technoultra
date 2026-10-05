@@ -14,7 +14,7 @@ type Props = {
   modalities: string[];
   requiresEquipment: boolean;
   equipment: { id: string; label: string }[];
-  addresses: { id: string; label: string; covered: boolean }[];
+  addresses: { id: string; label: string; covered: Record<string, boolean> }[];
   days: { value: string; label: string }[];
 };
 
@@ -25,7 +25,7 @@ export function RequestForm({ serviceId, modalities, requiresEquipment, equipmen
   const physical = modality !== "remote";
   const selected = addresses.find((a) => a.id === addressId);
   // Ayuda visual únicamente: la validación real de cobertura ocurre en el servidor y en la base de datos.
-  const uncovered = physical && selected && !selected.covered;
+  const uncovered = physical && selected && selected.covered[modality] === false;
 
   return (
     <form action={action} className="flex flex-col gap-[18px]" noValidate>
@@ -81,7 +81,7 @@ export function RequestForm({ serviceId, modalities, requiresEquipment, equipmen
             {addresses.map((a) => (
               <option key={a.id} value={a.id}>
                 {a.label}
-                {a.covered ? "" : " · sin cobertura presencial"}
+                {!physical || a.covered[modality] !== false ? "" : " · sin cobertura presencial"}
               </option>
             ))}
           </Select>

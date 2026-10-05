@@ -17,7 +17,7 @@ export default async function RequestServicePage({ params }: { params: Promise<{
   const { data: svc } = await supabase
     .from("services")
     .select(
-      "id, name, description, short_description, price_mode, base_price, price_unit, allowed_modalities, requires_equipment",
+      "id, name, description, short_description, price_mode, base_price, price_unit, price_type_label, parts_extra, includes_text, excludes_text, price_treatment, estimated_time, requires_diagnosis, allowed_modalities, requires_equipment",
     )
     .eq("slug", slug)
     .maybeSingle();
@@ -37,11 +37,13 @@ export default async function RequestServicePage({ params }: { params: Promise<{
   ]);
   const addresses = await Promise.all(
     (addr ?? []).map(async (a) => {
-      const { data: covered } = await supabase.rpc("check_coverage", {
-        p_dane_code: a.dane_code,
-        p_modality: "pickup",
-      });
-      return { id: a.id, label: `${a.label} · ${a.line1}, ${a.city_name}`, covered: covered === true };
+      // Cobertura por cada modalidad física del servicio (ayuda visual; el servidor la valida de nuevo al crear la solicitud).
+      const covered: Record<string, boolean> = {};
+      for (const m of (svc.allowed_modalities as string[]).filter((x) => x !== "remote")) {
+        const { data } = await supabase.rpc("check_coverage", { p_dane_code: a.dane_code, p_modality: m as "store" | "pickup" | "home" });
+        covered[m] = data === true;
+      }
+      return { id: a.id, label: `${a.label} · ${a.line1}, ${a.city_name}`, covered };
     }),
   );
   const days = nextBusinessDays(5).map((d) => ({
@@ -61,6 +63,15 @@ export default async function RequestServicePage({ params }: { params: Promise<{
         <span className="text-[14px] font-bold text-muted">Precio de referencia</span>
         <span className="text-[18px] font-extrabold">{priceText(svc)}</span>
       </Card>
+      {svc.includes_text || svc.excludes_text || svc.estimated_time || svc.requires_diagnosis || svc.price_treatment ? (
+        <Card className="flex flex-col gap-2 text-[14px] leading-snug">
+          {svc.includes_text ? <p className="m-0"><strong>Incluye:</strong> {svc.includes_text}</p> : null}
+          {svc.excludes_text ? <p className="m-0"><strong>No incluye:</strong> {svc.excludes_text}</p> : null}
+          {svc.price_treatment ? <p className="m-0 text-muted">{svc.price_treatment}</p> : null}
+          {svc.estimated_time ? <p className="m-0"><strong>Tiempo estimado:</strong> {svc.estimated_time}</p> : null}
+          {svc.requires_diagnosis ? <p className="m-0 font-bold">Requiere diagnóstico previo; la cotización final te llega para aprobar.</p> : null}
+        </Card>
+      ) : null}
       <RequestForm
         serviceId={svc.id}
         modalities={svc.allowed_modalities}
