@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { assertRole } from "@/lib/auth/session";
 import { zodToState, type ActionState } from "@/lib/auth/schemas";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 const TRANSITION_ERRORS: [RegExp, string][] = [
@@ -95,6 +96,8 @@ export async function receiveRequestAction(fd: FormData): Promise<void> {
     .select("id")
     .single();
   if (error || !t) return;
+  // El diagnóstico preliminar de la solicitud pasa a acompañar al ticket (para validación humana).
+  await createAdminClient().from("ai_diagnostics").update({ ticket_id: t.id }).eq("service_request_id", r.id).is("ticket_id", null);
   revalidatePath("/b/solicitudes");
   redirect(`/b/tickets/${t.id}`);
 }

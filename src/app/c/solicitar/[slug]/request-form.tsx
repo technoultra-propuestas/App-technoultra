@@ -7,6 +7,7 @@ import { MODALITY_LABEL, Select, Textarea } from "@/components/ui/layout";
 import { initialState } from "@/lib/auth/schemas";
 import { COVERAGE_MESSAGE } from "@/lib/domain/requests";
 import { createRequestAction } from "../actions";
+import { AiPreview } from "./ai-preview";
 
 type Props = {
   serviceId: string;
@@ -113,6 +114,7 @@ export function RequestForm({ serviceId, modalities, requiresEquipment, equipmen
         </div>
       ) : null}
 
+      {requiresEquipment || modality !== "remote" ? <AiPreview /> : null}
       {state.error && !state.fieldErrors ? <Alert>{state.error}</Alert> : null}
       <SubmitButton pendingText="Enviando…">Enviar solicitud</SubmitButton>
     </form>

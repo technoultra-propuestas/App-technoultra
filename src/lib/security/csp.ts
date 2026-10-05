@@ -20,6 +20,7 @@ export function buildCsp(nonce: string, opts: { isDev: boolean; supabaseUrl: str
       "data:",
       "blob:",
       "https://res.cloudinary.com",
+      "https://api.cloudinary.com",
       "https://lh3.googleusercontent.com",
     ],
     "font-src": ["'self'", "data:"],

@@ -5,7 +5,9 @@ import { assertRole } from "@/lib/auth/session";
 import { allow, TOO_MANY } from "@/lib/auth/rate-limit";
 import { zodToState, type ActionState } from "@/lib/auth/schemas";
 import { friendlyRequestError, requestSchema, toPreferredAt } from "@/lib/domain/requests";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { z } from "zod";
 
 /**
  * Crea la solicitud. La cobertura geográfica, la coherencia servicio/modalidad y la propiedad de equipo y dirección
@@ -38,8 +40,13 @@ export async function createRequestAction(_p: ActionState, fd: FormData): Promis
       problem_description: v.problem,
       preferred_at: toPreferredAt(v.day, v.slot),
     })
-    .select("code")
+    .select("id, code")
     .single();
   if (error || !data) return { ok: false, error: friendlyRequestError(error?.message) };
+  // Vincula el diagnóstico preliminar (si lo hubo) a la solicitud, solo si pertenece a este cliente.
+  const aiId = z.string().uuid().safeParse(fd.get("aiId"));
+  if (aiId.success) {
+    await createAdminClient().from("ai_diagnostics").update({ service_request_id: data.id }).eq("id", aiId.data).eq("customer_id", customer.id).is("service_request_id", null);
+  }
   redirect(`/c/solicitar/listo?c=${encodeURIComponent(data.code)}`);
 }
