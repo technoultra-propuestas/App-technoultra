@@ -10,6 +10,8 @@ export const metadata: Metadata = { title: "Inicia sesión", robots: { index: fa
 const NOTICES: Record<string, string> = {
   inactive: "Esta cuenta está desactivada. Habla con administración.",
   oauth: "No pudimos iniciar sesión con Google. Inténtalo de nuevo.",
+  cancelled: "Cancelaste el inicio de sesión con Google. Puedes intentarlo de nuevo cuando quieras.",
+  profile: "No pudimos cargar tu perfil. Inténtalo de nuevo o escríbenos si el problema continúa.",
   link: "El enlace no es válido o ya venció. Pide uno nuevo.",
   rate: "Demasiados intentos. Espera unos minutos e inténtalo de nuevo.",
 };

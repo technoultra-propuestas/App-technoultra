@@ -117,3 +117,51 @@ describe("onboarding persistente", () => {
     expect((await q<{ role: string }>(`select role from profiles where id = $1`, [x]))[0].role).toBe("admin");
   });
 });
+
+describe("registro con Google y anti-escalada de rol", () => {
+  it("un alta de Google nace SIEMPRE como cliente aunque los metadatos pidan otro rol", async () => {
+    const id = await createUser(db, "google.user@gmail.com", {
+      provider_id: "1234567890",
+      iss: "https://accounts.google.com",
+      email_verified: true,
+      full_name: "Usuario Google",
+      avatar_url: "https://lh3.googleusercontent.com/a/x",
+      role: "admin",
+      app_role: "admin",
+      is_admin: true,
+      user_role: "technician",
+      invited_role: "admin",
+    });
+    const [p] = await q<{ role: string; full_name: string; is_active: boolean }>(`select role, full_name, is_active from profiles where id = $1`, [id]);
+    expect(p).toEqual({ role: "client", full_name: "Usuario Google", is_active: true });
+    expect((await q(`select 1 from staff_members where profile_id = $1`, [id])).length).toBe(0);
+    expect((await q(`select 1 from customers where profile_id = $1`, [id])).length).toBe(1);
+  });
+
+  it("un inicio de sesión posterior (actualización de metadatos) no cambia el rol ni reactiva cuentas", async () => {
+    const id = await createUser(db, "ya.existe@gmail.com", { full_name: "Ya Existe" });
+    await q(`update auth.users set raw_user_meta_data = $2::jsonb where id = $1`, [id, JSON.stringify({ role: "admin", full_name: "Otro Nombre" })]);
+    expect((await q<{ role: string }>(`select role from profiles where id = $1`, [id]))[0].role).toBe("client");
+    await q(`update profiles set is_active = false where id = $1`, [id]);
+    await q(`update auth.users set raw_user_meta_data = '{"is_active": true}'::jsonb where id = $1`, [id]);
+    expect((await q<{ a: boolean }>(`select is_active a from profiles where id = $1`, [id]))[0].a).toBe(false);
+  });
+
+  it("el cliente autenticado con Google no puede ejecutar funciones de administración", async () => {
+    const id = await createUser(db, "g2@gmail.com", { iss: "https://accounts.google.com" });
+    for (const sql of [
+      `select public.admin_provision_staff('${id}', '${id}', 'admin', 'x')`,
+      `select public.bootstrap_first_admin('${id}')`,
+      `select public.admin_set_user_active('${id}', '${id}', true)`,
+      `select public.assign_ticket(gen_random_uuid(), '${id}')`,
+    ]) {
+      await expect(as(db, id, () => q(sql))).rejects.toThrow(denied);
+    }
+    await expect(as(db, id, () => q(`update profiles set role = 'admin' where id = $1`, [id]))).rejects.toThrow(denied);
+    await expect(as(db, id, () => q(`insert into staff_members (profile_id) values ($1)`, [id]))).rejects.toThrow(denied);
+  });
+
+  it("no se aceptan cuentas sin correo (p. ej. proveedores que no lo entregan)", async () => {
+    await expect(q(`insert into auth.users (id, email) values (gen_random_uuid(), null)`)).rejects.toThrow(/email_required/);
+  });
+});
