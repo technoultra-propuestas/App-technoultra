@@ -44,3 +44,6 @@ Migración 20, importador validado (161 servicios/13 categorías), CRM ampliado 
 
 ## Configuración comercial (2026-10-05)
 IVA configurable, recargo por urgencia, domicilio, crédito de diagnóstico y snapshots (migración 22), consolidación del duplicado "Diagnóstico de red" (migración 23), pantalla `/b/comercial`, desglose en cotización (cliente, personal y PDF). Detalle en `docs/DECISIONS.md` D-050…D-055. **Migraciones 21, 22 y 23 pendientes de aplicar al remoto** (`supabase db push`); no desplegar el código antes (las pantallas de ticket usan las columnas nuevas).
+
+## Migraciones 21–23 y verificación de correo (2026-10-05)
+Migraciones 21, 22 y 23 aplicadas al remoto y verificadas (RLS, grants, tarifas, niveles de urgencia inactivos en 0 %, duplicado archivado). Flujo de registro probado de punta a punta en producción (registro → correo con enlace → callback → onboarding; enlace usado → aviso; volver a `/verificar` y refresh) con un buzón desechable y limpieza posterior del usuario de prueba. Onboarding responsive validado en 9 tamaños (360×800 … 1920×1080) sin overflow horizontal.
