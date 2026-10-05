@@ -1,17 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useRouter } from "next/navigation";
+import { useActionState, useEffect, useState } from "react";
 import { Alert, Field, SubmitButton } from "@/components/ui/form";
 import { GoogleG, IconBadge } from "@/components/ui/icons";
 import { initialState } from "@/lib/auth/schemas";
 import {
   requestPasswordResetAction,
-  resendCodeAction,
+  resendEmailAction,
   signInAction,
   signUpAction,
   updatePasswordAction,
-  verifyOtpAction,
 } from "./actions";
 
 const linkCls = "font-extrabold text-ink underline decoration-brand underline-offset-[3px]";
@@ -123,36 +123,71 @@ export function RegisterForm() {
   );
 }
 
-export function VerifyForm({ email, mode }: { email: string; mode: "signup" | "recovery" }) {
-  const [state, action] = useActionState(verifyOtpAction, initialState);
-  const [resent, resend] = useActionState(resendCodeAction, initialState);
+const RESEND_COOLDOWN_S = 60;
+
+/**
+ * "Revisa tu correo": el correo de Supabase trae un ENLACE (no un código). Mientras la pantalla está abierta se vuelve a pedir
+ * al servidor el estado de la sesión: si la persona confirma desde otra pestaña del mismo navegador, esta pantalla la lleva sola
+ * a la app. El reenvío tiene espera visible (además del límite real en servidor).
+ */
+export function CheckEmailPanel({ email, mode }: { email: string; mode: "signup" | "recovery" }) {
+  const router = useRouter();
+  const [resent, resend] = useActionState(resendEmailAction, initialState);
+  const [cooldown, setCooldown] = useState(30); // el correo acaba de enviarse
+  useEffect(() => {
+    const t = setInterval(() => setCooldown((c) => (c > 0 ? c - 1 : 0)), 1000);
+    return () => clearInterval(t);
+  }, []);
+  useEffect(() => {
+    if (mode !== "signup") return;
+    let ticks = 0;
+    const refresh = () => router.refresh();
+    const poll = setInterval(() => {
+      ticks += 1;
+      if (ticks > 120) clearInterval(poll); // ~10 min: lo que dura el enlace
+      else if (document.visibilityState === "visible") refresh();
+    }, 5000);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      clearInterval(poll);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, [mode, router]);
   return (
     <div className="flex flex-col gap-[18px]">
-      <form action={action} className="flex flex-col gap-[18px]" noValidate>
-        <input type="hidden" name="email" value={email} />
-        <input type="hidden" name="mode" value={mode} />
-        <input
-          name="token"
-          inputMode="numeric"
-          maxLength={6}
-          autoComplete="one-time-code"
-          aria-label="Código de 6 dígitos"
-          placeholder="······"
-          required
-          className="h-[72px] rounded-2xl border-[1.5px] border-line-strong bg-white px-5 text-center text-[32px] font-extrabold tracking-[0.5em]"
-        />
-        {state.error ? <Alert>{state.error}</Alert> : null}
-        <SubmitButton pendingText="Verificando…">Verificar</SubmitButton>
-      </form>
-      <form action={resend} className="flex flex-col gap-2">
+      <div className="flex items-start gap-4 rounded-2xl bg-[#FFF0DD] p-4">
+        <span aria-hidden className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] bg-brand">
+          <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#000" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="5" width="18" height="14" rx="3" />
+            <path d="m4 7 8 6 8-6" />
+          </svg>
+        </span>
+        <p className="m-0 text-[15px] leading-snug font-semibold text-ink-2">
+          Abre el correo y haz clic en el enlace. Hazlo desde este mismo navegador para que volvamos aquí automáticamente.
+        </p>
+      </div>
+      <p className="m-0 text-[14px] leading-snug text-muted">¿No encuentras el correo? Revisa <strong>Spam</strong> o <strong>Promociones</strong>. El enlace tiene vigencia limitada.</p>
+      <form action={resend} onSubmit={() => setCooldown(RESEND_COOLDOWN_S)} className="flex flex-col gap-2">
         <input type="hidden" name="email" value={email} />
         <input type="hidden" name="mode" value={mode} />
         {resent.message ? <Alert tone="ok">{resent.message}</Alert> : null}
         {resent.error ? <Alert>{resent.error}</Alert> : null}
-        <button type="submit" className="min-h-12 border-none bg-transparent text-[15px] font-bold">
-          Reenviar código
+        <button
+          type="submit"
+          disabled={cooldown > 0}
+          className="min-h-[58px] rounded-2xl border-[1.5px] border-line-strong bg-white text-[16px] font-extrabold text-ink transition-opacity duration-200 disabled:opacity-60"
+        >
+          {cooldown > 0 ? `Reenviar correo en ${cooldown} s` : "Reenviar correo"}
         </button>
       </form>
+      <div className="flex flex-col gap-1 text-[15px]">
+        <Link href="/login" className={`${linkCls} flex min-h-11 items-center`}>
+          Ya confirmé mi correo · Iniciar sesión
+        </Link>
+        <Link href={mode === "recovery" ? "/recuperar" : "/registro"} className={`${linkCls} flex min-h-11 items-center`}>
+          Usar otro correo
+        </Link>
+      </div>
     </div>
   );
 }

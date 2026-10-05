@@ -12,7 +12,7 @@ const NOTICES: Record<string, string> = {
   oauth: "No pudimos iniciar sesión con Google. Inténtalo de nuevo.",
   cancelled: "Cancelaste el inicio de sesión con Google. Puedes intentarlo de nuevo cuando quieras.",
   profile: "No pudimos cargar tu perfil. Inténtalo de nuevo o escríbenos si el problema continúa.",
-  link: "El enlace no es válido o ya venció. Pide uno nuevo.",
+  link: "Ese enlace ya se usó, venció o se abrió en otro dispositivo. Si ya confirmaste tu correo, inicia sesión; si no, pide un correo nuevo desde Crear cuenta.",
   rate: "Demasiados intentos. Espera unos minutos e inténtalo de nuevo.",
 };
 

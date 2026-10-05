@@ -21,7 +21,8 @@ export async function GET(request: NextRequest) {
   const sp = request.nextUrl.searchParams;
 
   if (sp.get("error")) {
-    // Código canónico de OAuth cuando la persona cancela el consentimiento.
+    // Enlace de correo vencido o ya usado: Supabase lo informa con error_code (otp_expired). Cancelar el consentimiento de Google es access_denied.
+    if (sp.get("error_code") === "otp_expired") return to("/login?error=link");
     return to(`/login?error=${sp.get("error") === "access_denied" ? "cancelled" : "oauth"}`);
   }
   const code = sp.get("code");
@@ -32,7 +33,8 @@ export async function GET(request: NextRequest) {
   const { error } = await supabase.auth.exchangeCodeForSession(code);
   if (error) {
     console.error("auth.callback.exchange", error.status, error.code);
-    return to("/login?error=oauth"); // código inválido, vencido o ya usado
+    // Con cookie de destino venimos de Google; sin ella, del enlace del correo (vencido, ya usado o abierto en otro dispositivo).
+    return to(request.cookies.has(NEXT_COOKIE) ? "/login?error=oauth" : "/login?error=link");
   }
 
   const { data: auth } = await supabase.auth.getUser();

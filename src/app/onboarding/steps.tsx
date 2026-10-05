@@ -17,21 +17,36 @@ import {
 const selectCls =
   "h-14 rounded-[14px] border-[1.5px] border-line-strong bg-white px-4 text-[17px] font-semibold text-ink";
 
+const PROCESS = [
+  ["Registramos tu solicitud", "y te damos un diagnóstico preliminar."],
+  ["Recogemos o recibimos tu equipo", "y lo revisamos con evidencia."],
+  ["Apruebas la cotización", "no hacemos nada sin tu aprobación."],
+  ["Te lo entregamos con garantía", "y próximo mantenimiento programado."],
+] as const;
+
 export function WelcomeStep({ name }: { name: string }) {
   const [, action] = useActionState(nextStepAction, initialState);
   return (
-    <form action={action} className="flex flex-col gap-4">
-      <p className="m-0 text-base leading-relaxed text-ink-2">
-        Hola{name ? `, ${name.split(" ")[0]}` : ""}. En unos pasos dejamos tu cuenta lista: tu celular, tu
-        dirección y tu primer equipo. Así podemos atenderte más rápido y mostrarte cada avance de tu servicio.
+    <form action={action} className="flex flex-col gap-5 md:gap-6">
+      <p className="m-0 text-base leading-relaxed text-ink-2 md:text-[18px]">
+        Hola{name ? `, ${name.split(" ")[0]}` : ""}. En unos pasos dejamos tu cuenta lista: tu celular, tu dirección y tu primer equipo. Así podemos
+        atenderte más rápido y mostrarte cada avance de tu servicio.
       </p>
-      <ul className="m-0 flex list-none flex-col gap-2 p-0 text-[15px] font-semibold">
-        <li>1. Registramos tu solicitud y te damos un diagnóstico preliminar.</li>
-        <li>2. Recogemos o recibimos tu equipo y lo revisamos.</li>
-        <li>3. Apruebas la cotización: no hacemos nada sin tu aprobación.</li>
-        <li>4. Te lo entregamos con garantía y próximo mantenimiento.</li>
-      </ul>
-      <SubmitButton>Empezar</SubmitButton>
+      <ol className="m-0 grid list-none gap-3 p-0 md:grid-cols-2">
+        {PROCESS.map(([title, rest], i) => (
+          <li key={title} className="flex gap-3 rounded-2xl border border-line bg-white p-4">
+            <span aria-hidden className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand text-[14px] font-extrabold text-ink">
+              {i + 1}
+            </span>
+            <span className="text-[15px] leading-snug text-ink-2">
+              <strong className="font-extrabold text-ink">{title}</strong> {rest}
+            </span>
+          </li>
+        ))}
+      </ol>
+      <div className="flex flex-col md:max-w-[280px]">
+        <SubmitButton>Empezar</SubmitButton>
+      </div>
     </form>
   );
 }

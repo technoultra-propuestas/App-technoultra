@@ -58,11 +58,21 @@ describe("GET /auth/callback", () => {
     expect(loc(await callback(req("/auth/callback")))).toContain("error=oauth");
     expect(loc(await callback(req("/auth/callback?code=" + "a".repeat(3000))))).toContain("error=oauth");
   });
-  it("código inválido, vencido o reutilizado → error y no hay sesión", async () => {
+  it("enlace de correo vencido, ya usado o de otro dispositivo → aviso de enlace y no hay sesión", async () => {
     supabase.auth.exchangeCodeForSession.mockResolvedValue({ error: { status: 400, code: "flow_state_not_found" } });
     const r = await callback(req("/auth/callback?code=expirado"));
-    expect(loc(r)).toBe("https://app.technoultra.com/login?error=oauth");
+    expect(loc(r)).toBe("https://app.technoultra.com/login?error=link");
     expect(supabase.from).not.toHaveBeenCalled();
+  });
+  it("código de Google inválido (hay cookie de destino) → error de Google", async () => {
+    supabase.auth.exchangeCodeForSession.mockResolvedValue({ error: { status: 400, code: "flow_state_not_found" } });
+    const r = await callback(req("/auth/callback?code=expirado", { cookie: "tu_next=/" }));
+    expect(loc(r)).toBe("https://app.technoultra.com/login?error=oauth");
+  });
+  it("Supabase informa otp_expired (enlace vencido/usado) → aviso de enlace", async () => {
+    const r = await callback(req("/auth/callback?error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid+or+has+expired"));
+    expect(loc(r)).toBe("https://app.technoultra.com/login?error=link");
+    expect(supabase.auth.exchangeCodeForSession).not.toHaveBeenCalled();
   });
   it("usuario autenticado SIN perfil → se cierra la sesión", async () => {
     supabase.from.mockReturnValue(profileQuery({ data: null, error: null }));

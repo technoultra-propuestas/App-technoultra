@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { AuthShell } from "@/components/ui/AuthShell";
 import { requireRole } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
+import { OnboardingShell } from "./shell";
 import {
   AddressStep,
   BackButton,
@@ -59,10 +59,7 @@ export default async function OnboardingPage() {
       : [];
 
   return (
-    <AuthShell title={TITLES[step]} subtitle={SUBTITLES[step]}>
-      <p className="m-0 text-[13px] font-bold tracking-[0.04em] text-muted" aria-live="polite">
-        PASO {step + 1} DE 6
-      </p>
+    <OnboardingShell step={step} title={TITLES[step]} subtitle={SUBTITLES[step]}>
       {step === 0 ? <WelcomeStep name={profile.full_name} /> : null}
       {step === 1 ? <PhoneStep /> : null}
       {step === 2 ? <AddressStep cities={cities} /> : null}
@@ -70,6 +67,6 @@ export default async function OnboardingPage() {
       {step === 4 ? <NotificationsStep /> : null}
       {step === 5 ? <LegalStep docs={docs} /> : null}
       {step > 0 ? <BackButton /> : null}
-    </AuthShell>
+    </OnboardingShell>
   );
 }

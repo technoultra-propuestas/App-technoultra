@@ -23,3 +23,14 @@ CI: typecheck, lint, tests, build (`.github/workflows/ci.yml`). Después de desp
 
 ## Cloudflare
 No necesario para el MVP (Vercel + Supabase cubren CDN/TLS). Evaluar WAF/Turnstile solo si hay abuso.
+
+## Mercado Pago: variables requeridas (pendientes de credenciales)
+| Variable | Dónde se usa | Entorno | Server-only |
+|---|---|---|---|
+| `MERCADOPAGO_ACCESS_TOKEN` | `src/lib/payments/mercadopago.ts` (crear preferencia y consultar el pago), `src/app/c/pedidos/actions.ts`, `src/app/api/webhooks/mercadopago/route.ts` | Production (credenciales de producción) y Preview/Development (credenciales de prueba) | Sí |
+| `MERCADOPAGO_WEBHOOK_SECRET` | Verificación de la firma HMAC del webhook (`x-signature`) en `/api/webhooks/mercadopago` | Mismo entorno que el token | Sí |
+
+- `NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY` aparece en `.env.example` pero **el código no la usa** (Checkout Pro redirige al enlace de pago); no hace falta cargarla.
+- Webhook a registrar en el panel de Mercado Pago: `https://app.technoultra.com/api/webhooks/mercadopago` (eventos de pagos). El secreto que entrega Mercado Pago es `MERCADOPAGO_WEBHOOK_SECRET`.
+- Sin estas variables la tienda funciona hasta crear el pedido; pagar muestra un aviso amable y el webhook responde sin procesar. Un pago solo pasa a `approved` tras verificar con Mercado Pago (nunca por lo que diga el navegador).
+- Los pagos de diagnóstico y de cotizaciones hoy se registran manualmente (administración); cobrarlos con Mercado Pago requiere extender `begin_payment` (hoy solo pedidos).

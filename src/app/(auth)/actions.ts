@@ -1,16 +1,16 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { allow, clientIp, TOO_MANY } from "@/lib/auth/rate-limit";
 import { getPublicEnv } from "@/lib/env.public";
-import { roleHome, safeNext } from "@/lib/auth/routes";
+import { NEXT_COOKIE, roleHome, safeNext } from "@/lib/auth/routes";
 import {
   emailOnlySchema,
   newPasswordSchema,
   signInSchema,
   signUpSchema,
-  verifyOtpSchema,
   zodToState,
   type ActionState,
 } from "@/lib/auth/schemas";
@@ -20,7 +20,14 @@ const GENERIC_SEND = "No pudimos procesar la solicitud. Inténtalo de nuevo en u
 
 const form = (fd: FormData) => Object.fromEntries(fd.entries());
 
-/** Registro de cliente: Supabase envía un código de 6 dígitos al correo (generado, limitado y con expiración en Auth). */
+/** Recuperación: el enlace vuelve a /auth/callback (URL exacta permitida en Supabase) y el destino viaja en una cookie corta. */
+async function sendRecoveryEmail(email: string) {
+  const appUrl = getPublicEnv().NEXT_PUBLIC_APP_URL;
+  (await cookies()).set(NEXT_COOKIE, "/restablecer", { httpOnly: true, sameSite: "lax", secure: appUrl.startsWith("https://"), path: "/auth", maxAge: 3600 });
+  return (await createClient()).auth.resetPasswordForEmail(email, { redirectTo: `${appUrl}/auth/callback` });
+}
+
+/** Registro de cliente: Supabase envía un correo con un ENLACE de confirmación que vuelve a /auth/callback (PKCE). */
 export async function signUpAction(_prev: ActionState, fd: FormData): Promise<ActionState> {
   const parsed = signUpSchema.safeParse(form(fd));
   if (!parsed.success) return zodToState(parsed.error);
@@ -47,28 +54,7 @@ export async function signUpAction(_prev: ActionState, fd: FormData): Promise<Ac
   redirect(`/verificar?${new URLSearchParams({ email, mode: "signup" })}`);
 }
 
-/** Verifica el código real (un solo uso, expira a los 10 min). Crea la sesión al acertar. */
-export async function verifyOtpAction(_prev: ActionState, fd: FormData): Promise<ActionState> {
-  const mode = fd.get("mode") === "recovery" ? "recovery" : "signup";
-  const parsed = verifyOtpSchema.safeParse(form(fd));
-  if (!parsed.success) return zodToState(parsed.error);
-  const { email, token } = parsed.data;
-
-  const ip = await clientIp();
-  if (!(await allow("otp-email", email, 6, 900)) || !(await allow("otp-ip", ip, 30, 900))) {
-    return { ok: false, error: TOO_MANY };
-  }
-  const supabase = await createClient();
-  const { error } = await supabase.auth.verifyOtp({
-    email,
-    token,
-    type: mode === "recovery" ? "recovery" : "email",
-  });
-  if (error) return { ok: false, error: "El código no es válido o ya venció. Pide uno nuevo." };
-  redirect(mode === "recovery" ? "/restablecer" : "/");
-}
-
-export async function resendCodeAction(_prev: ActionState, fd: FormData): Promise<ActionState> {
+export async function resendEmailAction(_prev: ActionState, fd: FormData): Promise<ActionState> {
   const mode = fd.get("mode") === "recovery" ? "recovery" : "signup";
   const parsed = emailOnlySchema.safeParse(form(fd));
   if (!parsed.success) return zodToState(parsed.error);
@@ -79,13 +65,17 @@ export async function resendCodeAction(_prev: ActionState, fd: FormData): Promis
   ) {
     return { ok: false, error: TOO_MANY };
   }
-  const supabase = await createClient();
   const { error } =
     mode === "recovery"
-      ? await supabase.auth.resetPasswordForEmail(email)
-      : await supabase.auth.resend({ type: "signup", email });
+      ? await sendRecoveryEmail(email)
+      : await (await createClient()).auth.resend({
+          type: "signup",
+          email,
+          options: { emailRedirectTo: `${getPublicEnv().NEXT_PUBLIC_APP_URL}/auth/callback` },
+        });
   if (error) console.error("auth.resend", error.status, error.code);
-  return { ok: true, message: "Si el correo es válido, te enviamos un código nuevo." };
+  // Respuesta idéntica exista o no la cuenta (anti-enumeración).
+  return { ok: true, message: "Si el correo es válido, te enviamos un correo nuevo." };
 }
 
 export async function signInAction(_prev: ActionState, fd: FormData): Promise<ActionState> {
@@ -134,20 +124,19 @@ export async function requestPasswordResetAction(_prev: ActionState, fd: FormDat
   ) {
     return { ok: false, error: TOO_MANY };
   }
-  const supabase = await createClient();
-  const { error } = await supabase.auth.resetPasswordForEmail(email);
+  const { error } = await sendRecoveryEmail(email);
   if (error) console.error("auth.reset", error.status, error.code);
   // Respuesta idéntica exista o no la cuenta.
   redirect(`/verificar?${new URLSearchParams({ email, mode: "recovery" })}`);
 }
 
-/** Requiere la sesión de recuperación creada al verificar el código. */
+/** Requiere la sesión de recuperación creada al abrir el enlace del correo. */
 export async function updatePasswordAction(_prev: ActionState, fd: FormData): Promise<ActionState> {
   const parsed = newPasswordSchema.safeParse(form(fd));
   if (!parsed.success) return zodToState(parsed.error);
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
-  if (!auth.user) return { ok: false, error: "Tu sesión venció. Vuelve a pedir el código." };
+  if (!auth.user) return { ok: false, error: "Tu sesión venció. Vuelve a pedir el enlace." };
   if (!(await allow("pwd-user", auth.user.id, 5, 3600))) return { ok: false, error: TOO_MANY };
   const { error } = await supabase.auth.updateUser({ password: parsed.data.password });
   if (error) return { ok: false, error: "No pudimos guardar la contraseña. Prueba con otra." };
