@@ -1,4 +1,4 @@
-import { Card, fmtDate, fmtDateTime, money } from "@/components/ui/layout";
+import { Card, fmtDate, fmtDateTime, money, statusLabel } from "@/components/ui/layout";
 import { createClient } from "@/lib/supabase/server";
 import { quoteBreakdown } from "@/lib/domain/pricing";
 import { removeItemAction, setDeliveryAction, setNeedsPartAction, setUrgencyAction } from "../quote-actions";
@@ -36,7 +36,7 @@ export async function QuoteSection({ ticketId, canQuote, ticketOpen }: { ticketI
   }
 
   const [{ data: tk }, { data: levels }] = await Promise.all([
-    supabase.from("tickets").select("modality").eq("id", ticketId).maybeSingle(),
+    supabase.from("tickets").select("modality, status").eq("id", ticketId).maybeSingle(),
     supabase.from("urgency_levels").select("id, code, label").eq("is_active", true).order("sort_order"),
   ]);
   const homeLike = tk?.modality === "home" || tk?.modality === "pickup";
@@ -151,7 +151,18 @@ export async function QuoteSection({ ticketId, canQuote, ticketOpen }: { ticketI
               <AddItemForm ticketId={ticketId} quoteId={quote.id} services={services ?? []} products={products ?? []} />
             </div>
           </details>
-          <QuoteActionForm ticketId={ticketId} quoteId={quote.id} kind="send" label="Enviar al cliente" />
+          {tk?.status === "diagnosing" ? (
+            <QuoteActionForm ticketId={ticketId} quoteId={quote.id} kind="send" label="Enviar al cliente" />
+          ) : (
+            <div className="flex flex-col gap-2">
+              <button type="button" disabled aria-describedby="send-why" className="min-h-[58px] rounded-2xl bg-brand text-[17px] font-extrabold text-ink opacity-50">
+                Enviar al cliente
+              </button>
+              <p id="send-why" className="m-0 text-[13px] font-semibold text-muted">
+                Para enviarla, el ticket debe estar «En diagnóstico». Ahora está «{statusLabel(tk?.status ?? "")}»: cámbialo desde «Cambiar estado».
+              </p>
+            </div>
+          )}
         </>
       ) : null}
 

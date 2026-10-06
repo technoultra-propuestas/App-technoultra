@@ -37,7 +37,16 @@ const metrics = (b) =>
     };
   })()`);
 
-export async function run({ b, rep, state, save, out }) {
+export async function run({ b, rep, state, save, out, base }) {
+  // El manifiesto PWA es público (sin sesión), rápido y válido.
+  const t0 = Date.now();
+  const mres = await fetch(`${base}/manifest.webmanifest`, { redirect: "manual" });
+  const man = await mres.json().catch(() => null);
+  rep.check("/manifest.webmanifest responde 200 sin sesión, con tipo y caché correctos", mres.status === 200 && /manifest+json|json/.test(mres.headers.get("content-type") ?? "") && /max-age=3600/.test(mres.headers.get("cache-control") ?? ""), `${mres.status} ${mres.headers.get("content-type")}`);
+  rep.check("el manifiesto es válido (nombre, inicio, modo y íconos) y responde rápido", Boolean(man?.name && man?.start_url && man?.display === "standalone" && man.icons?.length >= 2) && Date.now() - t0 < 2000, `${Date.now() - t0} ms`);
+  const icon = await fetch(`${base}${man?.icons?.[0]?.src ?? "/x"}`);
+  rep.check("los íconos del manifiesto también son públicos", icon.status === 200);
+
   const shots = (name) => b.screenshot(resolve(out, `ux-${name}.png`));
 
   // Datos de PRUEBA solo en la base local (para ver rejilla, carriles y tablero con contenido): eventos de agenda de esta semana.

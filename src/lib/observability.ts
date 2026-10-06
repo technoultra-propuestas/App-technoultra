@@ -109,3 +109,34 @@ export async function reportServerError(err: unknown, request: RequestInfo, cont
     /* sin acción: la observabilidad es de mejor esfuerzo */
   }
 }
+
+/**
+ * Registra el error REAL de una acción de servidor (código y mensaje depurados, sin SQL ni datos personales) y devuelve una
+ * referencia corta que se muestra al usuario («Ref. a1b2c3») para poder localizarlo en los registros o en Sentry.
+ */
+export async function reportActionError(op: string, error: unknown, extra: Record<string, string | number | boolean | null | undefined> = {}, env: Env = process.env, send: typeof fetch = fetch): Promise<string> {
+  const ref = crypto.randomUUID().replace(/-/g, "").slice(0, 8);
+  try {
+    const e = (error ?? {}) as { code?: unknown; message?: unknown; details?: unknown; hint?: unknown };
+    const report = {
+      event: "action_error",
+      ref,
+      op: scrubText(op, 80),
+      code: scrubText(e.code ?? "", 20),
+      message: scrubText(e.message ?? error, 300),
+      hint: e.hint ? scrubText(e.hint, 120) : undefined,
+      extra: Object.fromEntries(Object.entries(extra).map(([k, v]) => [scrubText(k, 40), typeof v === "string" ? scrubText(v, 80) : v])),
+      environment: env.VERCEL_ENV ?? env.NODE_ENV ?? "unknown",
+      release: env.VERCEL_GIT_COMMIT_SHA?.slice(0, 12),
+    };
+    console.error(JSON.stringify(report));
+    const dsn = parseDsn(env.SENTRY_DSN);
+    if (dsn) {
+      const base: ErrorReport = { event: "server_error", name: "ActionError", message: `${report.op} ${report.code} ${report.message}`, digest: ref, route: report.op, routeType: "action", method: "POST", environment: report.environment, release: report.release };
+      await send(dsn.url, { method: "POST", headers: { "Content-Type": "application/x-sentry-envelope" }, body: buildEnvelope(base, crypto.randomUUID().replace(/-/g, "")), signal: AbortSignal.timeout(3000) });
+    }
+  } catch {
+    /* mejor esfuerzo */
+  }
+  return ref;
+}

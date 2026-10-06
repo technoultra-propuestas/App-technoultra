@@ -63,3 +63,10 @@ Migración 25: `admin` → `superadmin` (propietario único), `is_admin` → `is
 
 ## Rediseño UX/UI — fase 1 (2026-10-06)
 Auditoría (`docs/UX-REDESIGN-AUDIT.md`) y primera entrega (`docs/UX-REDESIGN-COMPLETE.md`): riel + cabecera + barra inferior comunes a personal y cliente, kit de componentes, Inicio/Tickets/Clientes/Cotizaciones/Agenda (Día-Semana-Mes)/CRM (tablero)/Tienda/Avisos/Más del panel y «Lo que sigue» del cliente. Escenario E2E `05-panel-ux` (130 comprobaciones). Pendiente: el resto de pantallas listadas en el documento.
+
+## Corrección «Enviar al cliente» y manifest (2026-10-06)
+- **Causa:** el ticket TU-2026-00001 estaba en «Recibido»; `send_quote` (supabase/migrations/20261005000011_quote_workflow.sql, línea 30) lo pasa a «Esperando aprobación», transición que solo existe desde «En diagnóstico» → `invalid_transition: received -> awaiting_approval`. La acción (`src/app/b/tickets/quote-actions.ts`) lo traducía al mensaje genérico. Los importes (70.000 − 39.900 = 30.100) estaban correctos.
+- **Corrección:** mensaje claro con el estado actual; botón deshabilitado con explicación si el ticket no está en diagnóstico; errores desconocidos con referencia («Ref. xxxxxxxx») y registro/Sentry depurado (`reportActionError`). La máquina de estados y las reglas comerciales no cambian.
+- **Pruebas:** `tests/db/quote-send-regression.test.ts` (escenario exacto + doble clic + permisos + ticket en «Recibido»), `tests/unit/quote-send-action.test.ts`, E2E `06-cotizacion-estado`.
+- **Manifest:** `/manifest.webmanifest` es público (excluido del proxy) y responde 200 con `application/manifest+json`; el `ERR_TIMED_OUT` es intermitente de red (también falló `/` y la conexión IPv6 a la BD desde esta máquina), no de la ruta. Se añade `Cache-Control: public, max-age=3600, stale-while-revalidate=86400` para no repetir la petición en cada carga. E2E lo verifica.
+- **IA:** proveedor `AI_PROVIDER=openrouter` soportado (`src/lib/ai/llm.ts`); Gemini sigue como alternativa.

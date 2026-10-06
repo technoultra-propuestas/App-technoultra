@@ -5,7 +5,7 @@ import { assertRole } from "@/lib/auth/session";
 import { allow, TOO_MANY } from "@/lib/auth/rate-limit";
 import type { ActionState } from "@/lib/auth/schemas";
 import { basicDiagnosis, buildUserPrompt, DEFAULT_DISCLAIMER, parseModelOutput, PROMPT_VERSION, SYSTEM_PROMPT, type AiOutput } from "@/lib/ai/diagnosis";
-import { generateJson } from "@/lib/ai/gemini";
+import { generateJson } from "@/lib/ai/llm";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -23,7 +23,7 @@ const schema = z.object({
 });
 
 /**
- * Diagnóstico PRELIMINAR. Se ejecuta solo en el servidor (la clave de Gemini nunca llega al navegador), con límite de uso,
+ * Diagnóstico PRELIMINAR. Se ejecuta solo en el servidor (la clave del proveedor de IA nunca llega al navegador), con límite de uso,
  * salida validada contra un esquema cerrado y el aviso obligatorio añadido por el servidor (no por el modelo).
  */
 export async function previewDiagnosisAction(_p: AiPreviewState, fd: FormData): Promise<AiPreviewState> {

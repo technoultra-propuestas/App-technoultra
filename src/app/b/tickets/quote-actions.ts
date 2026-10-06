@@ -5,6 +5,8 @@ import { z } from "zod";
 import { assertRole } from "@/lib/auth/session";
 import { zodToState, type ActionState } from "@/lib/auth/schemas";
 import { scheduleEmailFlush } from "@/lib/email/outbox";
+import { statusLabel } from "@/components/ui/layout";
+import { reportActionError } from "@/lib/observability";
 import { createClient } from "@/lib/supabase/server";
 
 const QUOTE_ERRORS: [RegExp, string][] = [
@@ -25,7 +27,13 @@ const QUOTE_ERRORS: [RegExp, string][] = [
   [/ticket_not_diagnosis/, "Este ticket no es de un servicio de diagnóstico."],
   [/diagnosis_credit_already_used/, "El abono del diagnóstico ya fue usado."],
 ];
-const friendly = (m?: string) => QUOTE_ERRORS.find(([re]) => m && re.test(m))?.[1] ?? "No pudimos completar la acción. Inténtalo de nuevo.";
+const GENERIC = "No pudimos completar la acción. Inténtalo de nuevo.";
+/** Mensaje claro para el usuario según el error real; lo desconocido cae en el genérico (y se registra con referencia). */
+const friendly = (m?: string) => {
+  const t = m?.match(/invalid_transition: (\w+) -> awaiting_approval/);
+  if (t) return `Para enviar la cotización el ticket debe estar «En diagnóstico» (ahora está «${statusLabel(t[1])}»). Cámbialo desde «Cambiar estado».`;
+  return QUOTE_ERRORS.find(([re]) => m && re.test(m))?.[1] ?? GENERIC;
+};
 const uuid = z.string().uuid();
 const refresh = (ticketId: string) => revalidatePath(`/b/tickets/${ticketId}`);
 
@@ -117,7 +125,16 @@ async function run(fd: FormData, fn: "send_quote" | "record_in_person_approval" 
     fn === "answer_quote_question"
       ? await supabase.rpc(fn, { p_quote: p.data.quoteId, p_message: p.data.message ?? "" })
       : await supabase.rpc(fn, { p_quote: p.data.quoteId });
-  if (error) return { ok: false, error: friendly(error.message) };
+  if (error) {
+    const known = friendly(error.message);
+    if (known.startsWith(GENERIC)) {
+      const ref = await reportActionError(`quote.${fn}`, error, { quote_status_hint: fn });
+      return { ok: false, error: `${GENERIC} (Ref. ${ref})` };
+    }
+    // Errores de reglas de negocio conocidos: se muestran claros y se registran como advertencia (sin referencia).
+    console.warn(JSON.stringify({ event: "quote_rule", op: `quote.${fn}`, code: error.code }));
+    return { ok: false, error: known };
+  }
   refresh(p.data.ticketId);
   scheduleEmailFlush();
   return { ok: true, message: "Listo." };
