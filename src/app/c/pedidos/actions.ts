@@ -100,7 +100,7 @@ export async function startPaymentAction(fd: FormData): Promise<void> {
   if (order && Number(order.shipping_fee) > 0) lines.push({ id: "envio", title: "Envío", quantity: 1, unit_price: Number(order.shipping_fee) });
 
   const pref = await createPreference(
-    { externalReference: row.external_reference, idempotencyKey: `pref-${row.payment_id}`, items: lines, payerEmail: profile.email, appUrl: getPublicEnv().NEXT_PUBLIC_APP_URL, orderId: orderId.data, expiresAt: order?.expires_at ? new Date(order.expires_at) : null },
+    { externalReference: row.external_reference, idempotencyKey: `pref-${row.payment_id}`, items: lines, payerEmail: profile.email, appUrl: getPublicEnv().NEXT_PUBLIC_APP_URL, backPath: `/c/pedidos/${orderId.data}`, expiresAt: order?.expires_at ? new Date(order.expires_at) : null },
     token,
   );
   if (!pref) redirect(`/c/pedidos/${orderId.data}?pago=error`);

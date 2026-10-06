@@ -8,6 +8,7 @@ import { AssignForm, NoteForm, TransitionForm } from "./forms";
 import { AiDiagnosisCard } from "@/components/ai/AiDiagnosisCard";
 import { reviewAiAction } from "../ai-actions";
 import { DiagnosisBox } from "./diagnosis-box";
+import { PaymentBox } from "./payment-box";
 import { QuoteSection } from "./quote-section";
 import { ReceptionSection } from "./reception-section";
 import { WorkSection } from "./work-section";
@@ -108,6 +109,7 @@ export default async function StaffTicketPage({ params }: { params: Promise<{ id
         <WorkSection ticketId={t.id} status={t.status} />
         <DiagnosisBox ticketId={t.id} isAdmin={me.role === "superadmin"} />
         <QuoteSection ticketId={t.id} canQuote ticketOpen={!(["delivered", "cancelled"] as string[]).includes(t.status)} />
+        <PaymentBox ticketId={t.id} isOwner={me.role === "superadmin"} />
         <DocumentsSection ticketId={t.id} status={t.status} />
         <Card className="flex flex-col gap-3">
           <h2 className="m-0 text-[17px] font-extrabold">Historial</h2>

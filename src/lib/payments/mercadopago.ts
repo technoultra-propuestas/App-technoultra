@@ -84,12 +84,13 @@ export type PreferenceInput = {
   items: { id: string; title: string; quantity: number; unit_price: number }[];
   payerEmail: string | null;
   appUrl: string;
-  orderId: string;
+  /** Ruta interna a la que vuelve el cliente tras pagar (p. ej. /c/pedidos/<id> o /c/tickets/<id>). */
+  backPath: string;
   expiresAt: Date | null;
 };
 
 export async function createPreference(input: PreferenceInput, accessToken: string): Promise<{ id: string; init_point: string } | null> {
-  const back = `${input.appUrl}/c/pedidos/${input.orderId}`;
+  const back = `${input.appUrl}${input.backPath}`;
   try {
     const res = await fetch(`${API}/checkout/preferences`, {
       method: "POST",
@@ -115,5 +116,23 @@ export async function createPreference(input: PreferenceInput, accessToken: stri
     return json.id && json.init_point ? { id: json.id, init_point: json.init_point } : null;
   } catch {
     return null;
+  }
+}
+
+export type MpSearchResult = { id: number | string; status: string; transaction_amount: number; currency_id: string; external_reference: string | null; date_last_updated?: string };
+
+/** Conciliación: busca en Mercado Pago los pagos de una referencia (por si el webhook no llegó). Solo lectura. */
+export async function searchPaymentsByReference(ref: string, accessToken: string): Promise<MpSearchResult[]> {
+  try {
+    const res = await fetch(`${API}/v1/payments/search?external_reference=${encodeURIComponent(ref)}&sort=date_created&criteria=desc&limit=5`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      signal: AbortSignal.timeout(10_000),
+      cache: "no-store",
+    });
+    if (!res.ok) return [];
+    const json = (await res.json()) as { results?: MpSearchResult[] };
+    return json.results ?? [];
+  } catch {
+    return [];
   }
 }

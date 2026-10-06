@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { z } from "zod";
 import { AiDiagnosisCard } from "@/components/ai/AiDiagnosisCard";
 import { quoteBreakdown } from "@/lib/domain/pricing";
+import { PaymentCard } from "./payment-card";
 import { QuoteDecision } from "./quote-client";
 import {
   Card,
@@ -31,7 +32,7 @@ const MESSAGES: Record<string, string> = {
   cancelled: "Este servicio fue cancelado.",
 };
 
-export default async function TicketDetail({ params }: { params: Promise<{ id: string }> }) {
+export default async function TicketDetail({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ pago?: string }> }) {
   await requireRole(["client"]);
   const id = z
     .string()
@@ -137,6 +138,7 @@ export default async function TicketDetail({ params }: { params: Promise<{ id: s
           )}
         </Card>
       ) : null}
+      <PaymentCard ticketId={t.id} result={(await searchParams).pago} />
       {diag?.[0] ? (
         <Card className="flex flex-col gap-2">
           <h2 className="m-0 text-[17px] font-extrabold">Diagnóstico</h2>
