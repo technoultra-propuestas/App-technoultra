@@ -91,7 +91,7 @@ export async function QuoteSection({ ticketId, canQuote, ticketOpen }: { ticketI
         ))}
       </ul>
       <div className="flex flex-col gap-1 border-t border-line pt-3 text-[14px] font-semibold">
-        {quoteBreakdown(quote).map((l) => (
+        {quoteBreakdown(quote as unknown as Parameters<typeof quoteBreakdown>[0]).map((l) => (
           <div key={l.key} className={`flex justify-between ${l.strong ? "text-[18px] font-extrabold" : l.info ? "text-[13px] text-muted" : l.key === "subtotal" ? "" : "text-muted"}`}>
             <span>{l.label}</span>
             <span>

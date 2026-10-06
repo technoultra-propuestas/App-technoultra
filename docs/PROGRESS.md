@@ -53,3 +53,10 @@ Portal `/gestion/*` con TOTP obligatorio (migración 24 aplicada), `/b/seguridad
 
 ## Jerarquía SUPERADMIN (2026-10-05)
 Migración 25: `admin` → `superadmin` (propietario único), `is_admin` → `is_superadmin`, índice de propietario único, alta de personal solo técnicos, auditoría `superadmin.*`. Ver `docs/ACCESO-Y-MFA.md` y D-065…D-067.
+
+## E2E en el repositorio, observabilidad y tipos (2026-10-05)
+- `tests/e2e/` (ver su README): cuatro escenarios sobre la pila local de Supabase (puertos 563xx) con Chrome real, Mailpit, TOTP real, **Cloudinary real** (subida firmada y verificada) y **Gemini real** (aviso obligatorio): registro y onboarding; MFA y roles del personal; cadena completa CLIENTE → SOLICITUD → TICKET → RECEPCIÓN → FOTOS → DIAGNÓSTICO → COTIZACIÓN → APROBACIÓN → PAGO → SERVICIO → PRUEBAS → ENTREGA → GARANTÍA → MANTENIMIENTO; y 60 comprobaciones de seguridad con sesiones reales (escalada, aislamiento, MFA en BD, inmutabilidad). Comandos: `npm run e2e:setup`, `npm run e2e`, `npm run e2e:reset`.
+- Defecto real hallado por el E2E y corregido: el botón «Ver diagnóstico preliminar con IA» reiniciaba el formulario y borraba lo escrito (campos de la solicitud ahora controlados).
+- Observabilidad sin dependencias (`src/instrumentation.ts` + `src/lib/observability.ts`): registro JSON depurado (sin correos, JWT, claves, identificadores ni query) y envío a Sentry solo si existe `SENTRY_DSN`.
+- Tipos de Supabase generados desde el remoto (`src/lib/supabase/database.types.ts`) y aplicados a los tres clientes (servidor, admin, público). Regenerar tras cada migración con `supabase gen types typescript --db-url <url> --schema public`.
+- Plantillas de correo locales (`supabase/templates`) alineadas con producción (por enlace).

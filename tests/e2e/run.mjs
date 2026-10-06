@@ -1,4 +1,4 @@
-// Orquestador E2E. Uso:  node tests/e2e/run.mjs [escenario ...] [--reset] [--prod-build]
+// Orquestador E2E. Uso:  node tests/e2e/run.mjs [escenario ...] [--reset] [--dev]
 // Requisitos: Docker + `npx supabase start` (pila local) y Chrome. Todo corre contra la base LOCAL: los tickets, pagos y
 // auditoría son inmutables por diseño, así que estas pruebas jamás se ejecutan contra producción.
 import { execFileSync } from "node:child_process";
@@ -8,6 +8,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync } from 
 import { startApp } from "./lib/app.mjs";
 import { Browser } from "./lib/browser.mjs";
 import { adminClient, assertLocal, psql, publishLegalFixtures, seedStaff } from "./lib/fixtures.mjs";
+import { deleteTestAssets } from "./lib/cloudinary.mjs";
 import { createReporter, inbucket, randomPassword, readEnvFile, stamp } from "./lib/support.mjs";
 
 const args = process.argv.slice(2);
@@ -26,6 +27,13 @@ if (flags.has("--reset")) {
   execFileSync("npx", ["supabase", "db", "reset", "--local", "--yes"], { stdio: "inherit", shell: true });
   execFileSync(process.execPath, ["--env-file=.env.e2e", "scripts/import-catalog.mjs", "--apply"], { stdio: "inherit" });
   if (existsSync(STATE)) writeFileSync(STATE, "{}");
+  // Tras el reset, Auth/PostgREST tardan unos segundos en volver: se espera a que respondan antes de sembrar.
+  for (let i = 0; i < 60; i++) {
+    const ok = await fetch(`${env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/health`, { headers: { apikey: env.NEXT_PUBLIC_SUPABASE_ANON_KEY } }).then((r) => r.ok).catch(() => false);
+    if (ok) break;
+    await new Promise((r) => setTimeout(r, 2000));
+  }
+  await new Promise((r) => setTimeout(r, 5000));
 }
 
 const sb = adminClient(env);
@@ -44,7 +52,7 @@ if (!state.owner || psql("select count(*) from public.profiles where role = 'sup
 }
 const save = () => writeFileSync(STATE, JSON.stringify(state));
 
-const app = await startApp({ mode: flags.has("--prod-build") ? "start" : "dev" });
+const app = await startApp({ mode: flags.has("--dev") ? "dev" : "start" });
 const mail = inbucket(env.E2E_INBUCKET_URL ?? "http://127.0.0.1:56324");
 const browser = await Browser.launch({ baseUrl: app.base, profileDir: join(tmpdir(), `tu-e2e-chrome-${stamp()}`) });
 
@@ -67,6 +75,11 @@ try {
 } finally {
   await browser.close();
   app.stop();
+  if (!flags.has("--keep-assets")) {
+    const ids = psql("select id from public.tickets").split(/\s+/).filter(Boolean);
+    const r = await deleteTestAssets(env, [...ids.map((id) => `technoultra/tickets/${id}`), "technoultra/e2e-probe"]).catch(() => ({ deleted: 0 }));
+    console.log(`Cloudinary: ${r.skipped ? "sin credenciales, nada que limpiar" : r.deleted + " activos de prueba eliminados"}`);
+  }
 }
 console.log(allOk ? "\nE2E: TODO OK" : "\nE2E: HAY FALLOS");
 process.exit(allOk ? 0 : 1);

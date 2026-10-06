@@ -29,7 +29,7 @@ export default async function StaffTicketsPage({ searchParams }: { searchParams:
     .limit(100);
   if (f === "open") q = q.not("status", "in", "(delivered,cancelled)");
   else if (f === "closed") q = q.in("status", ["delivered", "cancelled"]);
-  else if (FILTERS.some(([k]) => k === f)) q = q.eq("status", f);
+  else if (FILTERS.some(([k]) => k === f)) q = q.eq("status", f as "received");
   const { data } = await q;
   const rows = data ?? [];
   return (

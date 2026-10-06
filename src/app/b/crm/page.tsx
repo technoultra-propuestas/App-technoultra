@@ -17,7 +17,7 @@ export default async function CrmPage({ searchParams }: { searchParams: Promise<
   const supabase = await createClient();
   let q = supabase.from("crm_tasks").select("id, task_type, status, due_at, note, customers(full_name, phone), equipment(brand, model)").order("due_at").limit(100);
   if (f === "open") q = q.in("status", ["pending", "contacted", "interested", "scheduled", "no_answer"]);
-  else if (f in CRM_LABEL) q = q.eq("status", f);
+  else if (f in CRM_LABEL) q = q.eq("status", f as "pending");
   const { data } = await q;
   const tasks = data ?? [];
   const ids = tasks.map((t) => t.id);

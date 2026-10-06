@@ -4,6 +4,7 @@ type Output = {
   summary?: string;
   causes?: { text: string; likelihood: "high" | "medium" | "low" }[];
 };
+export type AiRow = Row;
 type Row = { id: string; output: Output; urgency: string | null; disclaimer: string; validation_status: string; model: string };
 
 const VALIDATION: Record<string, string> = {

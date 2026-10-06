@@ -93,3 +93,8 @@ apuntaba a otra cuenta y tiene prioridad sobre el login: hay que quitarla o usar
 - **D-065 SUPERADMIN = propietario único de TechnoUltra.** Jerarquía `SUPERADMIN > TECHNICIAN > CLIENT`; no existen ADMIN, OWNER ni ROOT. El valor `admin` del enum `app_role` se renombró a `superadmin` (migración 25) sin tocar filas: UUID, historial, relaciones y auditoría del propietario se conservan. `private.is_admin()` pasó a `private.is_superadmin()`.
 - **D-066 Propietario único garantizado por la BD** (índice único parcial). El personal que se crea desde la app es siempre técnico; nadie puede crear, modificar, degradar ni desactivar al SUPERADMIN desde la aplicación; el bootstrap es de una sola vez (`bootstrap_first_superadmin`, solo service_role).
 - **D-067 Auditoría con los nombres definitivos:** `superadmin.*` para el propietario y `staff.*` para técnicos; los cambios de rol registran actor, usuario, rol anterior y nuevo. Los eventos históricos `admin.*` no se reescriben.
+
+## E2E y observabilidad (2026-10-05)
+- **D-068 E2E solo contra base local.** Tickets, pagos, historial y auditoría son inmutables, así que las pruebas de flujo completo nunca corren contra producción; el runner se niega si la URL de Supabase no es local. Cloudinary y Gemini se prueban con claves reales y los activos de prueba se borran al terminar.
+- **D-069 Observabilidad sin SDK.** `onRequestError` registra un JSON depurado y, si hay `SENTRY_DSN`, envía el evento por la API de envelope (sin usuario, cabeceras ni cuerpo). Evita una dependencia pesada y reduce el riesgo de filtrar datos personales.
+- **D-070 Tipos generados.** Los clientes de Supabase usan `Database`; los argumentos opcionales de RPC se envían como `undefined` (no `null`).

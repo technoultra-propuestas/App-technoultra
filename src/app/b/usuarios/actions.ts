@@ -47,8 +47,8 @@ export async function inviteStaffAction(_p: ActionState, fd: FormData): Promise<
     p_user_id: userId,
     p_role: role,
     p_full_name: fullName,
-    p_phone: phone || null,
-    p_title: title || null,
+    p_phone: phone || undefined,
+    p_title: title || undefined,
   });
   if (error) {
     console.error("staff.provision", error.code);

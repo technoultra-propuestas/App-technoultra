@@ -23,7 +23,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ]);
     for (const s of services ?? []) entries.push({ url: `${base}/servicios/${s.slug}`, lastModified: new Date(s.updated_at), changeFrequency: "weekly", priority: 0.7 });
     for (const a of areas ?? []) entries.push({ url: `${base}/cobertura/${slugify(a.city_name)}`, lastModified: new Date(a.updated_at), changeFrequency: "monthly", priority: 0.8 });
-    for (const l of legal ?? []) entries.push({ url: `${base}/legal/${l.slug}`, lastModified: new Date(l.published_at), changeFrequency: "yearly", priority: 0.3 });
+    for (const l of legal ?? []) entries.push({ url: `${base}/legal/${l.slug}`, lastModified: new Date(l.published_at ?? Date.now()), changeFrequency: "yearly", priority: 0.3 });
   } catch {
     /* sin base de datos disponible: se devuelven solo las páginas fijas */
   }

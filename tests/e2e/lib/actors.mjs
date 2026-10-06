@@ -60,6 +60,14 @@ export async function clientLogin(b, { email, password }) {
   return b.waitPath((p) => !p.startsWith("/login"), 15000);
 }
 
+// Supabase no acepta dos veces el mismo código TOTP: si ya se usó en esta ventana de 30 s se espera a la siguiente.
+const lastStep = new Map();
+export async function freshWindow(secret) {
+  const step = () => Math.floor(Date.now() / 30000);
+  while (lastStep.get(secret) === step()) await sleep(1000);
+  lastStep.set(secret, step());
+}
+
 /**
  * Inicio de sesión del personal en /gestion/login con MFA. Si aún no tiene factor, lo enrola leyendo la clave manual de
  * la pantalla (igual que lo haría la persona con su app autenticadora). Devuelve { path, secret }.
@@ -81,6 +89,7 @@ export async function staffLogin(b, { email, password, secret }) {
   }
   // El código del periodo actual; si Supabase lo rechaza por desfase/reuso, se prueba el siguiente periodo.
   for (const offset of [0, 1]) {
+    await freshWindow(secret);
     await b.fill("code", totp(secret, offset));
     await b.clickText(secret && (await b.text()).includes("Activar verificación") ? "Activar verificación" : "Verificar", "body");
     const p = await b.waitPath((x) => !x.startsWith("/gestion/mfa"), 8000);

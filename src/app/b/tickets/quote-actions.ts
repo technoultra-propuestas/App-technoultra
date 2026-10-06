@@ -86,7 +86,8 @@ export async function addItemAction(_p: ActionState, fd: FormData): Promise<Acti
     product_id: v.kind === "product" ? v.refId : null,
     description,
     qty: v.qty,
-    unit_price: v.kind === "custom" || v.kind === "service" ? v.unitPrice : null,
+    // El servidor fija el precio de catálogo cuando no se envía (la columna es obligatoria solo en los tipos generados).
+    unit_price: (v.kind === "custom" || v.kind === "service" ? v.unitPrice : null) as number,
     discount: v.discount,
     warranty_days: v.warrantyDays,
     warranty_kind: v.kind === "product" ? "product" : v.warrantyKind,

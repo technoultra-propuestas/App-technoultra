@@ -24,7 +24,7 @@ export async function createLegalDraftAction(_p: ActionState, fd: FormData): Pro
   const supabase = await createClient();
   const { data: next, error: e1 } = await supabase.rpc("next_legal_version", { p_slug: v.slug });
   if (e1 || !next) return { ok: false, error: "No tienes permiso para gestionar documentos legales." };
-  const { error } = await supabase.from("legal_documents").insert({ slug: v.slug, version: next, title: v.title, content: v.content, requires_acceptance: v.requiresAcceptance === "on", status: "draft" });
+  const { error } = await supabase.from("legal_documents").insert({ slug: v.slug, version: next, title: v.title, content: v.content, requires_acceptance: v.requiresAcceptance === "on", status: "draft", content_sha256: "" /* el trigger de la BD calcula el hash real */ });
   if (error) return { ok: false, error: "No pudimos guardar el borrador." };
   revalidatePath("/b/legal");
   return { ok: true, message: `Borrador de la versión ${next} creado. Revísalo con un abogado antes de publicarlo.` };

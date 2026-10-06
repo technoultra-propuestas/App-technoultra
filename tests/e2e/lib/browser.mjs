@@ -123,6 +123,10 @@ export class Browser {
   submit(withField) {
     return this.eval(`(() => { const f = ${withField ? `document.querySelector('[name="${withField}"]')?.form` : "document.querySelector('#contenido form')"}; const b = f?.querySelector('button[type=submit], button:not([type])'); if (!b) return false; b.click(); return true; })()`);
   }
+  /** Resumen legible de lo que hay en pantalla (títulos, botones, enlaces): para diagnosticar escenarios que fallan. */
+  snap(max = 90) {
+    return this.eval(`[...document.querySelectorAll('h1,h2,h3,button,a[href],label')].map((e) => e.innerText.trim().replace(/\\s+/g, ' ')).filter(Boolean).slice(0, ${max}).join(' | ')`);
+  }
   /** Igual que fill/submit pero acotado a un formulario concreto (p. ej. `form:has(input[name=key][value="business.phone"])`). */
   fillIn(formSel, name, value) {
     return this.eval(`(() => { const el = document.querySelector(${JSON.stringify(formSel)})?.querySelector('[name="${name}"]'); if (!el) return false;
@@ -133,12 +137,23 @@ export class Browser {
   submitIn(formSel) {
     return this.eval(`(() => { const b = document.querySelector(${JSON.stringify(formSel)})?.querySelector('button[type=submit], button:not([type])'); if (!b) return false; b.click(); return true; })()`);
   }
-  async setFiles(selector, files) {
-    const doc = await this.send("DOM.getDocument", { depth: 0 });
-    const q = await this.send("DOM.querySelector", { nodeId: doc.root.nodeId, selector });
-    if (!q.nodeId) return false;
-    await this.send("DOM.setFileInputFiles", { files, nodeId: q.nodeId });
-    return true;
+  /** Espera a que React haya hidratado el elemento (si no, eventos como `change` se pierden en silencio). */
+  async waitHydrated(selector = "input[type=file]", ms = 40000) {
+    const t0 = Date.now();
+    while (Date.now() - t0 < ms) {
+      if (await this.eval(`(() => { const el = document.querySelector(${JSON.stringify(selector)}); return !!el && Object.keys(el).some((k) => k.startsWith('__reactFiber') || k.startsWith('__reactProps')); })()`)) return true;
+      await sleep(400);
+    }
+    return false;
+  }
+  /** Adjunta archivos (rutas absolutas) al n-ésimo input que cumpla el selector; dispara el evento `change` real. */
+  async setFiles(selector, files, index = 0) {
+    // Se localiza el input con Runtime (objectId): más fiable que los nodeId del dominio DOM, que se invalidan al navegar.
+    const r = await this.send("Runtime.evaluate", { expression: `document.querySelectorAll(${JSON.stringify(selector)})[${index}]` });
+    const objectId = r.result?.objectId;
+    if (!objectId) return false;
+    const res = await this.send("DOM.setFileInputFiles", { files, objectId });
+    return !res?.message;
   }
   clearCookies() {
     return this.send("Network.clearBrowserCookies");

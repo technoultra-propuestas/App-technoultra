@@ -31,7 +31,7 @@ export async function decideQuoteAction(_p: ActionState, fd: FormData): Promise<
   const v = parsed.data;
   if (!(await allow("quote-decide", profile.id, 20, 3600))) return { ok: false, error: TOO_MANY };
   const supabase = await createClient();
-  const { error } = await supabase.rpc("decide_quote", { p_quote: v.quoteId, p_decision: v.decision, p_message: v.message || null });
+  const { error } = await supabase.rpc("decide_quote", { p_quote: v.quoteId, p_decision: v.decision, p_message: v.message || undefined });
   if (error) return { ok: false, error: ERRORS.find(([re]) => re.test(error.message))?.[1] ?? "No pudimos registrar tu decisión. Inténtalo de nuevo." };
   revalidatePath(`/c/tickets/${v.ticketId}`);
   return {

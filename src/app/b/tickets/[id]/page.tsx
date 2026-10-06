@@ -5,7 +5,7 @@ import { Card, EQUIPMENT_LABEL, fmtDateTime, MODALITY_LABEL, PageTitle, StatusBa
 import { requireRole } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { AssignForm, NoteForm, TransitionForm } from "./forms";
-import { AiDiagnosisCard } from "@/components/ai/AiDiagnosisCard";
+import { AiDiagnosisCard, type AiRow } from "@/components/ai/AiDiagnosisCard";
 import { reviewAiAction } from "../ai-actions";
 import { DiagnosisBox } from "./diagnosis-box";
 import { PaymentBox } from "./payment-box";
@@ -90,7 +90,7 @@ export default async function StaffTicketPage({ params }: { params: Promise<{ id
           </Card>
         </div>
         {ai ? (
-          <AiDiagnosisCard row={ai} audience="staff">
+          <AiDiagnosisCard row={ai as unknown as AiRow} audience="staff">
             {ai.validation_status === "pending" ? (
               <div className="flex flex-wrap gap-2">
                 {([["validated", "Validar"], ["edited", "Marcar como ajustado"], ["rejected", "Descartar"]] as const).map(([st, label]) => (

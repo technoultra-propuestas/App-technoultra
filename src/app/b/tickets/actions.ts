@@ -52,7 +52,7 @@ export async function transitionAction(_p: ActionState, fd: FormData): Promise<A
   const parsed = transitionSchema.safeParse(Object.fromEntries(fd.entries()));
   if (!parsed.success) return zodToState(parsed.error);
   const supabase = await createClient();
-  const { error } = await supabase.rpc("transition_ticket", { p_ticket: parsed.data.ticketId, p_to: parsed.data.to, p_reason: parsed.data.reason || null });
+  const { error } = await supabase.rpc("transition_ticket", { p_ticket: parsed.data.ticketId, p_to: parsed.data.to, p_reason: parsed.data.reason || undefined });
   if (error) return { ok: false, error: friendlyTransitionError(error.message) };
   await autoDocuments(parsed.data.ticketId, parsed.data.to, actor.id);
   scheduleEmailFlush();

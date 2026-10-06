@@ -14,14 +14,14 @@ type Sb = Awaited<ReturnType<typeof createClient>>;
 export async function updateOrInsert(sb: Sb, table: string, match: Record<string, string>, values: Record<string, unknown>) {
   const keys = Object.keys(match);
   const update = async () => {
-    let q = sb.from(table).update(values);
+    let q = sb.from(table as never).update(values as never) as ReturnType<ReturnType<Sb["from"]>["update"]>;
     for (const k of keys) q = q.eq(k, match[k]);
     return q.select(keys[0]);
   };
   const first = await update();
   if (first.error) return first.error;
   if (first.data?.length) return null;
-  const ins = await sb.from(table).insert({ ...match, ...values });
+  const ins = await sb.from(table as never).insert({ ...match, ...values } as never);
   if (ins.error?.code === "23505") return (await update()).error; // otra petición creó la fila entre medias
   return ins.error;
 }

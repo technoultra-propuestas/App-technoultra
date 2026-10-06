@@ -64,8 +64,8 @@ export async function createOrderAction(_p: ActionState, fd: FormData): Promise<
   const { data, error } = await supabase.rpc("create_order", {
     p_items: cart.map((c) => ({ product_id: c.productId, qty: c.qty, install: Boolean(c.install) })),
     p_delivery_method: method.data,
-    p_address_id: addressId.success ? addressId.data : null,
-    p_notes: String(fd.get("notes") ?? "").slice(0, 500) || null,
+    p_address_id: addressId.success ? addressId.data : undefined,
+    p_notes: String(fd.get("notes") ?? "").slice(0, 500) || undefined,
   });
   if (error || !data) return { ok: false, error: ORDER_ERRORS.find(([re]) => re.test(error?.message ?? ""))?.[1] ?? "No pudimos crear tu pedido. Inténtalo de nuevo." };
   redirect(`/c/pedidos/${data}`);

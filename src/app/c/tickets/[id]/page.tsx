@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { z } from "zod";
-import { AiDiagnosisCard } from "@/components/ai/AiDiagnosisCard";
+import { AiDiagnosisCard, type AiRow } from "@/components/ai/AiDiagnosisCard";
 import { quoteBreakdown } from "@/lib/domain/pricing";
 import { PaymentCard } from "./payment-card";
 import { QuoteDecision } from "./quote-client";
@@ -102,7 +102,7 @@ export default async function TicketDetail({ params, searchParams }: { params: P
         <h2 className="m-0 text-[17px] font-extrabold">Lo que nos contaste</h2>
         <p className="m-0 text-[15px] leading-normal text-ink-2">{t.problem}</p>
       </Card>
-      {ai ? <AiDiagnosisCard row={ai} audience="client" /> : null}
+      {ai ? <AiDiagnosisCard row={ai as unknown as AiRow} audience="client" /> : null}
       {quote ? (
         <Card className="flex flex-col gap-3">
           <h2 className="m-0 text-[17px] font-extrabold">Cotización {quote.code}</h2>
@@ -118,7 +118,7 @@ export default async function TicketDetail({ params, searchParams }: { params: P
             ))}
           </ul>
           <div className="flex flex-col gap-1 border-t border-line pt-3 text-[14px] font-semibold">
-            {quoteBreakdown(quote).map((l) => (
+            {quoteBreakdown(quote as unknown as Parameters<typeof quoteBreakdown>[0]).map((l) => (
               <div key={l.key} className={`flex justify-between ${l.strong ? "text-[18px] font-extrabold" : l.info ? "text-[13px] text-muted" : ""}`}>
                 <span>{l.label}</span>
                 <span>

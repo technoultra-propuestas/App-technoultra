@@ -22,6 +22,12 @@ export function RequestForm({ serviceId, modalities, requiresEquipment, equipmen
   const [state, action] = useActionState(createRequestAction, initialState);
   const [modality, setModality] = useState(modalities[0] ?? "remote");
   const [addressId, setAddressId] = useState(addresses[0]?.id ?? "");
+  // Campos controlados: el botón de la vista previa con IA usa su propia acción y React 19 reinicia los campos no controlados
+  // del formulario al terminarla (se borraría lo que la persona ya escribió).
+  const [problem, setProblem] = useState("");
+  const [day, setDay] = useState("");
+  const [slot, setSlot] = useState("morning");
+  const [equipmentId, setEquipmentId] = useState(equipment[0]?.id ?? "");
   const physical = modality !== "remote";
   const selected = addresses.find((a) => a.id === addressId);
   // Ayuda visual únicamente: la validación real de cobertura ocurre en el servidor y en la base de datos.
@@ -53,7 +59,7 @@ export function RequestForm({ serviceId, modalities, requiresEquipment, equipmen
             </Link>
           </Alert>
         ) : (
-          <Select label="Equipo" name="equipmentId" defaultValue={equipment[0]?.id}>
+          <Select label="Equipo" name="equipmentId" value={equipmentId} onChange={(e) => setEquipmentId(e.target.value)}>
             {equipment.map((e) => (
               <option key={e.id} value={e.id}>
                 {e.label}
@@ -92,6 +98,8 @@ export function RequestForm({ serviceId, modalities, requiresEquipment, equipmen
       <Textarea
         label="¿Qué está pasando?"
         name="problem"
+        value={problem}
+        onChange={(e) => setProblem(e.target.value)}
         placeholder="Ej.: Está muy lento y se demora en prender."
         required
         error={state.fieldErrors?.problem}
@@ -99,7 +107,7 @@ export function RequestForm({ serviceId, modalities, requiresEquipment, equipmen
 
       {physical ? (
         <div className="grid grid-cols-2 gap-3">
-          <Select label="Día preferido" name="day" defaultValue="">
+          <Select label="Día preferido" name="day" value={day} onChange={(e) => setDay(e.target.value)}>
             <option value="">Sin preferencia</option>
             {days.map((d) => (
               <option key={d.value} value={d.value}>
@@ -107,7 +115,7 @@ export function RequestForm({ serviceId, modalities, requiresEquipment, equipmen
               </option>
             ))}
           </Select>
-          <Select label="Franja" name="slot" defaultValue="morning">
+          <Select label="Franja" name="slot" value={slot} onChange={(e) => setSlot(e.target.value)}>
             <option value="morning">Mañana</option>
             <option value="afternoon">Tarde</option>
           </Select>
