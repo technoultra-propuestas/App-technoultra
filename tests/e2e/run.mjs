@@ -61,6 +61,8 @@ const selected = files.filter((f) => !wanted.length || wanted.some((w) => f.incl
 let allOk = true;
 try {
   for (const f of selected) {
+    // Los límites de intentos (seguridad real de la app) se vacían entre escenarios: aquí no se prueban y varios inicios de sesión seguidos los agotarían.
+    psql("truncate private.rate_limits");
     const mod = await import(`./scenarios/${f}`);
     const rep = createReporter(mod.title ?? f);
     console.log(`\n=== ${mod.title ?? f} ===`);

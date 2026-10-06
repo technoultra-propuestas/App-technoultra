@@ -12,6 +12,22 @@
   --color-line-strong: #d9d9d5;
   --color-ink-2: #3a3a38;
   --font-sans: var(--font-manrope), system-ui, sans-serif;
+
+  /* Sistema de diseño: forma, elevación y movimiento (valores comunes de todo el producto) */
+  --radius-card: 20px;
+  --radius-ctl: 14px;
+  --radius-chip: 999px;
+  --shadow-card: 0 1px 2px rgb(18 18 18 / 0.04), 0 4px 16px rgb(18 18 18 / 0.04);
+  --shadow-pop: 0 8px 28px rgb(18 18 18 / 0.14);
+  --color-rail: #121212;
+  --color-ok: #1f6b3a;
+  --color-ok-soft: #e3f3e8;
+  --color-warn: #7a3e00;
+  --color-warn-soft: #ffe9cc;
+  --color-danger: #9a2b1e;
+  --color-danger-soft: #f7e4e1;
+  --color-info: #33507a;
+  --color-info-soft: #eef1f6;
 }
 
 :root {
@@ -72,4 +88,25 @@ a {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* Movimiento sutil y corto (150–300 ms); se anula con prefers-reduced-motion (regla anterior). */
+.press {
+  transition: transform 150ms ease, background-color 200ms ease, box-shadow 200ms ease, opacity 200ms ease;
+}
+.press:active {
+  transform: scale(0.97);
+}
+@keyframes tu-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.enter {
+  animation: tu-fade-up 240ms ease-out both;
 }

@@ -60,3 +60,6 @@ Migración 25: `admin` → `superadmin` (propietario único), `is_admin` → `is
 - Observabilidad sin dependencias (`src/instrumentation.ts` + `src/lib/observability.ts`): registro JSON depurado (sin correos, JWT, claves, identificadores ni query) y envío a Sentry solo si existe `SENTRY_DSN`.
 - Tipos de Supabase generados desde el remoto (`src/lib/supabase/database.types.ts`) y aplicados a los tres clientes (servidor, admin, público). Regenerar tras cada migración con `supabase gen types typescript --db-url <url> --schema public`.
 - Plantillas de correo locales (`supabase/templates`) alineadas con producción (por enlace).
+
+## Rediseño UX/UI — fase 1 (2026-10-06)
+Auditoría (`docs/UX-REDESIGN-AUDIT.md`) y primera entrega (`docs/UX-REDESIGN-COMPLETE.md`): riel + cabecera + barra inferior comunes a personal y cliente, kit de componentes, Inicio/Tickets/Clientes/Cotizaciones/Agenda (Día-Semana-Mes)/CRM (tablero)/Tienda/Avisos/Más del panel y «Lo que sigue» del cliente. Escenario E2E `05-panel-ux` (130 comprobaciones). Pendiente: el resto de pantallas listadas en el documento.

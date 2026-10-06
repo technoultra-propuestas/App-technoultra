@@ -28,7 +28,7 @@ export async function signUpClient(b, mail, { email, password, fullName }) {
 }
 
 /** Completa los 6 pasos del onboarding por la interfaz. Devuelve la ruta final (esperada: /c). */
-export async function completeOnboarding(b, { phone = "3001234567", dane = "76001", address = "Calle 5 # 38-20", brand = "Lenovo", model = "ThinkPad E14" } = {}) {
+export async function completeOnboarding(b, { phone = "3" + String(Math.floor(Math.random() * 1e9)).padStart(9, "0"), dane = "76001", address = "Calle 5 # 38-20", brand = "Lenovo", model = "ThinkPad E14" } = {}) {
   const next = (label) => b.clickText(label, "body");
   await next("Empezar");
   await must(b, /PASO 2 DE 6/i, 30000);

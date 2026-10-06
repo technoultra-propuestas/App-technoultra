@@ -1,5 +1,4 @@
-import { AppHeader } from "@/components/ui/AppHeader";
-import { StaffNav } from "@/components/ui/StaffNav";
+import { StaffShell } from "@/components/ui/StaffShell";
 import { requireRole } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 
@@ -7,10 +6,8 @@ export default async function StaffLayout({ children }: { children: React.ReactN
   const profile = await requireRole(["technician", "superadmin"]);
   const { count: unread } = await (await createClient()).from("notifications").select("id", { count: "exact", head: true }).is("read_at", null).eq("channel", "in_app");
   return (
-    <div className="min-h-screen-dvh">
-      <AppHeader home="/b" name={profile.full_name} roleLabel={profile.role === "superadmin" ? "Superadmin" : "Técnico"} unread={unread ?? 0} />
-      <StaffNav isAdmin={profile.role === "superadmin"} />
-      <div id="contenido" tabIndex={-1} className="pb-safe mx-auto max-w-[1040px] px-5 pb-10 pt-6 outline-none">{children}</div>
-    </div>
+    <StaffShell name={profile.full_name} isAdmin={profile.role === "superadmin"} unread={unread ?? 0}>
+      {children}
+    </StaffShell>
   );
 }
