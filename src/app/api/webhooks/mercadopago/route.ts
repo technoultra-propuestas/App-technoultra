@@ -1,17 +1,18 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { serverEnv } from "@/lib/env.server";
-import { fetchPayment, mapStatus, verifyWebhookSignature } from "@/lib/payments/mercadopago";
 import { scheduleEmailFlush } from "@/lib/email/outbox";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { fetchOrder, ORDER_ID, verifyWebhookSignature } from "@/lib/payments/mercadopago";
+import { applyOrder } from "@/lib/payments/orders";
 
 const reply = (status: number, body: Record<string, unknown> = {}) => NextResponse.json(body, { status, headers: { "Cache-Control": "no-store" } });
+const MAX_BODY = 16 * 1024;
 
 /**
- * Notificaciones de Mercado Pago. Orden de seguridad:
- *  1) validar la firma x-signature (HMAC con el secreto del webhook);
- *  2) NO confiar en el cuerpo: consultar el pago a la API de Mercado Pago;
- *  3) aplicar el evento en base de datos de forma idempotente (monto/moneda/referencia verificados allí).
- * Respuestas: 401 firma inválida · 200 procesado o duplicado · 502 si el proveedor no responde (para que reintente).
+ * Webhook de Mercado Pago (evento «Order (Mercado Pago)» de Checkout Pro + Orders API). Orden de seguridad:
+ *  1) validar la firma x-signature (HMAC-SHA256 con el secreto del webhook, tiempo constante, ventana de tiempo);
+ *  2) NO confiar en el cuerpo: consultar la Order a la API con el token del servidor;
+ *  3) aplicar el evento en base de datos de forma idempotente (aplicación, moneda, monto y referencia verificados; estados monotónicos).
+ * Respuestas: 401 firma inválida · 200 procesado/duplicado/ignorado · 502 si la API no responde (Mercado Pago reintenta).
  */
 export async function POST(request: NextRequest) {
   let env: { MERCADOPAGO_ACCESS_TOKEN: string; MERCADOPAGO_WEBHOOK_SECRET: string };
@@ -20,8 +21,15 @@ export async function POST(request: NextRequest) {
   } catch {
     return reply(503, { error: "not_configured" });
   }
+  const raw = await request.text();
+  if (raw.length > MAX_BODY) return reply(413, { error: "too_large" });
+  let body: { type?: string; action?: string; data?: { id?: string | number } } | null = null;
+  try {
+    body = raw ? JSON.parse(raw) : null;
+  } catch {
+    body = null;
+  }
   const url = request.nextUrl;
-  const body = (await request.json().catch(() => null)) as { type?: string; data?: { id?: string | number } } | null;
   const dataId = url.searchParams.get("data.id") ?? (body?.data?.id !== undefined ? String(body.data.id) : null);
   const type = url.searchParams.get("type") ?? body?.type ?? null;
 
@@ -31,30 +39,27 @@ export async function POST(request: NextRequest) {
     dataId,
     secret: env.MERCADOPAGO_WEBHOOK_SECRET,
   });
-  if (!valid) return reply(401, { error: "invalid_signature" });
-  if (type !== "payment" || !dataId || !/^[0-9]{1,20}$/.test(dataId)) return reply(200, { ignored: true });
-
-  const payment = await fetchPayment(dataId, env.MERCADOPAGO_ACCESS_TOKEN);
-  if (!payment) return reply(502, { error: "provider_unavailable" });
-  if (!payment.external_reference) return reply(200, { ignored: "no_reference" });
-
-  const { data, error } = await createAdminClient().rpc("apply_payment_event", {
-    p_provider: "mercadopago",
-    p_event_id: `${payment.id}:${payment.status}:${payment.date_last_updated ?? ""}`,
-    p_event_type: "payment",
-    // Solo se guardan los campos necesarios para auditoría (sin datos personales del pagador).
-    p_payload: { id: payment.id, status: payment.status, status_detail: payment.status_detail, amount: payment.transaction_amount, currency: payment.currency_id },
-    p_signature_valid: true,
-    p_external_reference: payment.external_reference,
-    p_external_id: String(payment.id),
-    p_status: mapStatus(payment.status),
-    p_amount: payment.transaction_amount,
-    p_currency: payment.currency_id,
-  });
-  if (error) {
-    console.error("mp.webhook.apply", error.code);
-    return reply(500, { error: "apply_failed" });
+  if (!valid) {
+    console.warn(JSON.stringify({ event: "mp_webhook_rejected", reason: "invalid_signature" }));
+    return reply(401, { error: "invalid_signature" });
   }
+  // Solo se procesan Orders. Otros tipos (p. ej. `payment` heredado) se reconocen con 200 y no cambian nada.
+  // El id firmado puede venir en minúsculas (así lo exige el manifiesto); el id real de la Order es en mayúsculas.
+  const orderId = (body?.data?.id !== undefined ? String(body.data.id) : (dataId ?? "")).toUpperCase();
+  if (type !== "order" || !ORDER_ID.test(orderId) || orderId.toLowerCase() !== dataId?.toLowerCase()) return reply(200, { ignored: true });
+
+  const order = await fetchOrder(orderId, env.MERCADOPAGO_ACCESS_TOKEN);
+  if (order === "not_found") return reply(200, { ignored: "order_not_found" });
+  if (!order) return reply(502, { error: "provider_unavailable" });
+  if (order.id !== orderId) return reply(200, { ignored: "id_mismatch" });
+
+  const out = await applyOrder(order, env.MERCADOPAGO_ACCESS_TOKEN, "webhook");
+  if (out.kind === "error") return reply(500, { error: "apply_failed" });
+  if (out.kind === "ignored") {
+    console.warn(JSON.stringify({ event: "mp_webhook_ignored", reason: out.reason }));
+    return reply(200, { ignored: out.reason });
+  }
+  if (["amount_mismatch", "unknown_payment"].includes(out.result)) console.warn(JSON.stringify({ event: "mp_webhook_anomaly", result: out.result }));
   scheduleEmailFlush();
-  return reply(200, { result: data });
+  return reply(200, { result: out.result });
 }

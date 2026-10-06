@@ -8,7 +8,7 @@ import { allow, TOO_MANY } from "@/lib/auth/rate-limit";
 import type { ActionState } from "@/lib/auth/schemas";
 import { serverEnv } from "@/lib/env.server";
 import { getPublicEnv } from "@/lib/env.public";
-import { createPreference } from "@/lib/payments/mercadopago";
+import { createOrder } from "@/lib/payments/mercadopago";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -96,15 +96,26 @@ export async function startPaymentAction(fd: FormData): Promise<void> {
 
   const { data: items } = await admin.from("order_items").select("id, description, qty, unit_price").eq("order_id", orderId.data);
   const { data: order } = await admin.from("orders").select("shipping_fee, expires_at").eq("id", orderId.data).single();
-  const lines = (items ?? []).map((i) => ({ id: i.id, title: i.description, quantity: i.qty, unit_price: Number(i.unit_price) }));
-  if (order && Number(order.shipping_fee) > 0) lines.push({ id: "envio", title: "Envío", quantity: 1, unit_price: Number(order.shipping_fee) });
+  const lines = (items ?? []).map((i) => ({ title: i.description, quantity: i.qty, unit_price: Number(i.unit_price) }));
+  if (order && Number(order.shipping_fee) > 0) lines.push({ title: "Envío", quantity: 1, unit_price: Number(order.shipping_fee) });
 
-  const pref = await createPreference(
-    { externalReference: row.external_reference, idempotencyKey: `pref-${row.payment_id}`, items: lines, payerEmail: profile.email, appUrl: getPublicEnv().NEXT_PUBLIC_APP_URL, backPath: `/c/pedidos/${orderId.data}`, expiresAt: order?.expires_at ? new Date(order.expires_at) : null },
+  const mpOrder = await createOrder(
+    {
+      externalReference: row.external_reference,
+      idempotencyKey: `ord-${row.payment_id}`,
+      items: lines,
+      totalAmount: Number(row.amount),
+      description: `Pedido ${row.order_code}`,
+      payerEmail: profile.email,
+      appUrl: getPublicEnv().NEXT_PUBLIC_APP_URL,
+      backPath: `/c/pedidos/${orderId.data}`,
+      expiresAt: order?.expires_at ? new Date(order.expires_at) : null,
+    },
     token,
   );
-  if (!pref) redirect(`/c/pedidos/${orderId.data}?pago=error`);
-  redirect(pref.init_point);
+  if (!mpOrder) redirect(`/c/pedidos/${orderId.data}?pago=error`);
+  await admin.from("payments").update({ external_id: mpOrder.id }).eq("id", row.payment_id).eq("provider", "mercadopago");
+  redirect(mpOrder.checkoutUrl);
 }
 
 export async function cancelOrderAction(fd: FormData): Promise<void> {

@@ -1,28 +1,45 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 
+/**
+ * Mercado Pago · Checkout Pro con **Orders API** (`POST /v1/orders`, `type=online`, `processing_mode=manual`).
+ * TechnoUltra es la fuente de verdad del pago: el importe sale de la base de datos, el navegador nunca decide el estado, y un pago
+ * solo pasa a «aprobado» tras (1) webhook con firma válida, (2) consulta de la Order a la API con el token del servidor y
+ * (3) verificación de monto, moneda, referencia y aplicación (ver `orders.ts` y la función SQL `apply_payment_event`).
+ *
+ * Notas verificadas contra la API real (Colombia): los importes en COP van como texto SIN decimales ("30100"); los ítems solo admiten
+ * `title`, `unit_price`, `quantity` (y similares), no `total_amount` ni `unit_measure`.
+ */
+
 export type PaymentStatus = "pending" | "approved" | "rejected" | "cancelled" | "refunded" | "expired";
 
-/** Estados de Mercado Pago → estados internos. Cualquier valor desconocido se trata como pendiente (nunca como aprobado). */
-export function mapStatus(mp: string | undefined | null): PaymentStatus {
-  switch (mp) {
-    case "approved":
-      return "approved";
-    case "rejected":
+/**
+ * Estado de la Order de Mercado Pago → estado interno. Todo valor desconocido es «pendiente» (jamás «aprobado»).
+ * Solo `processed` + `accredited` aprueba. Un reembolso parcial NO cambia el estado (el pago sigue aprobado).
+ */
+export function mapOrderStatus(status: string | undefined | null, detail?: string | null): PaymentStatus {
+  switch (status) {
+    case "processed":
+      if (detail === "accredited" || detail === "partially_refunded") return "approved";
+      if (detail === "refunded") return "refunded";
+      return "pending";
+    case "refunded":
+      return "refunded";
+    case "failed":
       return "rejected";
+    case "canceled":
     case "cancelled":
       return "cancelled";
-    case "refunded":
-    case "charged_back":
-      return "refunded";
+    case "expired":
+      return "expired";
     default:
-      return "pending"; // pending, in_process, authorized, in_mediation, desconocidos
+      return "pending"; // created, processing, action_required, desconocidos
   }
 }
 
 /**
  * Valida la cabecera x-signature de las notificaciones de Mercado Pago:
- * manifest = "id:<data.id>;request-id:<x-request-id>;ts:<ts>;" firmado con HMAC-SHA256 y el secreto del webhook.
- * Comparación en tiempo constante y ventana de validez de la marca de tiempo.
+ * manifest = "id:<data.id en minúsculas>;request-id:<x-request-id>;ts:<ts>;" firmado con HMAC-SHA256 y el secreto del webhook.
+ * Comparación en tiempo constante y ventana de validez de la marca de tiempo (anti-repetición; la idempotencia cubre el resto).
  */
 export function verifyWebhookSignature(p: {
   xSignature: string | null;
@@ -52,87 +69,137 @@ export function verifyWebhookSignature(p: {
   return given.length === expected.length && timingSafeEqual(given, expected);
 }
 
-export type MpPayment = {
-  id: number | string;
+const API = "https://api.mercadopago.com";
+export const ORDER_ID = /^ORD[0-9A-Z]{10,48}$/;
+
+/** El id de aplicación va dentro del access token (`APP_USR-<appId>-…`): permite comprobar que una Order es de NUESTRA aplicación. */
+export function applicationIdFromToken(token: string): string | null {
+  const m = /^(?:APP_USR|TEST)-(\d{6,20})-/.exec(token);
+  return m ? m[1] : null;
+}
+
+export type MpOrder = {
+  id: string;
   status: string;
   status_detail?: string;
-  transaction_amount: number;
-  currency_id: string;
-  external_reference: string | null;
-  date_last_updated?: string;
+  external_reference?: string | null;
+  total_amount: string;
+  total_paid_amount?: string;
+  currency?: string;
+  last_updated_date?: string;
+  integration_data?: { application_id?: string };
+  transactions?: { payments?: { id?: string; amount?: string; paid_amount?: string; status?: string; status_detail?: string }[] };
 };
 
-const API = "https://api.mercadopago.com";
+const authHeaders = (token: string) => ({ Authorization: `Bearer ${token}`, accept: "application/json" });
 
-/** Consulta el pago directamente a Mercado Pago: NUNCA se confía en el cuerpo de la notificación ni en query params. */
-export async function fetchPayment(id: string, accessToken: string): Promise<MpPayment | null> {
+/** Consulta la Order directamente a Mercado Pago: NUNCA se confía en el cuerpo de la notificación ni en query params. */
+export async function fetchOrder(id: string, token: string): Promise<MpOrder | "not_found" | null> {
+  if (!ORDER_ID.test(id)) return "not_found";
   try {
-    const res = await fetch(`${API}/v1/payments/${encodeURIComponent(id)}`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-      signal: AbortSignal.timeout(10_000),
-      cache: "no-store",
-    });
-    return res.ok ? ((await res.json()) as MpPayment) : null;
+    const res = await fetch(`${API}/v1/orders/${encodeURIComponent(id)}`, { headers: authHeaders(token), signal: AbortSignal.timeout(10_000), cache: "no-store" });
+    if (res.status === 404) return "not_found";
+    if (!res.ok) {
+      console.error("mp.order.get", { status: res.status });
+      return null;
+    }
+    return (await res.json()) as MpOrder;
   } catch {
     return null;
   }
 }
 
-export type PreferenceInput = {
+/** COP no tiene decimales: importe como texto entero. Devuelve null si el valor no es un entero positivo válido. */
+export function copAmount(n: number): string | null {
+  return Number.isFinite(n) && n > 0 && Number.isInteger(n) && n < 1e10 ? String(n) : null;
+}
+
+export type OrderInput = {
   externalReference: string;
+  /** Una clave nueva por intento de creación (UUID). Para el mismo pago puede reutilizarse: Mercado Pago devuelve la misma Order. */
   idempotencyKey: string;
-  items: { id: string; title: string; quantity: number; unit_price: number }[];
+  items: { title: string; quantity: number; unit_price: number }[];
+  /** Total calculado por el servidor; debe ser exactamente la suma de unit_price × quantity. */
+  totalAmount: number;
+  description: string;
   payerEmail: string | null;
   appUrl: string;
-  /** Ruta interna a la que vuelve el cliente tras pagar (p. ej. /c/pedidos/<id> o /c/tickets/<id>). */
+  /** Ruta interna a la que vuelve el cliente tras pagar (p. ej. /c/pedidos/<id> o /c/tickets/<id>). Solo informa: no confirma nada. */
   backPath: string;
   expiresAt: Date | null;
 };
 
-export async function createPreference(input: PreferenceInput, accessToken: string): Promise<{ id: string; init_point: string } | null> {
+export type CreatedOrder = { id: string; checkoutUrl: string };
+
+/** Duración ISO 8601 hasta `expiresAt` (días enteros si es posible, si no horas). Mínimo 1 hora. */
+export function expirationDuration(expiresAt: Date, now = Date.now()): string {
+  const hours = Math.max(1, Math.round((expiresAt.getTime() - now) / 3_600_000));
+  return hours % 24 === 0 ? `P${hours / 24}D` : `PT${hours}H`;
+}
+
+/** Crea la Order de Checkout Pro. Devuelve null ante cualquier fallo (el llamador muestra un error seguro; el detalle queda en el registro). */
+export async function createOrder(input: OrderInput, token: string): Promise<CreatedOrder | null> {
+  const total = copAmount(input.totalAmount);
+  const lines = input.items.map((i) => ({ title: i.title.slice(0, 250), quantity: i.quantity, unit_price: copAmount(i.unit_price) }));
+  const sum = input.items.reduce((s, i) => s + i.unit_price * i.quantity, 0);
+  // Coherencia obligatoria: total = Σ(precio × cantidad), enteros positivos. Si no cuadra, NO se envía nada a Mercado Pago.
+  if (!total || lines.some((l) => !l.unit_price || !Number.isInteger(l.quantity) || l.quantity < 1) || sum !== input.totalAmount) {
+    console.error("mp.order.invalid_amounts");
+    return null;
+  }
   const back = `${input.appUrl}${input.backPath}`;
   try {
-    const res = await fetch(`${API}/checkout/preferences`, {
+    const res = await fetch(`${API}/v1/orders`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json", "X-Idempotency-Key": input.idempotencyKey },
+      headers: { ...authHeaders(token), "Content-Type": "application/json", "X-Idempotency-Key": input.idempotencyKey },
       body: JSON.stringify({
-        items: input.items.map((i) => ({ ...i, title: i.title.slice(0, 250), currency_id: "COP" })),
-        payer: input.payerEmail ? { email: input.payerEmail } : undefined,
+        type: "online",
+        processing_mode: "manual",
+        total_amount: total,
         external_reference: input.externalReference,
-        notification_url: `${input.appUrl}/api/webhooks/mercadopago`,
-        back_urls: { success: `${back}?pago=exito`, pending: `${back}?pago=pendiente`, failure: `${back}?pago=fallo` },
-        auto_return: "approved",
-        statement_descriptor: "TECHNOULTRA",
-        expires: Boolean(input.expiresAt),
-        ...(input.expiresAt ? { expiration_date_to: input.expiresAt.toISOString() } : {}),
+        description: input.description.slice(0, 150),
+        payer: input.payerEmail ? { email: input.payerEmail } : undefined,
+        config: { online: { success_url: `${back}?pago=exito`, pending_url: `${back}?pago=pendiente`, failure_url: `${back}?pago=fallo`, auto_return: "approved" } },
+        ...(input.expiresAt ? { expiration_time: expirationDuration(input.expiresAt) } : {}),
+        items: lines.map((l) => ({ title: l.title, quantity: l.quantity, unit_price: l.unit_price })),
       }),
       signal: AbortSignal.timeout(15_000),
     });
     if (!res.ok) {
-      console.error("mp.preference", res.status);
+      const retryAfter = res.headers.get("retry-after");
+      const err = (await res.json().catch(() => ({}))) as { errors?: { code?: string }[]; message?: string };
+      console.error("mp.order.create", { status: res.status, code: err.errors?.[0]?.code ?? err.message ?? null, retryAfter });
       return null;
     }
-    const json = (await res.json()) as { id?: string; init_point?: string };
-    return json.id && json.init_point ? { id: json.id, init_point: json.init_point } : null;
+    const o = (await res.json()) as MpOrder & { checkout_url?: string };
+    let host = "";
+    try {
+      host = new URL(o.checkout_url ?? "").hostname;
+    } catch {
+      /* url inválida */
+    }
+    // La respuesta debe corresponder EXACTAMENTE a lo pedido; si no, no se redirige a nadie.
+    if (!ORDER_ID.test(o.id ?? "") || !/(^|\.)mercadopago\.com(\.[a-z]{2})?$/.test(host) || o.external_reference !== input.externalReference || o.total_amount !== total || (o.currency && o.currency !== "COP")) {
+      console.error("mp.order.unexpected_response");
+      return null;
+    }
+    return { id: o.id, checkoutUrl: o.checkout_url as string };
   } catch {
     return null;
   }
 }
 
-export type MpSearchResult = { id: number | string; status: string; transaction_amount: number; currency_id: string; external_reference: string | null; date_last_updated?: string };
-
-/** Conciliación: busca en Mercado Pago los pagos de una referencia (por si el webhook no llegó). Solo lectura. */
-export async function searchPaymentsByReference(ref: string, accessToken: string): Promise<MpSearchResult[]> {
+/** Cancela una Order sin pagar (p. ej. al vencer el pago interno). Mejor esfuerzo; un error nunca rompe el flujo. */
+export async function cancelOrder(id: string, token: string): Promise<boolean> {
+  if (!ORDER_ID.test(id)) return false;
   try {
-    const res = await fetch(`${API}/v1/payments/search?external_reference=${encodeURIComponent(ref)}&sort=date_created&criteria=desc&limit=5`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
+    const res = await fetch(`${API}/v1/orders/${encodeURIComponent(id)}/cancel`, {
+      method: "POST",
+      headers: { ...authHeaders(token), "X-Idempotency-Key": crypto.randomUUID() },
       signal: AbortSignal.timeout(10_000),
-      cache: "no-store",
     });
-    if (!res.ok) return [];
-    const json = (await res.json()) as { results?: MpSearchResult[] };
-    return json.results ?? [];
+    return res.ok;
   } catch {
-    return [];
+    return false;
   }
 }

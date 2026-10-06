@@ -6,7 +6,7 @@ import { allow } from "@/lib/auth/rate-limit";
 import { assertRole } from "@/lib/auth/session";
 import { getPublicEnv } from "@/lib/env.public";
 import { serverEnv } from "@/lib/env.server";
-import { createPreference } from "@/lib/payments/mercadopago";
+import { createOrder } from "@/lib/payments/mercadopago";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const schema = z.object({ kind: z.enum(["diagnosis", "quote"]), ticketId: z.string().uuid(), ref: z.string().uuid() });
@@ -44,11 +44,13 @@ export async function startServicePaymentAction(fd: FormData): Promise<void> {
     if (error) console.error("pay.begin", kind, error.code, error.message);
     return back(REASONS.find(([re]) => re.test(error?.message ?? ""))?.[1] ?? "no_disponible");
   }
-  const pref = await createPreference(
+  const order = await createOrder(
     {
       externalReference: row.external_reference,
-      idempotencyKey: `pref-${row.payment_id}`,
-      items: [{ id: row.payment_id, title: row.title, quantity: 1, unit_price: Number(row.amount) }],
+      idempotencyKey: `ord-${row.payment_id}`,
+      items: [{ title: row.title, quantity: 1, unit_price: Number(row.amount) }],
+      totalAmount: Number(row.amount),
+      description: row.title,
       payerEmail: profile.email,
       appUrl: getPublicEnv().NEXT_PUBLIC_APP_URL,
       backPath: `/c/tickets/${ticketId}`,
@@ -56,6 +58,8 @@ export async function startServicePaymentAction(fd: FormData): Promise<void> {
     },
     token,
   );
-  if (!pref) return back("error");
-  redirect(pref.init_point);
+  if (!order) return back("error");
+  // Se guarda el id de la Order para consultarla y conciliarla (la referencia externa ya es el id interno del pago).
+  await admin.from("payments").update({ external_id: order.id }).eq("id", row.payment_id).eq("provider", "mercadopago");
+  redirect(order.checkoutUrl);
 }

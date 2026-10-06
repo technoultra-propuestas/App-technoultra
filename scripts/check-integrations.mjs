@@ -25,14 +25,19 @@ else {
   const me = await fetch("https://api.mercadopago.com/users/me", { headers: h, signal: t() }).then(async (r) => ({ s: r.status, j: await json(r) })).catch((e) => ({ s: 0, j: { message: e.name } }));
   if (me.s !== 200) bad("Mercado Pago: token", `HTTP ${me.s} ${me.j.message ?? ""}`);
   else ok("Mercado Pago: token válido", `país ${me.j.site_id}${/^TEST-/.test(mp) ? " · credencial de PRUEBA (TEST-)" : /^APP_USR-/.test(mp) ? " · APP_USR (cuenta de prueba o producción: se distingue en el panel)" : ""}`);
-  const pref = await fetch("https://api.mercadopago.com/checkout/preferences", {
+  // Orders API: se crea una Order de 1.000 COP SIN pagar y se cancela de inmediato (no cobra nada).
+  const key = () => crypto.randomUUID();
+  const ord = await fetch("https://api.mercadopago.com/v1/orders", {
     method: "POST",
-    headers: { ...h, "Content-Type": "application/json" },
-    body: JSON.stringify({ items: [{ title: "Validación de credenciales", quantity: 1, unit_price: 1000, currency_id: "COP" }], external_reference: `check-${Date.now()}`, notification_url: `${env.NEXT_PUBLIC_APP_URL ?? "https://app.technoultra.com"}/api/webhooks/mercadopago` }),
+    headers: { ...h, "Content-Type": "application/json", "X-Idempotency-Key": key() },
+    body: JSON.stringify({ type: "online", processing_mode: "manual", total_amount: "1000", external_reference: `check-${Date.now()}`, expiration_time: "PT1H", items: [{ title: "Validación de credenciales", unit_price: "1000", quantity: 1 }] }),
     signal: t(),
   }).then(async (r) => ({ s: r.status, j: await json(r) })).catch(() => ({ s: 0, j: {} }));
-  if (pref.s === 201) ok("Mercado Pago: se puede crear una preferencia de pago", pref.j.sandbox_init_point ? "con enlace sandbox" : "");
-  else bad("Mercado Pago: crear preferencia", `HTTP ${pref.s} ${pref.j.message ?? ""}`);
+  if (ord.s === 201 && ord.j.id) {
+    ok("Mercado Pago: Orders API crea una Order de Checkout Pro", ord.j.checkout_url ? "con checkout_url" : "");
+    const c = await fetch(`https://api.mercadopago.com/v1/orders/${ord.j.id}/cancel`, { method: "POST", headers: { ...h, "X-Idempotency-Key": key() }, signal: t() }).then((r) => r.status).catch(() => 0);
+    c === 200 ? ok("Mercado Pago: la Order de validación se canceló (sin cobro)") : warn("Mercado Pago: cancelar la Order de validación", `HTTP ${c}`);
+  } else bad("Mercado Pago: crear Order", `HTTP ${ord.s} ${ord.j.errors?.[0]?.code ?? ord.j.message ?? ""}`);
   if (!env.NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY) warn("Mercado Pago: NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY", "vacía (solo se necesita si se usan Bricks)");
   if (!env.MERCADOPAGO_WEBHOOK_SECRET) warn("Mercado Pago: MERCADOPAGO_WEBHOOK_SECRET", "vacío: sin él NO se confirma ningún pago (el webhook rechaza lo que no pueda verificar). Mercado Pago → Tus integraciones → Webhooks → «Clave secreta».");
   else ok("Mercado Pago: secreto del webhook definido");
