@@ -20,10 +20,12 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
       <main id="contenido" tabIndex={-1} className="mx-auto w-full max-w-[1040px] flex-1 px-5 py-8">{children}</main>
       <footer className="pb-safe border-t border-line bg-white">
         <div className="mx-auto flex max-w-[1040px] flex-wrap gap-x-5 gap-y-2 px-5 py-5 text-[13px] font-semibold text-muted">
-          <Link href="/legal/terms" className="text-muted">Términos</Link>
-          <Link href="/legal/privacy" className="text-muted">Privacidad</Link>
-          <Link href="/legal/data_policy" className="text-muted">Tratamiento de datos</Link>
-          <Link href="/legal/warranty_policy" className="text-muted">Garantías</Link>
+          <Link href="/legal/terms" className="flex min-h-11 items-center text-muted">Términos</Link>
+          <Link href="/legal/privacy" className="flex min-h-11 items-center text-muted">Privacidad</Link>
+          <Link href="/legal/data_policy" className="flex min-h-11 items-center text-muted">Tratamiento de datos</Link>
+          <Link href="/legal/warranty_policy" className="flex min-h-11 items-center text-muted">Garantías</Link>
+          <Link href="/legal/returns_policy" className="flex min-h-11 items-center text-muted">Reembolsos</Link>
+          <Link href="/legal" className="flex min-h-11 items-center font-extrabold text-ink">Todos los documentos</Link>
         </div>
       </footer>
     </div>
