@@ -2,6 +2,7 @@ import "server-only";
 import { createHash } from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { QuotePricing } from "@/lib/domain/pricing";
+import { loadBusinessInfo } from "@/lib/seo";
 import {
   buildDeliveryPdf, buildDiagnosisPdf, buildQuotePdf, buildReceptionPdf, buildWarrantyPdf,
   type EquipmentInfo, type Party,
@@ -63,7 +64,8 @@ export async function generateTicketDocument(kind: DocKind, ticketId: string, ac
   const code = codeData as string;
   const { data: prev } = await admin.from("documents").select("id, version, status").eq("ticket_id", ticketId).eq("doc_type", kind).order("version", { ascending: false });
   const version = (prev?.[0]?.version ?? 0) + 1;
-  const meta = { title: TITLES[kind], code, version, generatedAt: new Date() };
+  const biz = await loadBusinessInfo();
+  const meta = { title: TITLES[kind], code, version, generatedAt: new Date(), business: { name: biz.name, phone: biz.phone, address: biz.address } };
   let quoteId: string | null = null;
   let pdf: Uint8Array;
 

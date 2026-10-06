@@ -1,5 +1,6 @@
 import "server-only";
 import { serverEnv } from "@/lib/env.server";
+import { loadBusinessInfo } from "@/lib/seo";
 import { renderNotificationEmail, type NotificationEmail } from "./templates";
 
 export type EmailMessage = {
@@ -56,6 +57,14 @@ export async function sendEmail(msg: EmailMessage): Promise<SendResult> {
 }
 
 export async function sendNotificationEmail(to: string, n: NotificationEmail, idempotencyKey?: string) {
-  const { subject, html, text } = renderNotificationEmail(n);
+  // Datos de contacto del negocio (los carga el SUPERADMIN en el CRM). Si no se pueden leer, el correo sale igual, sin ellos.
+  let business: NotificationEmail["business"];
+  try {
+    const b = await loadBusinessInfo();
+    business = { name: b.name, phone: b.phone, address: b.address };
+  } catch {
+    business = undefined;
+  }
+  const { subject, html, text } = renderNotificationEmail({ business, ...n });
   return sendEmail({ to, subject, html, text, idempotencyKey });
 }

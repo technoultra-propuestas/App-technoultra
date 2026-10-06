@@ -22,5 +22,8 @@ export function parseSetting(def: SettingDef, raw: string): { ok: true; value: s
   const t = raw.trim();
   if (t.length > 300) return { ok: false, error: "Máximo 300 caracteres." };
   if (def.key === "business.email" && t && !z.string().email().safeParse(t).success) return { ok: false, error: "Correo no válido." };
+  if (def.key === "business.phone" && t && !/^\+?[0-9 ()-]{7,20}$/.test(t)) return { ok: false, error: "Teléfono no válido (solo números, espacios, + ( ) -)." };
+  if (def.key === "business.name" && t && t.length < 2) return { ok: false, error: "Escribe al menos 2 caracteres." };
+  if (def.key === "business.address" && t && t.length < 5) return { ok: false, error: "Escribe la dirección completa." };
   return { ok: true, value: t };
 }

@@ -5,6 +5,7 @@ import { z } from "zod";
 import { assertRole } from "@/lib/auth/session";
 import { phoneCO, zodToState, type ActionState } from "@/lib/auth/schemas";
 import { createClient } from "@/lib/supabase/server";
+import { updateOrInsert } from "@/lib/supabase/save";
 
 const schema = z
   .object({
@@ -61,12 +62,8 @@ export async function updatePreferencesAction(_p: ActionState, fd: FormData): Pr
   const profile = await assertRole(["client"]);
   const v = prefsSchema.parse(Object.fromEntries(fd.entries()));
   const supabase = await createClient();
-  const { error } = await supabase
-    .from("notification_preferences")
-    .upsert(
-      { profile_id: profile.id, email_enabled: v.email === "on", in_app_enabled: true },
-      { onConflict: "profile_id" },
-    );
+  const error = await updateOrInsert(supabase, "notification_preferences", { profile_id: profile.id }, { email_enabled: v.email === "on", in_app_enabled: true });
+  if (error) console.error("notification_preferences.save", error.code, error.message);
   if (error) return { ok: false, error: "No pudimos guardar tus preferencias." };
   revalidatePath("/c/perfil");
   return { ok: true, message: "Preferencias guardadas." };

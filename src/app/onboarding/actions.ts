@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { updateOrInsert } from "@/lib/supabase/save";
 import { assertRole } from "@/lib/auth/session";
 import { phoneCO, zodToState, type ActionState } from "@/lib/auth/schemas";
 
@@ -145,12 +146,8 @@ export async function saveNotificationPermissionAction(_p: ActionState, fd: Form
   const parsed = notifSchema.safeParse(form(fd));
   if (!parsed.success) return zodToState(parsed.error);
   const { profile, supabase } = await ctx();
-  await supabase
-    .from("notification_preferences")
-    .upsert(
-      { profile_id: profile.id, in_app_enabled: true, push_enabled: parsed.data.permission === "granted" },
-      { onConflict: "profile_id" },
-    );
+  const prefError = await updateOrInsert(supabase, "notification_preferences", { profile_id: profile.id }, { in_app_enabled: true, push_enabled: parsed.data.permission === "granted" });
+  if (prefError) console.error("notification_preferences.save", prefError.code, prefError.message);
   await setStep(supabase, profile.id, profile.onboarding_step, 5);
   redirect("/onboarding");
 }

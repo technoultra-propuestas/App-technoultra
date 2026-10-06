@@ -6,6 +6,7 @@ import { assertRole } from "@/lib/auth/session";
 import { zodToState, type ActionState } from "@/lib/auth/schemas";
 import { DIAGNOSTIC_COMPONENTS } from "@/lib/domain/reception";
 import { createClient } from "@/lib/supabase/server";
+import { updateOrInsert } from "@/lib/supabase/save";
 
 const uuid = z.string().uuid();
 const refresh = (id: string) => revalidatePath(`/b/tickets/${id}`);
@@ -48,8 +49,13 @@ export async function saveDiagnosisAction(_p: ActionState, fd: FormData): Promis
     return ["ok", "review", "fail"].includes(state) ? [{ diagnostic_id: id!, component: c, state }] : [];
   });
   if (items.length) {
-    const { error } = await supabase.from("diagnostic_items").upsert(items, { onConflict: "diagnostic_id,component" });
-    if (error) return { ok: false, error: "No pudimos guardar los componentes evaluados." };
+    for (const it of items) {
+      const error = await updateOrInsert(supabase, "diagnostic_items", { diagnostic_id: it.diagnostic_id, component: it.component }, { state: it.state });
+      if (error) {
+        console.error("diagnostic_items.save", error.code, error.message);
+        return { ok: false, error: "No pudimos guardar los componentes evaluados." };
+      }
+    }
   }
   refresh(v.ticketId);
   return { ok: true, message: "Diagnóstico guardado." };

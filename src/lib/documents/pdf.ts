@@ -21,7 +21,7 @@ export const winAnsi = (s: string) =>
     })
     .join("");
 
-export type PdfMeta = { title: string; code: string; version: number; generatedAt: Date };
+export type PdfMeta = { title: string; code: string; version: number; generatedAt: Date; /** datos públicos del negocio (CRM → Configuración); si faltan no se imprime nada inventado */ business?: { name?: string; phone?: string; address?: string } };
 
 /** Constructor mínimo de PDFs: encabezado de marca, secciones, pares clave/valor, tablas y pie con código y versión. */
 export class PdfBuilder {
@@ -164,6 +164,9 @@ export class PdfBuilder {
         color: MUTED,
       });
       p.drawText("TechnoUltra · technoultra.com", { x: PAGE.w - PAGE.margin - 120, y: 28, size: 8, font: this.font, color: MUTED });
+      const b = this.meta.business;
+      const contact = [b?.name, b?.phone, b?.address].filter(Boolean).join(" · ");
+      if (contact) p.drawText(winAnsi(contact.slice(0, 120)), { x: PAGE.margin, y: 16, size: 8, font: this.font, color: MUTED });
     });
     return this.doc.save();
   }
