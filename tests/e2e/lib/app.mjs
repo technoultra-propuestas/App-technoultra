@@ -6,7 +6,9 @@ import { assertLocal } from "./fixtures.mjs";
 import { e2eEnv, readEnvFile } from "./support.mjs";
 
 export async function startApp({ port = 3000, logFile = "tests/e2e/.app.log", mode = "dev" } = {}) {
-  const env = { ...readEnvFile(".env.e2e") };
+  // Next también carga `.env.local`: se fijan en blanco las integraciones externas para que las pruebas NUNCA usen credenciales
+  // reales (Mercado Pago, correo, Sentry). Un valor definido, aunque vacío, tiene prioridad sobre `.env.local`.
+  const env = { MERCADOPAGO_ACCESS_TOKEN: "", MERCADOPAGO_WEBHOOK_SECRET: "", NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY: "", RESEND_API_KEY: "", SENTRY_DSN: "", ...readEnvFile(".env.e2e") };
   assertLocal(env);
   const base = `http://localhost:${port}`;
   // Si ya hay un servidor en ese puerto (p. ej. lo arrancó el desarrollador), se reutiliza.

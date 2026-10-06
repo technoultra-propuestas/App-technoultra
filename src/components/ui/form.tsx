@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect } from "react";
 import { useFormStatus } from "react-dom";
+import { haptic } from "@/lib/haptics";
 import type { InputHTMLAttributes, ReactNode } from "react";
 
 /** Campo de formulario con el estilo aprobado (alto 56, borde 1.5, radio 14). */
@@ -20,7 +22,7 @@ export function Field({
         name={name}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? `${id}-err` : hint ? `${id}-hint` : undefined}
-        className="h-14 rounded-[14px] border-[1.5px] border-line-strong bg-white px-4 text-[17px] font-semibold text-ink placeholder:text-muted/60"
+        className="h-14 rounded-ctl border-[1.5px] border-line-strong bg-white px-4 text-[17px] font-semibold text-ink placeholder:text-muted/60"
         {...rest}
       />
       {hint && !error ? (
@@ -52,7 +54,7 @@ export function SubmitButton({
     <button
       type="submit"
       disabled={pending}
-      className={`min-h-[58px] rounded-2xl border-none text-[17px] font-extrabold transition-opacity duration-200 disabled:opacity-60 ${styles}`}
+      className={`press min-h-[58px] rounded-2xl border-none text-[17px] font-extrabold disabled:opacity-60 ${styles}`}
     >
       {pending ? pendingText : children}
     </button>
@@ -60,7 +62,11 @@ export function SubmitButton({
 }
 
 export function Alert({ children, tone = "error" }: { children: ReactNode; tone?: "error" | "ok" }) {
-  const styles = tone === "error" ? "bg-[#F7E4E1] text-[#9A2B1E]" : "bg-[#E3F3E8] text-[#1F6B3A]";
+  const styles = tone === "error" ? "bg-danger-soft text-danger" : "bg-ok-soft text-ok";
+  // Confirmación o aviso háptico sutil cuando aparece el resultado de una acción.
+  useEffect(() => {
+    haptic(tone === "ok" ? "success" : "error");
+  }, [tone]);
   return (
     <div
       role={tone === "error" ? "alert" : "status"}

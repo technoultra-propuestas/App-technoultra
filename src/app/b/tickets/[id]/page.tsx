@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { z } from "zod";
+import { TextLink } from "@/components/ui/kit";
 import { Card, EQUIPMENT_LABEL, fmtDateTime, MODALITY_LABEL, PageTitle, StatusBadge, statusLabel } from "@/components/ui/layout";
 import { requireRole } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
@@ -56,6 +57,7 @@ export default async function StaffTicketPage({ params }: { params: Promise<{ id
   return (
     <section className="grid gap-6 md:grid-cols-[1fr_380px]">
       <div className="flex flex-col gap-6">
+        <TextLink href="/b/tickets" className="w-fit">← Tickets</TextLink>
         <PageTitle title={t.code} subtitle={`${svc?.name ?? "Servicio"} · ${MODALITY_LABEL[t.modality]}`} />
         <Card className="flex flex-col gap-3">
           <div className="flex items-center justify-between gap-3">

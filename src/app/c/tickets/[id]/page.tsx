@@ -1,3 +1,4 @@
+import { TextLink } from "@/components/ui/kit";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { z } from "zod";
@@ -89,6 +90,7 @@ export default async function TicketDetail({ params, searchParams }: { params: P
   const eq = t.equipment as unknown as { brand: string; model: string } | null;
   return (
     <section className="mx-auto flex w-full max-w-[640px] flex-col gap-6">
+      <TextLink href="/c/tickets" className="w-fit">← Mis tickets</TextLink>
       <PageTitle
         title={t.code}
         subtitle={eq ? `${eq.brand} ${eq.model} · ${MODALITY_LABEL[t.modality]}` : MODALITY_LABEL[t.modality]}

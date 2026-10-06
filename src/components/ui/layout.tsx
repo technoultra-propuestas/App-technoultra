@@ -13,7 +13,7 @@ export function PageTitle({
   return (
     <div className="flex flex-wrap items-end justify-between gap-3">
       <div className="flex flex-col gap-2">
-        <h1 className="m-0 text-[30px] font-extrabold tracking-[-0.025em]">{title}</h1>
+        <h1 className="m-0 text-[28px] font-extrabold tracking-[-0.025em] lg:text-[30px]">{title}</h1>
         <div className="h-1 w-10 rounded-sm bg-brand" />
         {subtitle ? (
           <p className="m-0 mt-1 max-w-[640px] text-base leading-normal text-muted">{subtitle}</p>
@@ -25,7 +25,7 @@ export function PageTitle({
 }
 
 export function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return <div className={`rounded-[20px] border border-line bg-white p-5 ${className}`}>{children}</div>;
+  return <div className={`rounded-card border border-line bg-white p-5 shadow-card ${className}`}>{children}</div>;
 }
 
 export function EmptyState({ title, text, action }: { title: string; text?: string; action?: ReactNode }) {
@@ -39,7 +39,7 @@ export function EmptyState({ title, text, action }: { title: string; text?: stri
 }
 
 const buttonBase =
-  "inline-flex min-h-[52px] items-center justify-center rounded-2xl px-5 text-[16px] font-extrabold no-underline";
+  "press inline-flex min-h-[52px] items-center justify-center rounded-2xl px-5 text-[16px] font-extrabold no-underline";
 export function LinkButton({
   variant = "primary",
   className = "",
@@ -67,7 +67,7 @@ export function Select({
       <select
         name={name}
         aria-invalid={error ? true : undefined}
-        className="h-14 rounded-[14px] border-[1.5px] border-line-strong bg-white px-4 text-[17px] font-semibold text-ink"
+        className="h-14 rounded-ctl border-[1.5px] border-line-strong bg-white px-4 text-[17px] font-semibold text-ink"
         {...rest}
       >
         {children}
@@ -90,7 +90,7 @@ export function Textarea({
         name={name}
         aria-invalid={error ? true : undefined}
         rows={4}
-        className="rounded-[14px] border-[1.5px] border-line-strong bg-white px-4 py-3 text-[17px] font-semibold text-ink"
+        className="rounded-ctl border-[1.5px] border-line-strong bg-white px-4 py-3 text-[17px] font-semibold text-ink"
         {...rest}
       />
       {error ? <span className="text-[13px] font-bold text-[#9A2B1E]">{error}</span> : null}

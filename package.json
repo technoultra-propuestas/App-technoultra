@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "format": "prettier --write .",
+    "check:integrations": "node scripts/check-integrations.mjs",
     "e2e:setup": "node tests/e2e/setup-env.mjs",
     "e2e": "node tests/e2e/run.mjs",
     "e2e:reset": "node tests/e2e/run.mjs --reset",
