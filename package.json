@@ -10,6 +10,9 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "format": "prettier --write .",
+    "e2e:setup": "node tests/e2e/setup-env.mjs",
+    "e2e": "node tests/e2e/run.mjs",
+    "e2e:reset": "node tests/e2e/run.mjs --reset",
     "check": "npm run typecheck && npm run lint && npm test && npm run build"
   },
   "dependencies": {

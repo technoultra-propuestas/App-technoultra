@@ -47,3 +47,8 @@ next-env.d.ts
 .mcp.json
 .serena/
 supabase/.temp/
+
+# E2E local (estado, salidas y registro del servidor de pruebas)
+/tests/e2e/.state.json
+/tests/e2e/.out/
+/tests/e2e/.app.log

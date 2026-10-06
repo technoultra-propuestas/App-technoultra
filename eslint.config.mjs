@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Referencia visual de Claude Design (no es código de la app)
     "design/**",
+    // Salidas locales de las pruebas E2E (capturas, perfiles de navegador)
+    "tests/e2e/.out/**",
   ]),
 ]);
 
