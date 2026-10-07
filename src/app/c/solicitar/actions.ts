@@ -67,5 +67,7 @@ export async function createRequestAction(_p: ActionState, fd: FormData): Promis
   // El ticket nace solo (idempotente, solo servidor). Si falla, la solicitud queda registrada y el SUPERADMIN puede recibirla a mano.
   const { data: ticketId, error: tErr } = await createAdminClient().rpc("auto_create_ticket", { p_request: data.id });
   if (tErr && !/service_not_technical/.test(tErr.message)) console.error("request.auto_ticket", tErr.code);
+  // El diagnóstico preliminar de IA viaja con el ticket (el técnico lo ve y lo valida), igual que cuando el personal recibía la solicitud a mano.
+  if (ticketId) await createAdminClient().from("ai_diagnostics").update({ ticket_id: ticketId }).eq("service_request_id", data.id).is("ticket_id", null);
   redirect(`/c/solicitar/listo?c=${encodeURIComponent(data.code)}${ticketId ? `&t=${ticketId}` : ""}`);
 }

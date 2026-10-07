@@ -20,6 +20,7 @@ export async function POST(request: NextRequest) {
   if (ok === false) return done(429);
   const { data: visible } = await createPublicClient().from("products").select("id").eq("id", body.data.productId).not("source", "is", null).maybeSingle();
   if (!visible) return done(404);
-  await admin.from("product_inquiries").insert({ product_id: visible.id, channel: "whatsapp" });
+  const { error } = await admin.from("product_inquiries").insert({ product_id: visible.id, channel: "whatsapp" });
+  if (error) console.error("tienda.consulta", error.code); // el cliente nunca ve el fallo: WhatsApp se abre igual
   return done();
 }

@@ -58,12 +58,11 @@ export async function run({ b, rep, state, save }) {
   await phase("ticket", async () => {
     await staff("owner");
     if (!flow.ticketId) {
+      // Desde el flujo automatizado, enviar la solicitud crea el ticket al instante (idempotente): ya no hay «Recibir y crear ticket» manual.
+      flow.ticketId = q(`select t.id from tickets t join service_requests r on r.id = t.service_request_id where r.code = '${flow.requestCode}'`);
+      rep.check("al enviar la solicitud el ticket se crea automáticamente (sin intervención del personal)", /^[0-9a-f-]{36}$/.test(flow.ticketId ?? "") && q(`select status from service_requests where code = '${flow.requestCode}'`) === "converted", flow.ticketId);
       await b.goto("/b/solicitudes");
-      await must(b, new RegExp(flow.requestCode), 15000);
-      await b.clickText("Recibir y crear ticket", "body");
-      const p = await b.waitPath((x) => /^\/b\/tickets\/[0-9a-f-]{36}/.test(x), 25000);
-      flow.ticketId = p.split("/")[3].split("?")[0];
-      rep.check("el SUPERADMIN convierte la solicitud en ticket", Boolean(flow.ticketId), p);
+      rep.check("la solicitud ya no queda «por atender» en la bandeja del personal", !(await b.text()).includes(flow.requestCode));
       save();
     }
     await b.goto(ticketUrl(), 1500); // recarga completa: el formulario de asignación ya está hidratado
