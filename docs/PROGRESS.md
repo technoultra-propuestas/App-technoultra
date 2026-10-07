@@ -88,3 +88,6 @@ Ticket automático al solicitar, pago inmediato de servicios de precio fijo (Mer
 - Cron `/api/cron/catalog-sync`. Fuente automática pendiente: la hoja de Google está privada (401) → compartirla «con el enlace» y definir `EXCELENTER_CATALOG_CSV_URL`.
 - Sentry: SDK `@sentry/nextjs` 11 (servidor, edge y navegador) con depuración total de datos personales (`lib/sentry-scrub.ts`), sin Session Replay, CSP con el host exacto del DSN, source maps con `SENTRY_AUTH_TOKEN` en el build.
 - `npm run check`: 548 pruebas, build OK.
+
+## Auditoría y E2E completos (2026-10-07)
+E2E: 314 comprobaciones OK (escenarios 01–07; nuevo 07 de la tienda). Corregidos: ficha de producto 500 en producción, IA sin ligar al ticket automático, privilegios de `service_role` del catálogo (migración 35). Detalle, pendientes y veredicto en `docs/AUDITORIA-PRE-PRODUCCION.md`.
