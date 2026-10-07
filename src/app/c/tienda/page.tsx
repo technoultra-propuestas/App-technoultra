@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ChipRow, FilterChip } from "@/components/ui/kit";
 import { AddToCart } from "@/components/store/AddToCart";
 import { Card, EmptyState, money, PageTitle } from "@/components/ui/layout";
 import { requireRole } from "@/lib/auth/session";
@@ -19,12 +20,12 @@ export default async function StorePage({ searchParams }: { searchParams: Promis
     <section className="flex flex-col gap-6">
       <PageTitle title="Tienda" subtitle="Productos con garantía. Puedes pedir la instalación junto con tu compra." action={<Link href="/c/carrito" className="inline-flex min-h-[52px] items-center rounded-2xl bg-ink px-5 text-[16px] font-extrabold text-white no-underline">Ver carrito</Link>} />
       {(cats ?? []).length > 0 ? (
-        <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
-          <Link href="/c/tienda" className={`flex-none rounded-full px-4 py-2 text-[14px] font-extrabold no-underline ${!cat ? "bg-ink text-white" : "border border-line bg-white text-ink-2"}`}>Todo</Link>
+        <ChipRow label="Categorías">
+          <FilterChip href="/c/tienda" on={!cat}>Todo</FilterChip>
           {(cats ?? []).map((c) => (
-            <Link key={c.id} href={`/c/tienda?cat=${c.id}`} className={`flex-none rounded-full px-4 py-2 text-[14px] font-extrabold no-underline ${cat === c.id ? "bg-ink text-white" : "border border-line bg-white text-ink-2"}`}>{c.name}</Link>
+            <FilterChip key={c.id} href={`/c/tienda?cat=${c.id}`} on={cat === c.id}>{c.name}</FilterChip>
           ))}
-        </div>
+        </ChipRow>
       ) : null}
       {(products ?? []).length === 0 ? (
         <EmptyState title="Aún no hay productos" text="Estamos cargando el catálogo de la tienda." />

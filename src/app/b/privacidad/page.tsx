@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Card, EmptyState, PageTitle } from "@/components/ui/layout";
+import { SearchField } from "@/components/ui/kit";
 import { requireRole } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { anonymizeCustomerAction } from "./actions";
@@ -27,13 +28,7 @@ export default async function PrivacyPage({ searchParams }: { searchParams: Prom
         title="Privacidad y datos personales"
         subtitle="Atiende solicitudes de supresión (Ley 1581). Se borran los datos de contacto; el historial de servicios, pagos y documentos se conserva sin datos personales por obligación legal."
       />
-      <form method="get" role="search" className="flex gap-2">
-        <label className="flex-1">
-          <span className="sr-only">Buscar cliente</span>
-          <input name="q" defaultValue={q} minLength={3} maxLength={60} placeholder="Nombre, correo o celular (mín. 3 letras)" className="h-12 w-full rounded-[14px] border border-line bg-white px-4 text-[15px]" />
-        </label>
-        <button className="min-h-12 rounded-[14px] bg-ink px-5 text-[15px] font-extrabold text-white">Buscar</button>
-      </form>
+      <SearchField placeholder="Nombre, correo o celular (mín. 3 letras)" defaultValue={q} />
       {q.length >= 3 && rows.length === 0 ? <EmptyState title="Sin resultados" text="No hay clientes activos con ese dato." /> : null}
       <ul className="m-0 flex list-none flex-col gap-3 p-0">
         {rows.map((c) => (

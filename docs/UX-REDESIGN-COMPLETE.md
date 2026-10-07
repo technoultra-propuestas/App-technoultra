@@ -30,5 +30,10 @@ Todo proviene de consultas a Supabase bajo RLS (el técnico ve solo lo suyo). Cu
 ## 8. Accesibilidad y rendimiento
 Objetivos táctiles de navegación ≥ 44 px (verificado en la prueba), `aria-current`, `aria-label` en íconos, enlace «Saltar al contenido» conservado, foco visible, filtros como enlaces (funcionan sin JavaScript), vistas de agenda renderizadas en servidor. Los filtros y búsquedas del panel se resuelven en el servidor, sin estado de cliente adicional.
 
-## 9. Pendiente real
-Aplicar el mismo tratamiento a: detalle de ticket (jerarquía), reportes, servicios/catálogo, cobertura, legal, comercial, privacidad, ajustes, usuarios, proyectos; flujos del cliente (solicitar, detalle de ticket, cotización/aprobación/firma, pagos, documentos, equipos, tienda, carrito, perfil, ayuda); estados de carga (`loading.tsx`) y error homogéneos; háptica en acciones clave; revisión de textos de error; contraste AA con herramienta automática; modo claro/oscuro no está en alcance.
+## 9. Fase 2 aplicada (2026-10-06)
+Nuevo `components/ui/detail.tsx`: `StatusHero` (tarjeta oscura con código, estado y mensaje), `ProgressSteps` (avance del servicio para el cliente), `Timeline` (historial vertical), `InfoList` y `Panel`.
+Rehechas: detalle de ticket del cliente (héroe + avance + historial) y del personal (héroe, fichas de cliente/equipo, historial), lista «Mis servicios», Tienda (chips), Reportes (cifras + barras proporcionales sin librerías), Usuarios (avatar), Privacidad (buscador común) y filtros del catálogo de servicios. Cargas y errores: `loading.tsx`/`error.tsx` existentes en `/b` y `/c`; háptica ya integrada en `SubmitButton` (respeta movimiento reducido).
+`npm run check` OK. Sin E2E completo (a petición).
+
+## 10. Pendiente real
+Cotización/firma, pagos, documentos, equipos, carrito, perfil y ayuda del cliente; legal, comercial, cobertura, ajustes y proyectos del personal (heredan la base, sin rehacer); contraste AA con herramienta automática; capturas comparativas tras la próxima ejecución del E2E.

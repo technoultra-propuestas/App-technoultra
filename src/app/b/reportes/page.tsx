@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { ChipRow, FilterChip, StatCard } from "@/components/ui/kit";
+import { Panel } from "@/components/ui/detail";
 import { Card, money, PageTitle, statusLabel } from "@/components/ui/layout";
 import { requireRole } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
@@ -48,48 +50,51 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
   return (
     <section className="flex flex-col gap-6">
       <PageTitle title="Reportes" subtitle={`Del ${from} al ${to}. Solo datos agregados, sin información personal.`} />
-      <div className="flex gap-2">
+      <ChipRow label="Periodo">
         {[7, 30, 90, 365].map((d) => (
-          <a key={d} href={`/b/reportes?dias=${d}`} className={`rounded-full px-4 py-2 text-[14px] font-extrabold no-underline ${d === days ? "bg-ink text-white" : "border border-line bg-white text-ink-2"}`}>
-            {d === 365 ? "1 año" : `${d} días`}
-          </a>
+          <FilterChip key={d} href={`/b/reportes?dias=${d}`} on={d === days}>{d === 365 ? "1 año" : `${d} días`}</FilterChip>
         ))}
-      </div>
+      </ChipRow>
       {error || !r ? (
         <Card>No pudimos cargar el reporte.</Card>
       ) : (
         <>
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,220px),1fr))] gap-3">
-            {kpis.map(([label, value]) => (
-              <Card key={label} className="flex flex-col gap-1">
-                <span className="text-[26px] font-extrabold leading-none">{value}</span>
-                <span className="text-[13px] font-semibold text-muted">{label}</span>
-              </Card>
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            {kpis.map(([label, value], i) => (
+              <StatCard key={label} value={value} label={label} tone={i === 0 ? "dark" : "light"} />
             ))}
           </div>
           <div className="grid gap-4 md:grid-cols-2">
-            <Card className="flex flex-col gap-2">
-              <h2 className="m-0 text-[17px] font-extrabold">Tickets por estado (hoy)</h2>
-              {Object.entries(r.tickets_by_status).map(([s, n]) => (
-                <div key={s} className="flex justify-between text-[15px] font-semibold">
-                  <span>{statusLabel(s)}</span>
-                  <span>{n}</span>
-                </div>
-              ))}
-            </Card>
-            <Card className="flex flex-col gap-2">
-              <h2 className="m-0 text-[17px] font-extrabold">Servicios más aprobados</h2>
-              {r.top_services.length === 0 ? <p className="m-0 text-[14px] text-muted">Sin datos en el periodo.</p> : null}
-              {r.top_services.map((s) => (
-                <div key={s.name} className="flex justify-between text-[15px] font-semibold">
-                  <span>{s.name}</span>
-                  <span>{s.count}</span>
-                </div>
-              ))}
-            </Card>
+            <Panel title="Tickets por estado (hoy)">
+              <Bars rows={Object.entries(r.tickets_by_status).map(([s, n]) => ({ label: statusLabel(s), value: n }))} empty="Sin tickets." />
+            </Panel>
+            <Panel title="Servicios más aprobados">
+              <Bars rows={r.top_services.map((s) => ({ label: s.name, value: s.count }))} empty="Sin datos en el periodo." />
+            </Panel>
           </div>
         </>
       )}
     </section>
+  );
+}
+
+/** Barras horizontales proporcionales (sin librerías): el valor numérico siempre es visible para lectores de pantalla y para quien no distingue colores. */
+function Bars({ rows, empty }: { rows: { label: string; value: number }[]; empty: string }) {
+  if (!rows.length) return <p className="m-0 text-[14px] text-muted">{empty}</p>;
+  const max = Math.max(...rows.map((r) => r.value), 1);
+  return (
+    <ul className="m-0 flex list-none flex-col gap-3 p-0">
+      {rows.map((r) => (
+        <li key={r.label} className="flex flex-col gap-1">
+          <div className="flex justify-between gap-3 text-[14px] font-bold">
+            <span className="truncate">{r.label}</span>
+            <span>{r.value}</span>
+          </div>
+          <div aria-hidden className="h-2 rounded-full bg-[#EDEDEA]">
+            <div className="h-2 rounded-full bg-brand" style={{ width: `${Math.max(4, (r.value / max) * 100)}%` }} />
+          </div>
+        </li>
+      ))}
+    </ul>
   );
 }

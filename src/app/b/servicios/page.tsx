@@ -12,7 +12,7 @@ export const metadata: Metadata = { title: "Catálogo de servicios", robots: { i
 const PAGE = 40;
 type Sp = { q?: string; categoria?: string; estado?: string; diagnostico?: string; pagina?: string; resultado?: string };
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const inputCls = "h-11 rounded-xl border border-[#D9D9D5] px-3 text-[15px]";
+const inputCls = "h-12 rounded-ctl border-[1.5px] border-line-strong bg-white px-3 text-[15px] font-semibold";
 
 export default async function ServicesAdminPage({ searchParams }: { searchParams: Promise<Sp> }) {
   await requireRole(["superadmin"]);
@@ -51,7 +51,7 @@ export default async function ServicesAdminPage({ searchParams }: { searchParams
           {sp.resultado === "archivado" ? "El servicio tiene historial: quedó archivado (oculto) y se conserva." : "Servicio eliminado."}
         </p>
       ) : null}
-      <form method="get" className="flex flex-wrap items-end gap-3">
+      <form method="get" className="flex flex-wrap items-end gap-3 rounded-card border border-line bg-white p-4 shadow-card">
         <label className="flex flex-col gap-1 text-[13px] font-bold">
           Buscar
           <input name="q" defaultValue={q} maxLength={60} className={inputCls} />
@@ -82,7 +82,7 @@ export default async function ServicesAdminPage({ searchParams }: { searchParams
             <option value="si">Requieren diagnóstico</option>
           </select>
         </label>
-        <button className="h-11 rounded-xl bg-ink px-5 text-[15px] font-extrabold text-white">Filtrar</button>
+        <button className="press h-12 rounded-ctl bg-ink px-5 text-[15px] font-extrabold text-white">Filtrar</button>
       </form>
       <p className="m-0 text-[13px] font-semibold text-muted">
         {total} servicio(s) · <Link href="/b/servicios/reglas">Reglas de precios y fuentes</Link>

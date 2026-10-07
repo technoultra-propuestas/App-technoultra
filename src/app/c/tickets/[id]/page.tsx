@@ -1,4 +1,5 @@
 import { TextLink } from "@/components/ui/kit";
+import { Panel, ProgressSteps, StatusHero, Timeline } from "@/components/ui/detail";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { z } from "zod";
@@ -12,8 +13,6 @@ import {
   fmtDateTime,
   money,
   MODALITY_LABEL,
-  PageTitle,
-  StatusBadge,
   statusLabel,
 } from "@/components/ui/layout";
 import { requireRole } from "@/lib/auth/session";
@@ -91,19 +90,19 @@ export default async function TicketDetail({ params, searchParams }: { params: P
   return (
     <section className="mx-auto flex w-full max-w-[640px] flex-col gap-6">
       <TextLink href="/c/tickets" className="w-fit">← Mis tickets</TextLink>
-      <PageTitle
-        title={t.code}
+      <StatusHero
+        code={t.code}
         subtitle={eq ? `${eq.brand} ${eq.model} · ${MODALITY_LABEL[t.modality]}` : MODALITY_LABEL[t.modality]}
+        status={t.status}
+        message={t.cancelled_reason ? `${MESSAGES[t.status]} ${t.cancelled_reason}` : MESSAGES[t.status]}
+        meta={`Recibido ${fmtDateTime(t.received_at)}`}
       />
-      <Card className="flex flex-col gap-3">
-        <StatusBadge status={t.status} />
-        <p className="m-0 text-[16px] font-semibold leading-snug">{MESSAGES[t.status]}</p>
-        {t.cancelled_reason ? <p className="m-0 text-[14px] text-muted">{t.cancelled_reason}</p> : null}
+      <Card>
+        <ProgressSteps status={t.status} />
       </Card>
-      <Card className="flex flex-col gap-2">
-        <h2 className="m-0 text-[17px] font-extrabold">Lo que nos contaste</h2>
+      <Panel title="Lo que nos contaste">
         <p className="m-0 text-[15px] leading-normal text-ink-2">{t.problem}</p>
-      </Card>
+      </Panel>
       {ai ? <AiDiagnosisCard row={ai as unknown as AiRow} audience="client" /> : null}
       {quote ? (
         <Card className="flex flex-col gap-3">
@@ -160,17 +159,9 @@ export default async function TicketDetail({ params, searchParams }: { params: P
           ))}
         </Card>
       ) : null}
-      <Card className="flex flex-col gap-3">
-        <h2 className="m-0 text-[17px] font-extrabold">Historial</h2>
-        <ol className="m-0 flex list-none flex-col gap-2 p-0">
-          {(history ?? []).map((h) => (
-            <li key={h.id} className="flex items-start justify-between gap-3 text-[15px] font-semibold">
-              <span>{statusLabel(h.to_status)}</span>
-              <span className="text-[13px] text-muted">{fmtDateTime(h.created_at)}</span>
-            </li>
-          ))}
-        </ol>
-      </Card>
+      <Panel title="Historial">
+        <Timeline items={[...(history ?? [])].reverse().map((h) => ({ id: h.id, title: statusLabel(h.to_status), at: h.created_at, detail: h.reason }))} />
+      </Panel>
     </section>
   );
 }

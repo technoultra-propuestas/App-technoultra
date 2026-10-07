@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 import { TextLink } from "@/components/ui/kit";
-import { Card, EQUIPMENT_LABEL, fmtDateTime, MODALITY_LABEL, PageTitle, StatusBadge, statusLabel } from "@/components/ui/layout";
+import { InfoList, Panel, StatusHero, Timeline } from "@/components/ui/detail";
+import { Card, EQUIPMENT_LABEL, fmtDateTime, MODALITY_LABEL, statusLabel } from "@/components/ui/layout";
 import { requireRole } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { AssignForm, NoteForm, TransitionForm } from "./forms";
@@ -58,38 +59,24 @@ export default async function StaffTicketPage({ params }: { params: Promise<{ id
     <section className="grid gap-6 md:grid-cols-[1fr_380px]">
       <div className="flex flex-col gap-6">
         <TextLink href="/b/tickets" className="w-fit">← Tickets</TextLink>
-        <PageTitle title={t.code} subtitle={`${svc?.name ?? "Servicio"} · ${MODALITY_LABEL[t.modality]}`} />
-        <Card className="flex flex-col gap-3">
-          <div className="flex items-center justify-between gap-3">
-            <StatusBadge status={t.status} />
-            <span className="text-[13px] font-semibold text-muted">Recibido {fmtDateTime(t.received_at)}</span>
-          </div>
-          <p className="m-0 text-[15px] leading-normal">{t.problem}</p>
-          {t.cancelled_reason ? <p className="m-0 text-[14px] text-muted">Motivo de cancelación: {t.cancelled_reason}</p> : null}
-        </Card>
+        <StatusHero code={t.code} subtitle={`${svc?.name ?? "Servicio"} · ${MODALITY_LABEL[t.modality]}`} status={t.status} message={t.problem} meta={<>Recibido {fmtDateTime(t.received_at)}{t.cancelled_reason ? ` · Cancelación: ${t.cancelled_reason}` : ""}</>} />
         <div className="grid gap-4 sm:grid-cols-2">
-          <Card className="flex flex-col gap-1">
-            <h2 className="m-0 text-[15px] font-extrabold">Cliente</h2>
-            <span className="text-[15px] font-semibold">{customer?.full_name}</span>
-            {customer?.phone ? <a href={`tel:${customer.phone}`} className="text-[14px] font-semibold underline decoration-brand underline-offset-[3px]">{customer.phone}</a> : null}
-            {customer?.email ? <span className="text-[13px] text-muted">{customer.email}</span> : null}
-          </Card>
-          <Card className="flex flex-col gap-1">
-            <h2 className="m-0 text-[15px] font-extrabold">Equipo</h2>
+          <Panel title="Cliente">
+            <InfoList
+              rows={[
+                { label: "Nombre", value: customer?.full_name },
+                { label: "Teléfono", value: customer?.phone ? <a href={`tel:${customer.phone}`} className="underline decoration-brand underline-offset-[3px]">{customer.phone}</a> : null },
+                { label: "Correo", value: customer?.email },
+              ]}
+            />
+          </Panel>
+          <Panel title="Equipo">
             {eq ? (
-              <>
-                <span className="text-[15px] font-semibold">
-                  {eq.brand} {eq.model}
-                </span>
-                <span className="text-[13px] text-muted">
-                  {EQUIPMENT_LABEL[eq.type] ?? eq.type}
-                  {eq.serial ? ` · Serial ${eq.serial}` : ""}
-                </span>
-              </>
+              <InfoList rows={[{ label: "Equipo", value: `${eq.brand} ${eq.model}` }, { label: "Tipo", value: EQUIPMENT_LABEL[eq.type] ?? eq.type }, { label: "Serial", value: eq.serial }]} />
             ) : (
               <span className="text-[14px] text-muted">Sin equipo (servicio remoto o digital)</span>
             )}
-          </Card>
+          </Panel>
         </div>
         {ai ? (
           <AiDiagnosisCard row={ai as unknown as AiRow} audience="staff">
@@ -113,20 +100,9 @@ export default async function StaffTicketPage({ params }: { params: Promise<{ id
         <QuoteSection ticketId={t.id} canQuote ticketOpen={!(["delivered", "cancelled"] as string[]).includes(t.status)} />
         <PaymentBox ticketId={t.id} isOwner={me.role === "superadmin"} />
         <DocumentsSection ticketId={t.id} status={t.status} />
-        <Card className="flex flex-col gap-3">
-          <h2 className="m-0 text-[17px] font-extrabold">Historial</h2>
-          <ol className="m-0 flex list-none flex-col gap-2 p-0">
-            {(history ?? []).map((h) => (
-              <li key={h.id} className="flex flex-col gap-0.5 text-[15px] font-semibold">
-                <div className="flex justify-between gap-3">
-                  <span>{statusLabel(h.to_status)}</span>
-                  <span className="text-[13px] text-muted">{fmtDateTime(h.created_at)}</span>
-                </div>
-                {h.reason ? <span className="text-[13px] font-normal text-muted">{h.reason}</span> : null}
-              </li>
-            ))}
-          </ol>
-        </Card>
+        <Panel title="Historial">
+          <Timeline items={[...(history ?? [])].reverse().map((h) => ({ id: h.id, title: statusLabel(h.to_status), at: h.created_at, detail: h.reason }))} />
+        </Panel>
         <Card className="flex flex-col gap-3">
           <h2 className="m-0 text-[17px] font-extrabold">Notas</h2>
           {(notes ?? []).length === 0 ? <p className="m-0 text-[14px] text-muted">Sin notas todavía.</p> : null}

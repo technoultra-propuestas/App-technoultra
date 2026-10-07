@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { Avatar } from "@/components/ui/kit";
+import { PageTitle } from "@/components/ui/layout";
 import { requireRole } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { InviteStaffForm } from "./invite-form";
@@ -22,21 +24,16 @@ export default async function UsersPage() {
 
   return (
     <section className="flex flex-col gap-6">
-      <div className="flex flex-col gap-2">
-        <h1 className="m-0 text-[30px] font-extrabold tracking-[-0.025em]">Usuarios del equipo</h1>
-        <div className="h-1 w-10 rounded-sm bg-brand" />
-        <p className="m-0 text-base text-muted">
-          Técnicos y administradores se crean aquí. No existe registro público para el equipo.
-        </p>
-      </div>
+      <PageTitle title="Usuarios del equipo" subtitle="Técnicos y administradores se crean aquí. No existe registro público para el equipo." />
       <div className="grid gap-6 md:grid-cols-[1fr_380px]">
         <ul className="m-0 flex list-none flex-col gap-2 p-0">
           {rows.map((u) => (
             <li
               key={u.id}
-              className="flex items-center justify-between gap-3 rounded-[20px] border border-line bg-white px-5 py-4"
+              className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-line bg-white px-5 py-4 shadow-card"
             >
-              <div className="min-w-0">
+              <Avatar name={u.full_name || u.email} />
+              <div className="min-w-0 flex-1">
                 <div className="truncate text-[16px] font-extrabold">{u.full_name || u.email}</div>
                 <div className="truncate text-[13px] font-semibold text-muted">
                   {u.email} · {u.role === "superadmin" ? "Superadmin" : "Técnico"} ·{" "}
