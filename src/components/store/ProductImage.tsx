@@ -1,9 +1,7 @@
 "use client";
 
 import { useState } from "react";
-
-/** Optimiza una URL de Cloudinary (formato y calidad automáticos, ancho acotado). Otras URLs se usan tal cual. */
-export const optimizedImage = (url: string, width: number) => (url.includes("/image/upload/") && !/\/image\/upload\/[^/]*(f_auto|w_\d)/.test(url) ? url.replace("/image/upload/", `/image/upload/f_auto,q_auto,w_${width}/`) : url);
+import { optimizedImage } from "@/lib/catalog/image";
 
 /** Imagen del producto con carga diferida y respaldo visual si falta o falla (nunca se inventa otra imagen). */
 export function ProductImage({ src, alt, width = 480, eager = false, className = "" }: { src: string | null; alt: string; width?: number; eager?: boolean; className?: string }) {
