@@ -182,6 +182,19 @@ describe("pago inmediato de un servicio de precio fijo", () => {
     expect((await q<{ prepaid_at: string | null }>(`select prepaid_at from tickets where id = $1`, [t]))[0].prepaid_at).not.toBeNull();
     await expect(q(`select public.record_manual_service_payment($1,'service',$2,'cash')`, [admin, t])).rejects.toThrow(/service_already_paid/);
   });
+  it("un pago en línea que vence sin completarse crea UNA tarea de seguimiento en el CRM (sin duplicar)", async () => {
+    const t = await newTicket();
+    const [p] = await begin(cliA, t);
+    await q(`update payments set created_at = now() - interval '49 hours' where id = $1`, [p.payment_id]);
+    expect(num((await q<{ n: string }>(`select public.expire_pending_service_payments() n`))[0].n)).toBeGreaterThanOrEqual(1);
+    expect((await q<{ status: string }>(`select status from payments where id = $1`, [p.payment_id]))[0].status).toBe("expired");
+    const tasks = await q(`select 1 from crm_tasks where ticket_id = $1 and task_type = 'followup' and note like 'Pago sin completar%'`, [t]);
+    expect(tasks.length).toBe(1);
+    await q(`select public.expire_pending_service_payments()`);
+    expect((await q(`select 1 from crm_tasks where ticket_id = $1 and note like 'Pago sin completar%'`, [t])).length).toBe(1);
+    const [p2] = await begin(cliA, t); // puede reintentar: se crea un pago nuevo
+    expect(p2.payment_id).not.toBe(p.payment_id);
+  });
   it("el pago de un ticket cerrado no se puede iniciar", async () => {
     const t = await newTicket();
     await q(`update tickets set status = 'cancelled', cancelled_reason = 'x' where id = $1`, [t]).catch(() => null);

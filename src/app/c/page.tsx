@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { EmptyState, money } from "@/components/ui/layout";
 import type { NavIconName } from "@/components/ui/icons";
 import { ListRow, PrimaryLink, Section, StatCard } from "@/components/ui/kit";
@@ -63,6 +64,13 @@ export default async function ClientHome() {
         <StatCard icon="box" value={equipment.count ?? 0} label="Equipos registrados" href="/c/equipos" />
         <StatCard icon="bell" value={unread.count ?? 0} label="Avisos sin leer" href="/avisos" />
       </div>
+      <Link href="/c/asistente" className="press flex min-h-14 items-center justify-between gap-3 rounded-card border border-line bg-white px-5 py-3 text-ink no-underline shadow-card">
+        <span className="flex flex-col">
+          <span className="text-[15px] font-extrabold">Asistente TechnoUltra</span>
+          <span className="text-[13px] font-semibold text-muted">Pregunta por servicios, precios, cobertura o tu solicitud.</span>
+        </span>
+        <span className="flex-none text-[13px] font-extrabold text-brand">Abrir</span>
+      </Link>
       <Section title="Lo que sigue">
         {rows.length === 0 ? (
           <EmptyState title="No tienes nada pendiente" text="Cuando solicites un servicio, aquí verás qué está pasando y qué te toca hacer." />

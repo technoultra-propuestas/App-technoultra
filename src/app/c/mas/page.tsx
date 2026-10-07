@@ -7,6 +7,7 @@ import { requireRole } from "@/lib/auth/session";
 export const metadata: Metadata = { title: "Más", robots: { index: false } };
 
 const LINKS: { href: string; label: string; text: string; icon: NavIconName }[] = [
+  { href: "/c/asistente", label: "Asistente", text: "Te orienta con servicios, precios y el estado de tus solicitudes.", icon: "inbox" },
   { href: "/c/equipos", label: "Mis equipos", text: "Registra y consulta tus equipos y su historial.", icon: "box" },
   { href: "/c/pedidos", label: "Mis pedidos", text: "Compras de la tienda y estado del pago.", icon: "store" },
   { href: "/c/proyectos", label: "Mis proyectos", text: "Avance de tus soluciones digitales.", icon: "folder" },

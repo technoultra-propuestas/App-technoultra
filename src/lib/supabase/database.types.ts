@@ -159,6 +159,56 @@ export type Database = {
           },
         ]
       }
+      ai_usage: {
+        Row: {
+          at: string
+          error: string | null
+          id: number
+          latency_ms: number | null
+          model: string | null
+          profile_id: string | null
+          provider: string | null
+          route: string
+          tokens_input: number | null
+          tokens_output: number | null
+          topic: string | null
+        }
+        Insert: {
+          at?: string
+          error?: string | null
+          id?: never
+          latency_ms?: number | null
+          model?: string | null
+          profile_id?: string | null
+          provider?: string | null
+          route: string
+          tokens_input?: number | null
+          tokens_output?: number | null
+          topic?: string | null
+        }
+        Update: {
+          at?: string
+          error?: string | null
+          id?: never
+          latency_ms?: number | null
+          model?: string | null
+          profile_id?: string | null
+          provider?: string | null
+          route?: string
+          tokens_input?: number | null
+          tokens_output?: number | null
+          topic?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_usage_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       app_settings: {
         Row: {
           description: string | null
@@ -1343,6 +1393,106 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      knowledge_entries: {
+        Row: {
+          answer: string
+          category: string
+          created_at: string
+          created_by: string | null
+          id: string
+          keywords: string[]
+          locale: string
+          priority: number
+          question: string
+          source_id: string | null
+          source_type: string | null
+          status: string
+          title: string
+          updated_at: string
+          uses_ai: boolean
+          version: number
+        }
+        Insert: {
+          answer: string
+          category: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          keywords?: string[]
+          locale?: string
+          priority?: number
+          question: string
+          source_id?: string | null
+          source_type?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          uses_ai?: boolean
+          version?: number
+        }
+        Update: {
+          answer?: string
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          keywords?: string[]
+          locale?: string
+          priority?: number
+          question?: string
+          source_id?: string | null
+          source_type?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          uses_ai?: boolean
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_entries_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      knowledge_entry_versions: {
+        Row: {
+          changed_at: string
+          changed_by: string | null
+          entry_id: string
+          id: number
+          snapshot: Json
+          version: number
+        }
+        Insert: {
+          changed_at?: string
+          changed_by?: string | null
+          entry_id: string
+          id?: never
+          snapshot: Json
+          version: number
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string | null
+          entry_id?: string
+          id?: never
+          snapshot?: Json
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_entry_versions_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_entries"
             referencedColumns: ["id"]
           },
         ]

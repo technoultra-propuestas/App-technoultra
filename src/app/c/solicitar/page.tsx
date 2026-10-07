@@ -51,8 +51,15 @@ export default async function RequestCatalogPage({
     <section className="flex flex-col gap-6">
       <PageTitle
         title="Solicitar un servicio"
-        subtitle="Elige lo que necesitas. Siempre te mostramos la cotización antes de hacer cualquier trabajo."
+        subtitle="Elige lo que necesitas. Siempre te mostramos el precio o la cotización antes de cobrar o hacer cualquier trabajo."
       />
+      <Link href="/c/asistente" className="press flex min-h-14 items-center justify-between gap-3 rounded-card border border-brand bg-white px-5 py-3 text-ink no-underline shadow-card">
+        <span className="flex flex-col">
+          <span className="text-[15px] font-extrabold">¿No sabes qué servicio necesitas?</span>
+          <span className="text-[13px] font-semibold text-muted">Cuéntaselo al asistente y te sugiere opciones.</span>
+        </span>
+        <span className="flex-none text-[13px] font-extrabold text-brand">Abrir</span>
+      </Link>
       <div role="tablist" className="flex gap-2">
         <Link role="tab" aria-selected={tab === "technical"} href="/c/solicitar" className={tabCls(tab === "technical")}>
           Servicio técnico
