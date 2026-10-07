@@ -3,7 +3,10 @@ import { z } from "zod";
 
 /** Secretos: solo se evalúan en servidor. Cada grupo se valida al usarlo (no bloquea fases anteriores). */
 const supabaseServer = z.object({ SUPABASE_SERVICE_ROLE_KEY: z.string().min(20) });
-const aiOpenRouter = z.object({ AI_PROVIDER: z.literal("openrouter"), OPENROUTER_API_KEY: z.string().min(10), AI_MODEL: z.string().min(1) });
+const aiOpenRouter = z.object({ AI_PROVIDER: z.literal("openrouter"), OPENROUTER_API_KEY: z.string().min(10),
+  // Modelo CONCRETO: los enrutadores dinámicos (`openrouter/free`, `openrouter/auto`…) cambian de modelo en cada llamada y dieron respuestas inconsistentes.
+  AI_MODEL: z.string().regex(/^(?!openrouter\/)[a-z0-9._-]+\/[a-zA-Z0-9._:-]+$/, "AI_MODEL debe ser el slug exacto de un modelo (p. ej. proveedor/modelo), no un enrutador."),
+});
 const aiGemini = z.object({ GEMINI_API_KEY: z.string().min(10), GEMINI_MODEL: z.string().min(1) });
 const mercadopago = z.object({
   MERCADOPAGO_ACCESS_TOKEN: z.string().min(10),
