@@ -771,7 +771,8 @@ describe("revisión Zero Trust automática de funciones", () => {
     expect(rows).toEqual([]);
   });
   it("toda RPC pública expuesta a authenticated/anon valida identidad o es de solo lectura pública explícita", async () => {
-    const publicByDesign = new Set(["check_coverage", "track_ticket", "product_stock_flags"]);
+    // service_flow: solo lectura sobre el catálogo público (devuelve «immediate» o «quote» de un servicio activo); sin datos del cliente.
+    const publicByDesign = new Set(["check_coverage", "track_ticket", "product_stock_flags", "service_flow"]);
     const rows = await q<{ proname: string; prosrc: string }>(
       `select p.proname, p.prosrc from pg_proc p join pg_namespace n on n.oid = p.pronamespace
        where n.nspname = 'public' and p.prosecdef
