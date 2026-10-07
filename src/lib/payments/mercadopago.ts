@@ -41,15 +41,21 @@ export function mapOrderStatus(status: string | undefined | null, detail?: strin
  * manifest = "id:<data.id en minúsculas>;request-id:<x-request-id>;ts:<ts>;" firmado con HMAC-SHA256 y el secreto del webhook.
  * Comparación en tiempo constante y ventana de validez de la marca de tiempo (anti-repetición; la idempotencia cubre el resto).
  */
-export function verifyWebhookSignature(p: {
+export type SignatureCheck = { ok: boolean; reason: "ok" | "missing_header" | "missing_data_id" | "no_secret" | "bad_format" | "stale_timestamp" | "mismatch"; tsAgeSeconds: number | null };
+
+/** Igual que `verifyWebhookSignature` pero explica el motivo del rechazo (para el registro; nunca incluye firma ni secreto). */
+export function checkWebhookSignature(p: {
   xSignature: string | null;
   xRequestId: string | null;
   dataId: string | null;
   secret: string;
   nowMs?: number;
   toleranceMs?: number;
-}): boolean {
-  if (!p.xSignature || !p.dataId || !p.secret) return false;
+}): SignatureCheck {
+  const fail = (reason: SignatureCheck["reason"], tsAgeSeconds: number | null = null): SignatureCheck => ({ ok: false, reason, tsAgeSeconds });
+  if (!p.secret) return fail("no_secret");
+  if (!p.xSignature) return fail("missing_header");
+  if (!p.dataId) return fail("missing_data_id");
   const parts = Object.fromEntries(
     p.xSignature.split(",").map((kv) => {
       const i = kv.indexOf("=");
@@ -58,15 +64,20 @@ export function verifyWebhookSignature(p: {
   );
   const ts = parts.ts;
   const v1 = parts.v1;
-  if (!ts || !v1 || !/^\d+$/.test(ts) || !/^[0-9a-f]{64}$/i.test(v1)) return false;
+  if (!ts || !v1 || !/^\d+$/.test(ts) || !/^[0-9a-f]{64}$/i.test(v1)) return fail("bad_format");
   const tsMs = ts.length <= 10 ? Number(ts) * 1000 : Number(ts);
-  const tolerance = p.toleranceMs ?? 24 * 3600_000;
-  if (Math.abs((p.nowMs ?? Date.now()) - tsMs) > tolerance) return false;
+  const age = Math.round(((p.nowMs ?? Date.now()) - tsMs) / 1000);
+  if (Math.abs(age * 1000) > (p.toleranceMs ?? 24 * 3600_000)) return fail("stale_timestamp", age);
   const id = /^[A-Za-z0-9]+$/.test(p.dataId) ? p.dataId.toLowerCase() : p.dataId;
   const manifest = `id:${id};${p.xRequestId ? `request-id:${p.xRequestId};` : ""}ts:${ts};`;
   const expected = createHmac("sha256", p.secret).update(manifest).digest();
   const given = Buffer.from(v1, "hex");
-  return given.length === expected.length && timingSafeEqual(given, expected);
+  const ok = given.length === expected.length && timingSafeEqual(given, expected);
+  return ok ? { ok, reason: "ok", tsAgeSeconds: age } : fail("mismatch", age);
+}
+
+export function verifyWebhookSignature(p: Parameters<typeof checkWebhookSignature>[0]): boolean {
+  return checkWebhookSignature(p).ok;
 }
 
 const API = "https://api.mercadopago.com";
@@ -98,7 +109,7 @@ export async function fetchOrder(id: string, token: string): Promise<MpOrder | "
   if (!ORDER_ID.test(id)) return "not_found";
   try {
     const res = await fetch(`${API}/v1/orders/${encodeURIComponent(id)}`, { headers: authHeaders(token), signal: AbortSignal.timeout(10_000), cache: "no-store" });
-    if (res.status === 404) return "not_found";
+    if (res.status === 404 || res.status === 400) return "not_found"; // id inexistente o con formato no válido
     if (!res.ok) {
       console.error("mp.order.get", { status: res.status });
       return null;

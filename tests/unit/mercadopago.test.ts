@@ -1,6 +1,6 @@
 import { createHmac } from "node:crypto";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { applicationIdFromToken, cancelOrder, copAmount, createOrder, expirationDuration, fetchOrder, mapOrderStatus, ORDER_ID, verifyWebhookSignature } from "@/lib/payments/mercadopago";
+import { applicationIdFromToken, cancelOrder, checkWebhookSignature, copAmount, createOrder, expirationDuration, fetchOrder, mapOrderStatus, ORDER_ID, verifyWebhookSignature } from "@/lib/payments/mercadopago";
 
 const secret = "whsec_test_1234567890";
 const sign = (dataId: string, reqId: string, ts: string, s = secret) =>
@@ -33,6 +33,21 @@ describe("firma del webhook (x-signature)", () => {
   it("rechaza marcas de tiempo fuera de la ventana (repetición)", () => {
     const old = String(now - 3 * 24 * 3600_000);
     expect(verifyWebhookSignature({ xSignature: sign("1", "r", old), xRequestId: "r", dataId: "1", secret, nowMs: now })).toBe(false);
+  });
+});
+
+describe("motivo del rechazo de la firma (para diagnóstico)", () => {
+  const base = { xRequestId: "req-1", dataId: OID, secret, nowMs: now };
+  it("distingue cabecera ausente, formato, marca de tiempo vencida, secreto distinto y válida", () => {
+    expect(checkWebhookSignature({ ...base, xSignature: null }).reason).toBe("missing_header");
+    expect(checkWebhookSignature({ ...base, xSignature: "x" }).reason).toBe("bad_format");
+    expect(checkWebhookSignature({ ...base, xSignature: sign(OID.toLowerCase(), "req-1", String(now - 3 * 24 * 3600_000)) })).toMatchObject({ reason: "stale_timestamp", tsAgeSeconds: 3 * 24 * 3600 });
+    expect(checkWebhookSignature({ ...base, xSignature: sign(OID.toLowerCase(), "req-1", ts, "otro-secreto-123456") }).reason).toBe("mismatch");
+    expect(checkWebhookSignature({ ...base, dataId: null, xSignature: sign("x", "req-1", ts) }).reason).toBe("missing_data_id");
+    expect(checkWebhookSignature({ ...base, xSignature: sign(OID.toLowerCase(), "req-1", ts) })).toMatchObject({ ok: true, reason: "ok" });
+  });
+  it("el resultado nunca incluye la firma ni el secreto", () => {
+    expect(JSON.stringify(checkWebhookSignature({ ...base, xSignature: sign(OID.toLowerCase(), "req-1", ts, "otro") }))).not.toMatch(/whsec|v1=|[0-9a-f]{64}/);
   });
 });
 
@@ -130,8 +145,10 @@ describe("consulta y cancelación", () => {
   it("fetchOrder distingue: encontrada, no existe (404) y proveedor caído", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ id: OID, status: "created", total_amount: "1" }), { status: 200 })));
     expect(await fetchOrder(OID, "t")).toMatchObject({ id: OID });
-    vi.stubGlobal("fetch", vi.fn(async () => new Response("{}", { status: 404 })));
-    expect(await fetchOrder(OID, "t")).toBe("not_found");
+    for (const st of [404, 400]) {
+      vi.stubGlobal("fetch", vi.fn(async () => new Response("{}", { status: st })));
+      expect(await fetchOrder(OID, "t")).toBe("not_found");
+    }
     vi.stubGlobal("fetch", vi.fn(async () => new Response("{}", { status: 503 })));
     const err = vi.spyOn(console, "error").mockImplementation(() => {});
     expect(await fetchOrder(OID, "t")).toBeNull();

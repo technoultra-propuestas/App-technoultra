@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { serverEnv } from "@/lib/env.server";
 import { scheduleEmailFlush } from "@/lib/email/outbox";
-import { fetchOrder, ORDER_ID, verifyWebhookSignature } from "@/lib/payments/mercadopago";
+import { checkWebhookSignature, fetchOrder, ORDER_ID } from "@/lib/payments/mercadopago";
 import { applyOrder } from "@/lib/payments/orders";
 
 const reply = (status: number, body: Record<string, unknown> = {}) => NextResponse.json(body, { status, headers: { "Cache-Control": "no-store" } });
@@ -33,14 +33,15 @@ export async function POST(request: NextRequest) {
   const dataId = url.searchParams.get("data.id") ?? (body?.data?.id !== undefined ? String(body.data.id) : null);
   const type = url.searchParams.get("type") ?? body?.type ?? null;
 
-  const valid = verifyWebhookSignature({
+  const sig = checkWebhookSignature({
     xSignature: request.headers.get("x-signature"),
     xRequestId: request.headers.get("x-request-id"),
     dataId,
     secret: env.MERCADOPAGO_WEBHOOK_SECRET,
   });
-  if (!valid) {
-    console.warn(JSON.stringify({ event: "mp_webhook_rejected", reason: "invalid_signature" }));
+  if (!sig.ok) {
+    // Motivo exacto para diagnosticar (nunca se registra la firma ni el secreto).
+    console.warn(JSON.stringify({ event: "mp_webhook_rejected", reason: sig.reason, ts_age_s: sig.tsAgeSeconds, has_request_id: Boolean(request.headers.get("x-request-id")), id_source: url.searchParams.get("data.id") ? "query" : body?.data?.id !== undefined ? "body" : "none", live_mode: (body as { live_mode?: boolean } | null)?.live_mode ?? null }));
     return reply(401, { error: "invalid_signature" });
   }
   // Solo se procesan Orders. Otros tipos (p. ej. `payment` heredado) se reconocen con 200 y no cambian nada.
