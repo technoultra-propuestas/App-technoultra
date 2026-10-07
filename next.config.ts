@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs/config";
 
 const securityHeaders = [
   { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
@@ -24,4 +25,13 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+// Sentry: errores y trazas del servidor y del navegador. Los source maps se suben solo si hay SENTRY_AUTH_TOKEN (variable de build en Vercel, nunca en el cliente)
+// y se eliminan del despliegue después de subirlos. Sin token, el build funciona igual (sin subida).
+export default withSentryConfig(nextConfig, {
+  org: "technoultra",
+  project: "javascript-nextjs",
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  silent: !process.env.CI,
+  widenClientFileUpload: true,
+  sourcemaps: { deleteSourcemapsAfterUpload: true },
+});

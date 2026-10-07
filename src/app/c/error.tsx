@@ -1,5 +1,6 @@
 "use client";
 
+import * as Sentry from "@sentry/nextjs";
 import { useEffect } from "react";
 import { haptic } from "@/lib/haptics";
 
@@ -7,6 +8,7 @@ import { haptic } from "@/lib/haptics";
 export default function SectionError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   useEffect(() => {
     console.error("route.error", error.digest ?? "sin-digest");
+    Sentry.captureException(error);
     haptic("error");
   }, [error]);
   return (

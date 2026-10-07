@@ -4,7 +4,7 @@ import { useActionState } from "react";
 import { Alert, Field, SubmitButton } from "@/components/ui/form";
 import { Select, Textarea } from "@/components/ui/layout";
 import { initialState } from "@/lib/auth/schemas";
-import { adjustStockAction, createProductAction, createProductCategoryAction, updateProductAction } from "./actions";
+import { adjustStockAction, createProductAction, createProductCategoryAction, updateProductAction, updateSourceProductAction } from "./actions";
 
 export type ProductValues = {
   id?: string;
@@ -90,6 +90,23 @@ export function ProductCategoryForm() {
       <Field label="Nueva categoría" name="name" required error={state.fieldErrors?.name} />
       <Msg s={state} />
       <SubmitButton pendingText="Guardando…">Crear categoría</SubmitButton>
+    </form>
+  );
+}
+
+/** Producto de proveedor: solo visibilidad manual y garantía. La visibilidad manual prevalece sobre la sincronización. */
+export function SourceProductForm({ id, isActive, warrantyDays }: { id: string; isActive: boolean; warrantyDays: number }) {
+  const [state, action] = useActionState(updateSourceProductAction, initialState);
+  return (
+    <form action={action} className="flex flex-col gap-4" noValidate>
+      <input type="hidden" name="id" value={id} />
+      <label className="flex min-h-11 items-center gap-3 text-[15px] font-bold">
+        <input type="checkbox" name="isActive" defaultChecked={isActive} className="h-5 w-5" />
+        Visible en la tienda (si lo desmarcas, la sincronización no lo vuelve a mostrar)
+      </label>
+      <Field label="Garantía (días)" name="warrantyDays" defaultValue={String(warrantyDays)} inputMode="numeric" />
+      <Msg s={state} />
+      <SubmitButton>Guardar</SubmitButton>
     </form>
   );
 }

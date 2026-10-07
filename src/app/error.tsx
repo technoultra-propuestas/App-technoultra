@@ -1,11 +1,13 @@
 "use client";
 
+import * as Sentry from "@sentry/nextjs";
 import { useEffect } from "react";
 
 /** Error inesperado: mensaje amable y reintento. Nunca se muestra el detalle técnico (solo un código opaco para soporte). */
 export default function GlobalRouteError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   useEffect(() => {
     console.error("route.error", error.digest ?? "sin-digest");
+    Sentry.captureException(error);
   }, [error]);
   return (
     <main className="min-h-screen-dvh pt-safe pb-safe flex flex-col items-center justify-center gap-4 px-6 text-center">

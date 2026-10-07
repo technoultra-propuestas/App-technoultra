@@ -12,7 +12,7 @@ export default async function StorePage({ searchParams }: { searchParams: Promis
   await requireRole(["client"]);
   const cat = (await searchParams).cat;
   const supabase = await createClient();
-  let q = supabase.from("products").select("id, name, brand, price, warranty_days, category_id").order("name");
+  let q = supabase.from("products").select("id, name, brand, price, warranty_days, category_id").is("source", null).order("name");
   if (cat && /^[0-9a-f-]{36}$/i.test(cat)) q = q.eq("category_id", cat);
   const [{ data: products }, { data: cats }, { data: flags }] = await Promise.all([q, supabase.from("product_categories").select("id, name").order("sort_order"), supabase.rpc("product_stock_flags")]);
   const stock = new Map(((flags ?? []) as { product_id: string; in_stock: boolean; low_stock: boolean }[]).map((f) => [f.product_id, f]));

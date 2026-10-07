@@ -6,7 +6,7 @@ const ITEMS: NavItem[] = [
   { href: "/c", label: "Inicio", icon: "home", exact: true },
   { href: "/c/solicitar", label: "Servicios", icon: "wrench" },
   { href: "/c/tickets", label: "Tickets", icon: "ticket" },
-  { href: "/c/tienda", label: "Tienda", icon: "store", also: ["/c/carrito", "/c/pedidos"] },
+  { href: "/tienda", label: "Tienda", icon: "store", also: ["/c/tienda", "/c/carrito", "/c/pedidos"] },
 ];
 const MORE_ALSO = ["/c/equipos", "/c/proyectos", "/c/documentos", "/c/direcciones", "/c/perfil", "/c/legal"];
 

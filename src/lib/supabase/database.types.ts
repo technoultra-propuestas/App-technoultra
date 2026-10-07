@@ -394,6 +394,83 @@ export type Database = {
         }
         Relationships: []
       }
+      catalog_sync_runs: {
+        Row: {
+          activated: number
+          categories_changed: number
+          deactivated: number
+          duration_ms: number | null
+          error_count: number
+          errors: Json
+          finished_at: string | null
+          id: string
+          images_changed: number
+          prices_changed: number
+          products_created: number
+          products_seen: number
+          products_updated: number
+          run_type: string
+          source: string
+          started_at: string
+          status: string
+          stock_changed: number
+          triggered_by: string | null
+          warnings: Json
+        }
+        Insert: {
+          activated?: number
+          categories_changed?: number
+          deactivated?: number
+          duration_ms?: number | null
+          error_count?: number
+          errors?: Json
+          finished_at?: string | null
+          id?: string
+          images_changed?: number
+          prices_changed?: number
+          products_created?: number
+          products_seen?: number
+          products_updated?: number
+          run_type: string
+          source: string
+          started_at?: string
+          status?: string
+          stock_changed?: number
+          triggered_by?: string | null
+          warnings?: Json
+        }
+        Update: {
+          activated?: number
+          categories_changed?: number
+          deactivated?: number
+          duration_ms?: number | null
+          error_count?: number
+          errors?: Json
+          finished_at?: string | null
+          id?: string
+          images_changed?: number
+          prices_changed?: number
+          products_created?: number
+          products_seen?: number
+          products_updated?: number
+          run_type?: string
+          source?: string
+          started_at?: string
+          status?: string
+          stock_changed?: number
+          triggered_by?: string | null
+          warnings?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_sync_runs_triggered_by_fkey"
+            columns: ["triggered_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       checklist_items: {
         Row: {
           checked_at: string | null
@@ -2070,6 +2147,70 @@ export type Database = {
         }
         Relationships: []
       }
+      product_inquiries: {
+        Row: {
+          channel: string
+          created_at: string
+          id: number
+          product_id: string
+        }
+        Insert: {
+          channel?: string
+          created_at?: string
+          id?: never
+          product_id: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          id?: never
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_inquiries_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_price_history: {
+        Row: {
+          created_at: string
+          customer_price: number
+          id: number
+          product_id: string
+          run_id: string | null
+          source_price: number
+        }
+        Insert: {
+          created_at?: string
+          customer_price: number
+          id?: never
+          product_id: string
+          run_id?: string | null
+          source_price: number
+        }
+        Update: {
+          created_at?: string
+          customer_price?: number
+          id?: never
+          product_id?: string
+          run_id?: string | null
+          source_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_price_history_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_service_links: {
         Row: {
           link_kind: string
@@ -2103,6 +2244,88 @@ export type Database = {
           },
         ]
       }
+      product_source: {
+        Row: {
+          deactivated_at: string | null
+          deactivation_reason: string | null
+          first_seen_at: string
+          last_seen_at: string
+          product_id: string
+          source_price: number
+          source_stock: number
+          updated_at: string
+        }
+        Insert: {
+          deactivated_at?: string | null
+          deactivation_reason?: string | null
+          first_seen_at?: string
+          last_seen_at?: string
+          product_id: string
+          source_price: number
+          source_stock: number
+          updated_at?: string
+        }
+        Update: {
+          deactivated_at?: string | null
+          deactivation_reason?: string | null
+          first_seen_at?: string
+          last_seen_at?: string
+          product_id?: string
+          source_price?: number
+          source_stock?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_source_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: true
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_subcategories: {
+        Row: {
+          category_id: string
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_subcategories_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "product_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           brand: string | null
@@ -2112,11 +2335,18 @@ export type Database = {
           description: string | null
           id: string
           image_public_ids: string[]
+          image_url: string | null
           is_active: boolean
+          last_synced_at: string | null
           name: string
           price: number
           sku: string
           slug: string
+          source: string | null
+          source_available: boolean
+          source_product_id: string | null
+          source_ref: string | null
+          subcategory_id: string | null
           updated_at: string
           warranty_days: number
         }
@@ -2128,11 +2358,18 @@ export type Database = {
           description?: string | null
           id?: string
           image_public_ids?: string[]
+          image_url?: string | null
           is_active?: boolean
+          last_synced_at?: string | null
           name: string
           price: number
           sku: string
           slug: string
+          source?: string | null
+          source_available?: boolean
+          source_product_id?: string | null
+          source_ref?: string | null
+          subcategory_id?: string | null
           updated_at?: string
           warranty_days?: number
         }
@@ -2144,11 +2381,18 @@ export type Database = {
           description?: string | null
           id?: string
           image_public_ids?: string[]
+          image_url?: string | null
           is_active?: boolean
+          last_synced_at?: string | null
           name?: string
           price?: number
           sku?: string
           slug?: string
+          source?: string | null
+          source_available?: boolean
+          source_product_id?: string | null
+          source_ref?: string | null
+          subcategory_id?: string | null
           updated_at?: string
           warranty_days?: number
         }
@@ -2158,6 +2402,13 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "product_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_subcategory_id_fkey"
+            columns: ["subcategory_id"]
+            isOneToOne: false
+            referencedRelation: "product_subcategories"
             referencedColumns: ["id"]
           },
         ]
@@ -3643,6 +3894,15 @@ export type Database = {
       }
       publish_legal_document: { Args: { p_id: string }; Returns: undefined }
       purge_rate_limits: { Args: never; Returns: number }
+      record_catalog_sync_failure: {
+        Args: {
+          p_actor?: string
+          p_reason: string
+          p_run_type: string
+          p_source: string
+        }
+        Returns: string
+      }
       record_diagnosis_payment: {
         Args: { p_actor: string; p_method: string; p_ticket: string }
         Returns: string
@@ -3689,6 +3949,15 @@ export type Database = {
       }
       skip_non_email_notifications: { Args: never; Returns: number }
       start_checklist: { Args: { p_ticket: string }; Returns: string }
+      sync_catalog: {
+        Args: {
+          p_actor?: string
+          p_items: Json
+          p_run_type: string
+          p_source: string
+        }
+        Returns: Json
+      }
       track_ticket: { Args: { p_token: string }; Returns: Json }
       transition_ticket: {
         Args: {

@@ -3,8 +3,15 @@
  * lo necesita para reconstruir stacks). Los estilos en línea de atributos (style="...") se permiten vía style-src-attr
  * porque React/Next los emiten; no ejecutan código.
  */
-export function buildCsp(nonce: string, opts: { isDev: boolean; supabaseUrl: string }): string {
+export function buildCsp(nonce: string, opts: { isDev: boolean; supabaseUrl: string; sentryDsn?: string }): string {
   const supabaseHost = new URL(opts.supabaseUrl).host;
+  // El navegador envía errores a Sentry: solo se permite el host exacto del DSN del proyecto (no comodines).
+  let sentryHost: string | null = null;
+  try {
+    sentryHost = opts.sentryDsn ? new URL(opts.sentryDsn).host : null;
+  } catch {
+    sentryHost = null;
+  }
   const directives: Record<string, string[]> = {
     "default-src": ["'self'"],
     "script-src": [
@@ -29,6 +36,7 @@ export function buildCsp(nonce: string, opts: { isDev: boolean; supabaseUrl: str
       `https://${supabaseHost}`,
       `wss://${supabaseHost}`,
       "https://api.cloudinary.com",
+      ...(sentryHost ? [`https://${sentryHost}`] : []),
       ...(opts.isDev ? ["ws://localhost:*", "http://localhost:*"] : []),
     ],
     "media-src": ["'self'", "blob:", "https://res.cloudinary.com"],

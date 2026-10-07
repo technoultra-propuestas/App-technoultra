@@ -81,3 +81,10 @@ Ticket automático al solicitar, pago inmediato de servicios de precio fijo (Mer
 - `SENTRY_DSN` configurado en `.env.local` y en Vercel Production. Reporte por la API de envelopes (sin SDK): `onRequestError` + `reportActionError`, con datos personales depurados.
 - Verificado con 2 eventos reales (HTTP 200 de Sentry): error de servidor y error de acción, sin correo/teléfono/token en el mensaje.
 - Pendiente (opcional): `SENTRY_AUTH_TOKEN` + `@sentry/nextjs` solo si se quieren source maps; el asistente `@sentry/wizard` es interactivo y no se ejecutó.
+
+## Catálogo Excelenter + tienda pública + Sentry SDK (2026-10-07)
+- Migración 34 aplicada: subcategorías, columnas de proveedor en `products`, `product_source` (costo solo administración), historial de precios, registros de sincronización, consultas por WhatsApp, motor `sync_catalog` y bloqueo de productos de proveedor en pedidos. Ver `docs/EXCELENTER-CATALOG.md` y `docs/PRODUCT-SHIPPING.md`.
+- Tienda pública `/tienda` (categorías, subcategorías, búsqueda, marca, precio, orden, paginación, ficha con WhatsApp), administración `/b/tienda` (filtros, costo/precio, disponibilidad) y `/b/tienda/sincronizacion` (sincronizar ahora, importar CSV, historial, consultas).
+- Cron `/api/cron/catalog-sync`. Fuente automática pendiente: la hoja de Google está privada (401) → compartirla «con el enlace» y definir `EXCELENTER_CATALOG_CSV_URL`.
+- Sentry: SDK `@sentry/nextjs` 11 (servidor, edge y navegador) con depuración total de datos personales (`lib/sentry-scrub.ts`), sin Session Replay, CSP con el host exacto del DSN, source maps con `SENTRY_AUTH_TOKEN` en el build.
+- `npm run check`: 548 pruebas, build OK.

@@ -10,7 +10,7 @@ import { isAuthPage, isProtectedPath, loginPathFor, safeNext } from "@/lib/auth/
 export async function proxy(request: NextRequest) {
   const nonce = newNonce();
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "http://localhost:54321";
-  const csp = buildCsp(nonce, { isDev: process.env.NODE_ENV === "development", supabaseUrl });
+  const csp = buildCsp(nonce, { isDev: process.env.NODE_ENV === "development", supabaseUrl, sentryDsn: process.env.NEXT_PUBLIC_SENTRY_DSN });
 
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-nonce", nonce);

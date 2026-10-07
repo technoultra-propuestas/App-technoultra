@@ -74,6 +74,8 @@ else {
 }
 
 // ---------------------------------------------------------------- Sentry
+if (!env.EXCELENTER_CATALOG_CSV_URL) warn("Catálogo Excelenter: EXCELENTER_CATALOG_CSV_URL", "vacío: no hay sincronización automática (solo importación manual de CSV).");
+else /^https:\/\//.test(env.EXCELENTER_CATALOG_CSV_URL) ? ok("Catálogo Excelenter: fuente https configurada") : bad("Catálogo Excelenter: EXCELENTER_CATALOG_CSV_URL", "debe ser https");
 if (!env.SENTRY_DSN) warn("Sentry: SENTRY_DSN", "vacío: los errores solo quedan en el registro del servidor (Vercel). Proyecto de Sentry → Settings → Client Keys (DSN).");
 else /^https:\/\/[^@]+@[^/]+\/\d+$/.test(env.SENTRY_DSN) ? ok("Sentry: DSN con formato válido") : bad("Sentry: SENTRY_DSN", "formato no válido");
 

@@ -57,6 +57,23 @@ export async function updateProductAction(_p: ActionState, fd: FormData): Promis
   return { ok: true, message: "Cambios guardados." };
 }
 
+const sourceEditSchema = z.object({
+  id: z.string().uuid(),
+  warrantyDays: z.string().optional().transform((v) => (v ? Number(v) : 0)).pipe(z.number().int().min(0).max(3650)),
+  isActive: z.string().optional().transform((v) => v === "on"),
+});
+/** Producto de proveedor: solo se editan garantía y visibilidad (lo demás lo manda la fuente; la base de datos lo impide además). */
+export async function updateSourceProductAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  await assertRole(["superadmin"]);
+  const parsed = sourceEditSchema.safeParse(Object.fromEntries(fd.entries()));
+  if (!parsed.success) return zodToState(parsed.error);
+  const { data, error } = await (await createClient()).from("products").update({ warranty_days: parsed.data.warrantyDays, is_active: parsed.data.isActive }).eq("id", parsed.data.id).not("source", "is", null).select("id");
+  if (error || !data?.length) return { ok: false, error: friendly(error?.code) };
+  revalidatePath(`/b/tienda/${parsed.data.id}`);
+  revalidatePath("/tienda");
+  return { ok: true, message: "Cambios guardados." };
+}
+
 const stockSchema = z.object({
   productId: z.string().uuid(),
   delta: z.string().transform((v) => Number(v)).pipe(z.number().int("Usa un número entero.").refine((n) => n !== 0, "No puede ser 0.").refine((n) => Math.abs(n) <= 100000)),

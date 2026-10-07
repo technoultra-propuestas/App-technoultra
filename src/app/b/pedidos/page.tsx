@@ -25,7 +25,7 @@ export default async function OrdersAdminPage() {
   return (
     <section className="flex flex-col gap-6">
       <h1 className="m-0 text-[30px] font-extrabold tracking-[-0.025em]">Tienda</h1>
-      <SegmentTabs label="Secciones de la tienda" items={[{ key: "pedidos", label: "Pedidos", href: "/b/pedidos" }, { key: "productos", label: "Productos", href: "/b/tienda" }]} active="pedidos" />
+      <SegmentTabs label="Secciones de la tienda" items={[{ key: "pedidos", label: "Pedidos", href: "/b/pedidos" }, { key: "productos", label: "Productos", href: "/b/tienda" }, { key: "sync", label: "Sincronización", href: "/b/tienda/sincronizacion" }]} active="pedidos" />
       <p className="m-0 max-w-[760px] text-[14px] leading-normal text-muted">Un pedido solo avanza cuando está pagado. Los pagos en línea los confirma Mercado Pago a través del webhook verificado.</p>
       {orders.length === 0 ? (
         <EmptyState title="Aún no hay pedidos" />

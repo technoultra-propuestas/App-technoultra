@@ -12,6 +12,7 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
           </Link>
           <nav aria-label="Principal" className="flex items-center gap-2 text-[14px] font-extrabold">
             <Link href="/servicios" className="hidden px-3 py-2 text-ink no-underline sm:block">Servicios</Link>
+            <Link href="/tienda" className="px-3 py-2 text-ink no-underline">Tienda</Link>
             <Link href="/soporte-remoto" className="hidden px-3 py-2 text-ink no-underline sm:block">Soporte remoto</Link>
             <Link href="/login" className="rounded-[12px] bg-ink px-4 py-2.5 text-white no-underline">Ingresar</Link>
           </nav>
