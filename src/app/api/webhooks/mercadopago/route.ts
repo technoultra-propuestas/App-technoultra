@@ -6,6 +6,7 @@ import { applyOrder } from "@/lib/payments/orders";
 
 const reply = (status: number, body: Record<string, unknown> = {}) => NextResponse.json(body, { status, headers: { "Cache-Control": "no-store" } });
 const MAX_BODY = 16 * 1024;
+const caseOf = (v: string | null) => (!v ? "none" : v === v.toUpperCase() ? "upper" : v === v.toLowerCase() ? "lower" : "mixed");
 
 /**
  * Webhook de Mercado Pago (evento «Order (Mercado Pago)» de Checkout Pro + Orders API). Orden de seguridad:
@@ -37,11 +38,12 @@ export async function POST(request: NextRequest) {
     xSignature: request.headers.get("x-signature"),
     xRequestId: request.headers.get("x-request-id"),
     dataId,
+    altDataIds: body?.data?.id !== undefined ? [String(body.data.id)] : [],
     secret: env.MERCADOPAGO_WEBHOOK_SECRET,
   });
   if (!sig.ok) {
     // Motivo exacto para diagnosticar (nunca se registra la firma ni el secreto).
-    console.warn(JSON.stringify({ event: "mp_webhook_rejected", reason: sig.reason, ts_age_s: sig.tsAgeSeconds, has_request_id: Boolean(request.headers.get("x-request-id")), id_source: url.searchParams.get("data.id") ? "query" : body?.data?.id !== undefined ? "body" : "none", live_mode: (body as { live_mode?: boolean } | null)?.live_mode ?? null }));
+    console.warn(JSON.stringify({ event: "mp_webhook_rejected", reason: sig.reason, ts_age_s: sig.tsAgeSeconds, has_request_id: Boolean(request.headers.get("x-request-id")), query_id_case: caseOf(url.searchParams.get("data.id")), body_id_case: caseOf(body?.data?.id !== undefined ? String(body.data.id) : null), id_source: url.searchParams.get("data.id") ? "query" : body?.data?.id !== undefined ? "body" : "none", live_mode: (body as { live_mode?: boolean } | null)?.live_mode ?? null }));
     return reply(401, { error: "invalid_signature" });
   }
   // Solo se procesan Orders. Otros tipos (p. ej. `payment` heredado) se reconocen con 200 y no cambian nada.

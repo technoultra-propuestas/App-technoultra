@@ -48,6 +48,8 @@ export function checkWebhookSignature(p: {
   xSignature: string | null;
   xRequestId: string | null;
   dataId: string | null;
+  /** Otros ids que la notificación trae (p. ej. el del cuerpo): se prueban también como parte firmada. */
+  altDataIds?: string[];
   secret: string;
   nowMs?: number;
   toleranceMs?: number;
@@ -68,11 +70,16 @@ export function checkWebhookSignature(p: {
   const tsMs = ts.length <= 10 ? Number(ts) * 1000 : Number(ts);
   const age = Math.round(((p.nowMs ?? Date.now()) - tsMs) / 1000);
   if (Math.abs(age * 1000) > (p.toleranceMs ?? 24 * 3600_000)) return fail("stale_timestamp", age);
-  const id = /^[A-Za-z0-9]+$/.test(p.dataId) ? p.dataId.toLowerCase() : p.dataId;
-  const manifest = `id:${id};${p.xRequestId ? `request-id:${p.xRequestId};` : ""}ts:${ts};`;
-  const expected = createHmac("sha256", p.secret).update(manifest).digest();
+  // Mercado Pago indica el id en minúsculas si es alfanumérico; se aceptan las dos formas (con el id como llegó y en minúsculas):
+  // las dos exigen conocer el secreto, así que aceptar ambas no abre ninguna puerta.
+  const ids = [p.dataId, ...(p.altDataIds ?? [])].filter((x) => /^[A-Za-z0-9_-]{1,64}$/.test(x));
+  const candidates = [...new Set(ids.flatMap((x) => [x.toLowerCase(), x]))];
   const given = Buffer.from(v1, "hex");
-  const ok = given.length === expected.length && timingSafeEqual(given, expected);
+  const ok = candidates.some((id) => {
+    const manifest = `id:${id};${p.xRequestId ? `request-id:${p.xRequestId};` : ""}ts:${ts};`;
+    const expected = createHmac("sha256", p.secret).update(manifest).digest();
+    return given.length === expected.length && timingSafeEqual(given, expected);
+  });
   return ok ? { ok, reason: "ok", tsAgeSeconds: age } : fail("mismatch", age);
 }
 

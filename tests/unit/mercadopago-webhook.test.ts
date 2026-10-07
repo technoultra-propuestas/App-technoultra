@@ -58,6 +58,13 @@ describe("webhook de Mercado Pago (Orders)", () => {
     expect(fetchOrder).toHaveBeenCalledWith(OID, TOKEN);
     expect(rpc).toHaveBeenCalledWith("apply_payment_event", expect.objectContaining({ p_external_reference: "pay-p1", p_status: "approved", p_amount: 30100, p_currency: "COP", p_external_id: OID, p_event_type: "order.processed" }));
   });
+  it("acepta la firma calculada con el id tal cual (mayúsculas), aunque la URL lo traiga en minúsculas", async () => {
+    const ts = String(Date.now());
+    const sig = `ts=${ts},v1=${createHmac("sha256", SECRET).update(`id:${OID};request-id:req-1;ts:${ts};`).digest("hex")}`;
+    const r = await call({ sig });
+    expect(r.status).toBe(200);
+    expect(await json(r)).toEqual({ result: "approved" });
+  });
   it("sin firma, firma inválida o con otro secreto → 401 y NO se consulta ni se aplica nada", async () => {
     for (const sig of [null, "garbage", signed(OID, String(Date.now() - 5 * 24 * 3600_000)), `ts=${Date.now()},v1=${"a".repeat(64)}`]) {
       const r = await call({ sig });
