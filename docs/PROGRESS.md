@@ -76,3 +76,8 @@ Migración completa de Preferences/`payment` heredado a Orders API (ver `docs/ME
 
 ## Flujo automatizado y Asistente TechnoUltra (2026-10-07)
 Ticket automático al solicitar, pago inmediato de servicios de precio fijo (Mercado Pago Orders), matriz de flujo en la base de datos, asistente con enrutador (datos propios → reglas → FAQ → IA → respaldo), base de conocimiento versionada con plantillas, Centro de conocimiento del SUPERADMIN, métricas de IA sin contenido y tarea de CRM por pago abandonado. Detalle, matriz y auditoría de automatización en `docs/FLUJO-CLIENTE-Y-ASISTENTE.md`. Migraciones 30–33 aplicadas. Sin E2E completo (pendiente a petición).
+
+## Sentry (2026-10-06)
+- `SENTRY_DSN` configurado en `.env.local` y en Vercel Production. Reporte por la API de envelopes (sin SDK): `onRequestError` + `reportActionError`, con datos personales depurados.
+- Verificado con 2 eventos reales (HTTP 200 de Sentry): error de servidor y error de acción, sin correo/teléfono/token en el mensaje.
+- Pendiente (opcional): `SENTRY_AUTH_TOKEN` + `@sentry/nextjs` solo si se quieren source maps; el asistente `@sentry/wizard` es interactivo y no se ejecutó.
