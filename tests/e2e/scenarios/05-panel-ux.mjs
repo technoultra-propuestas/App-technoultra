@@ -144,7 +144,7 @@ export async function run({ b, rep, state, save, out, base }) {
   await clientLogin(b, state.client);
   for (const [vp, label, mobile] of [[DESKTOP, "escritorio", false], [MOBILE, "movil", true]]) {
     await b.viewport(vp[0], vp[1], mobile);
-    for (const [slug, path, re] of [["inicio", "/c", /./], ["servicios", "/c/solicitar", /Servicios|Solicitar|¿/], ["tickets", "/c/tickets", /Tickets|Mis/], ["tienda", "/c/tienda", /Tienda/], ["documentos", "/c/documentos", /documentos/i], ["mas", "/c/mas", /Cerrar sesión/]]) {
+    for (const [slug, path, re] of [["inicio", "/c", /./], ["servicios", "/c/solicitar", /Servicios|Solicitar|¿/], ["tickets", "/c/tickets", /Tickets|Mis/], ["ayuda", "/c/ayuda", /Ayuda/], ["documentos", "/c/documentos", /documentos/i], ["mas", "/c/mas", /Cerrar sesión/]]) {
       await b.goto(path, 1200);
       const m = await metrics(b);
       rep.check(`[cliente ${label}] ${path} carga y no desborda`, re.test(await b.text()) && (await b.path()).startsWith(path) && !m.overflowX, await b.path());

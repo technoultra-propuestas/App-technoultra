@@ -26,7 +26,7 @@ const sanitize = (s: string) => s.replace(/[%_,()*\\]/g, " ").replace(/\s+/g, " 
 export async function loadFacets(): Promise<Facets & { brands: { cat: string | null; sub: string | null; brand: string }[] }> {
   const sb = createPublicClient();
   const [{ data: cats }, { data: subs }, { data: rows }] = await Promise.all([
-    sb.from("product_categories").select("id, slug, name").order("name"),
+    sb.from("product_categories").select("id, slug, name, sort_order, is_featured").order("sort_order").order("name"),
     sb.from("product_subcategories").select("id, slug, name, category_id").order("name"),
     sb.from("products").select("category_id, subcategory_id, brand").not("source", "is", null).limit(5000),
   ]);
@@ -38,7 +38,8 @@ export async function loadFacets(): Promise<Facets & { brands: { cat: string | n
       subs: (subs ?? []).filter((s) => s.category_id === c.id).map((s) => ({ id: s.id, slug: s.slug, name: s.name, count: list.filter((r) => r.subcategory_id === s.id).length })).filter((s) => s.count > 0),
     }))
     .filter((c) => c.count > 0)
-    .sort((a, b) => a.name.localeCompare(b.name, "es"));
+    // Destacadas primero, luego el orden que fijó el SUPERADMIN y por último el nombre.
+    .sort((a, b) => Number(b.is_featured) - Number(a.is_featured) || a.sort_order - b.sort_order || a.name.localeCompare(b.name, "es"));
   const brands = list.filter((r) => r.brand).map((r) => ({ cat: r.category_id, sub: r.subcategory_id, brand: r.brand as string }));
   return { categories, total: list.length, brands };
 }
@@ -54,10 +55,31 @@ export async function listProducts(f: ListFilters, scope: { categoryId?: string;
   if (term) q = q.or(`name.ilike.%${term}%,brand.ilike.%${term}%,source_ref.ilike.%${term}%`);
   if (f.min && f.min > 0) q = q.gte("price", f.min);
   if (f.max && f.max > 0) q = q.lte("price", f.max);
-  q = f.orden === "precio-asc" ? q.order("price", { ascending: true }) : f.orden === "precio-desc" ? q.order("price", { ascending: false }) : q.order("name", { ascending: true });
+  // «destacados» (por defecto): primero lo que el SUPERADMIN destacó, por su orden; luego por nombre.
+  q =
+    f.orden === "precio-asc"
+      ? q.order("price", { ascending: true })
+      : f.orden === "precio-desc"
+        ? q.order("price", { ascending: false })
+        : f.orden === "nombre"
+          ? q.order("name", { ascending: true })
+          : q.order("is_featured", { ascending: false }).order("featured_rank", { ascending: true }).order("name", { ascending: true });
   const { data, count } = await q.order("id").range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
   const total = count ?? 0;
   return { products: (data ?? []).map((p) => ({ ...p, price: Number(p.price) })), total, page, pages: Math.max(1, Math.ceil(total / PAGE_SIZE)) };
+}
+
+/** Productos destacados por el SUPERADMIN (visibles y disponibles), en el orden que definió. */
+export async function listFeatured(limit = 8): Promise<CatalogProduct[]> {
+  const { data } = await createPublicClient()
+    .from("products")
+    .select("id, slug, name, brand, price, image_url, source_ref, category_id, subcategory_id")
+    .not("source", "is", null)
+    .eq("is_featured", true)
+    .order("featured_rank", { ascending: true })
+    .order("name", { ascending: true })
+    .limit(limit);
+  return (data ?? []).map((p) => ({ ...p, price: Number(p.price) }));
 }
 
 export async function getProductBySlug(slug: string) {

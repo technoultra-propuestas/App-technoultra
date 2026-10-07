@@ -61,13 +61,15 @@ const sourceEditSchema = z.object({
   id: z.string().uuid(),
   warrantyDays: z.string().optional().transform((v) => (v ? Number(v) : 0)).pipe(z.number().int().min(0).max(3650)),
   isActive: z.string().optional().transform((v) => v === "on"),
+  isFeatured: z.string().optional().transform((v) => v === "on"),
+  featuredRank: z.string().optional().transform((v) => Number((v ?? "0").replace(/[^0-9]/g, "") || 0)).pipe(z.number().int().min(0).max(9999)),
 });
-/** Producto de proveedor: solo se editan garantía y visibilidad (lo demás lo manda la fuente; la base de datos lo impide además). */
+/** Producto de proveedor: solo se editan garantía, visibilidad, destacado y orden (lo demás lo manda la fuente; la base de datos lo impide además). */
 export async function updateSourceProductAction(_p: ActionState, fd: FormData): Promise<ActionState> {
   await assertRole(["superadmin"]);
   const parsed = sourceEditSchema.safeParse(Object.fromEntries(fd.entries()));
   if (!parsed.success) return zodToState(parsed.error);
-  const { data, error } = await (await createClient()).from("products").update({ warranty_days: parsed.data.warrantyDays, is_active: parsed.data.isActive }).eq("id", parsed.data.id).not("source", "is", null).select("id");
+  const { data, error } = await (await createClient()).from("products").update({ warranty_days: parsed.data.warrantyDays, is_active: parsed.data.isActive, is_featured: parsed.data.isFeatured, featured_rank: parsed.data.featuredRank }).eq("id", parsed.data.id).not("source", "is", null).select("id");
   if (error || !data?.length) return { ok: false, error: friendly(error?.code) };
   revalidatePath(`/b/tienda/${parsed.data.id}`);
   revalidatePath("/tienda");

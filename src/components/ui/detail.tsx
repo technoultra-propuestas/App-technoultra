@@ -22,36 +22,46 @@ export function StatusHero({ code, subtitle, status, message, meta }: { code: st
   );
 }
 
-const FLOW = [
-  { key: "received", label: "Recibido" },
-  { key: "diagnosing", label: "Diagnóstico" },
-  { key: "awaiting_approval", label: "Aprobación" },
-  { key: "in_service", label: "Servicio" },
-  { key: "ready", label: "Listo" },
-  { key: "delivered", label: "Entregado" },
-];
-const STEP_OF: Record<string, number> = { received: 0, diagnosing: 1, awaiting_approval: 2, awaiting_part: 3, in_service: 3, testing: 3, ready: 4, delivered: 5 };
-
-/** Avance del servicio para el cliente. Los estados intermedios (repuesto, pruebas) cuentan dentro de «Servicio». */
-export function ProgressSteps({ status }: { status: string }) {
-  const cur = STEP_OF[status];
-  if (cur === undefined) return null; // cancelado u otro: sin barra de avance
+/**
+ * Avance del servicio para el cliente. Los pasos salen de `progressSteps` (lib/domain/ticket-flow.ts): con equipo físico
+ * «Solicitud · Equipo recibido · Diagnóstico · Aprobación · Servicio · Entrega»; en soporte remoto no hay paso de equipo.
+ * `current === steps.length` = todo completado.
+ */
+export function ProgressSteps({ steps, current }: { steps: string[]; current: number }) {
+  const total = steps.length;
+  const label = current >= total ? "Servicio completado" : `Paso ${current + 1} de ${total}: ${steps[current]}`;
   return (
-    <ol aria-label="Avance del servicio" className="m-0 grid list-none grid-cols-6 gap-1 p-0">
-      {FLOW.map((s, i) => {
-        const done = i < cur;
-        const now = i === cur;
-        return (
-          <li key={s.key} aria-current={now ? "step" : undefined} className="flex flex-col items-center gap-1.5 text-center">
-            <span className={`h-1.5 w-full rounded-full ${done || now ? "bg-brand" : "bg-line-strong"}`} />
-            <span className={`text-[11px] leading-tight sm:text-[12px] ${now ? "font-extrabold text-ink" : done ? "font-bold text-ink-2" : "font-semibold text-muted"}`}>
-              <span className="sr-only">{done ? "Completado: " : now ? "Paso actual: " : "Pendiente: "}</span>
-              {s.label}
-            </span>
-          </li>
-        );
-      })}
-    </ol>
+    <div className="flex flex-col gap-2">
+      <ol aria-label="Avance del servicio" className="m-0 grid list-none gap-1 p-0" style={{ gridTemplateColumns: `repeat(${total}, minmax(0, 1fr))` }}>
+        {steps.map((s, i) => {
+          const done = i < current;
+          const now = i === current;
+          return (
+            <li key={s} aria-current={now ? "step" : undefined} className="flex flex-col items-center gap-1.5 text-center">
+              <span className={`h-1.5 w-full rounded-full ${done || now ? "bg-brand" : "bg-line-strong"}`} />
+              {/* En móvil solo se nombra el paso actual (los seis nombres no caben); desde sm se muestran todos. */}
+              <span className={`hidden text-[12px] leading-tight sm:block ${now ? "font-extrabold text-ink" : done ? "font-bold text-ink-2" : "font-semibold text-muted"}`}>{s}</span>
+              <span className="sr-only">{done ? `Completado: ${s}` : now ? `Paso actual: ${s}` : `Pendiente: ${s}`}</span>
+            </li>
+          );
+        })}
+      </ol>
+      <p aria-hidden className="m-0 text-[13.5px] font-extrabold text-ink sm:hidden">{label}</p>
+    </div>
+  );
+}
+
+/** Fila de estado del ticket para el cliente («Solicitud · Pago · Equipo · …»): responde «¿qué falta para continuar?». */
+export function StatusRow({ label, value, tone = "neutral" }: { label: string; value: ReactNode; tone?: "ok" | "wait" | "neutral" | "bad" }) {
+  const dot = { ok: "bg-ok", wait: "bg-brand", neutral: "bg-line-strong", bad: "bg-danger" }[tone];
+  return (
+    <li className="flex items-start gap-3 py-2.5 text-[14.5px]">
+      <span aria-hidden className={`mt-1.5 h-2.5 w-2.5 flex-none rounded-full ${dot}`} />
+      <span className="flex min-w-0 flex-1 flex-col">
+        <span className="text-[12px] font-extrabold uppercase tracking-[0.04em] text-muted">{label}</span>
+        <span className="font-bold text-ink">{value}</span>
+      </span>
+    </li>
   );
 }
 

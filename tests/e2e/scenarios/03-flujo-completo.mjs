@@ -43,10 +43,13 @@ export async function run({ b, rep, state, save }) {
     console.log("   ruta solicitar:", await b.path());
     await b.fill("modality", "store");
     await b.fill("problem", "El equipo muestra pantalla azul al iniciar Windows y se reinicia solo (prueba E2E).");
-    // Diagnóstico preliminar con IA (Gemini real): debe mostrar el aviso obligatorio y no cambiar nada por sí solo.
-    await b.clickText("Ver diagnóstico preliminar con IA", "body");
-    const aiShown = await b.waitText(/Diagnóstico preliminar generado con asistencia de IA\. La recomendación está sujeta a verificación técnica presencial\./, 60000);
-    rep.check("la IA responde con el aviso legal obligatorio (Gemini real)", aiShown);
+    // Diagnóstico preliminar con IA: aparece SOLO al terminar de describir los síntomas (sin botón principal) y trae el aviso obligatorio.
+    const hadButton = (await b.text()).includes("Ver diagnóstico preliminar con IA");
+    rep.check("ya no hay botón «Ver diagnóstico preliminar con IA»: el análisis aparece solo", !hadButton);
+    const aiShown = await b.waitText(/Según los síntomas que nos indicaste, hemos detectado que lo que podría estar afectando a tu equipo es:/, 60000);
+    rep.check("el análisis contextual aparece al terminar de escribir", aiShown);
+    const legal = await b.waitText(/Diagnóstico preliminar generado con asistencia de IA\. La recomendación está sujeta a verificación técnica presencial\./, 15000);
+    rep.check("la IA responde con el aviso legal obligatorio", legal);
     await b.clickText("Enviar solicitud", "body");
     const p = await b.waitPath((x) => x.startsWith("/c/solicitar/listo"), 25000);
     if (!p.startsWith("/c/solicitar/listo")) console.log("   pantalla:", (await b.text()).replace(/\s+/g, " ").slice(-700));
@@ -174,12 +177,12 @@ export async function run({ b, rep, state, save }) {
   await phase("pago_en_linea", async () => {
     await clientLogin(b, state.client);
     await b.goto(`/c/tickets/${flow.ticketId}`);
-    await must(b, /Pagar con Mercado Pago/, 15000);
+    await must(b, /Pagar · \$/, 15000);
     await sleep(1500);
-    await b.clickText("Pagar con Mercado Pago", "body");
+    await b.clickText("Pagar ·", "body");
     await b.waitPath((x) => x.includes("pago="), 20000);
     const p = await b.path();
-    rep.check("sin credenciales de Mercado Pago el cliente vuelve al ticket con aviso (no_configurado)", p.includes("pago=no_configurado"), p);
+    rep.check("sin credenciales del proveedor de pagos el cliente vuelve al ticket con aviso (no_configurado)", p.includes("pago=no_configurado"), p);
     rep.check("no se crea ningún pago ni se marca nada como pagado", q(`select count(*) from payments where ticket_id = '${flow.ticketId}'`) === "0" && q(`select paid_at is null from quotes where id = '${flow.quoteId}'`) === "t");
   });
 

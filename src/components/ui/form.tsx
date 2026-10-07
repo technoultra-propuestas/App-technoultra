@@ -15,14 +15,14 @@ export function Field({
 }: { label: string; name: string; hint?: string; error?: string } & InputHTMLAttributes<HTMLInputElement>) {
   const id = `f-${name}`;
   return (
-    <label htmlFor={id} className="flex flex-col gap-2 text-[15px] font-bold">
+    <label htmlFor={id} className="flex min-w-0 flex-col gap-2 text-[15px] font-bold">
       {label}
       <input
         id={id}
         name={name}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? `${id}-err` : hint ? `${id}-hint` : undefined}
-        className="h-14 rounded-ctl border-[1.5px] border-line-strong bg-white px-4 text-[17px] font-semibold text-ink placeholder:text-muted/60"
+        className="h-14 w-full min-w-0 rounded-ctl border-[1.5px] border-line-strong bg-white px-4 text-[17px] font-semibold text-ink placeholder:text-muted/60"
         {...rest}
       />
       {hint && !error ? (

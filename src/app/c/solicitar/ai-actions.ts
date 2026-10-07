@@ -2,7 +2,8 @@
 
 import { z } from "zod";
 import { assertRole } from "@/lib/auth/session";
-import { allow, TOO_MANY } from "@/lib/auth/rate-limit";
+import { allow } from "@/lib/auth/rate-limit";
+import { findRelatedProducts, type RelatedProduct } from "@/lib/ai/related-products";
 import type { ActionState } from "@/lib/auth/schemas";
 import { basicDiagnosis, buildUserPrompt, DEFAULT_DISCLAIMER, parseModelOutput, PROMPT_VERSION, SYSTEM_PROMPT, type AiOutput } from "@/lib/ai/diagnosis";
 import { generateJson } from "@/lib/ai/llm";
@@ -13,8 +14,13 @@ export type AiPreviewState = ActionState & {
   aiId?: string;
   disclaimer?: string;
   source?: "ai" | "basic";
-  result?: { summary: string; causes: AiOutput["causes"]; urgency: AiOutput["urgency"]; recommendations: { name: string; reason: string }[] };
+  result?: { summary: string; causes: AiOutput["causes"]; urgency: AiOutput["urgency"]; recommendations: { name: string; reason: string }[]; products: RelatedProduct[] };
 };
+
+/** Memoria de 10 min por persona y consulta idéntica: evita gastar IA cuando el texto no cambió (no guarda nada de otras personas). */
+const CACHE_MS = 10 * 60_000;
+const cache = new Map<string, { at: number; state: AiPreviewState }>();
+const cacheKey = (profileId: string, service: string, equipment: string, problem: string) => `${profileId}|${service}|${equipment}|${problem.trim().toLowerCase().replace(/\s+/g, " ")}`;
 
 const schema = z.object({
   serviceId: z.string().uuid(),
@@ -30,8 +36,11 @@ export async function previewDiagnosisAction(_p: AiPreviewState, fd: FormData): 
   const profile = await assertRole(["client"]);
   const parsed = schema.safeParse(Object.fromEntries(fd.entries()));
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message };
-  if (!(await allow("ai-preview", profile.id, 6, 3600))) return { ok: false, error: TOO_MANY };
   const v = parsed.data;
+  const key = cacheKey(profile.id, v.serviceId, v.equipmentId ?? "", v.problem);
+  const hit = cache.get(key);
+  if (hit && Date.now() - hit.at < CACHE_MS) return hit.state;
+  if (!(await allow("ai-preview", profile.id, 10, 3600))) return { ok: false, error: "Ya generamos varios análisis seguidos. Puedes continuar con tu solicitud; el técnico revisará todo." };
 
   const supabase = await createClient();
   const { data: customer } = await supabase.from("customers").select("id").eq("profile_id", profile.id).is("deleted_at", null).maybeSingle();
@@ -42,11 +51,9 @@ export async function previewDiagnosisAction(_p: AiPreviewState, fd: FormData): 
     ? (await supabase.from("equipment").select("type, brand, model, year, ram, storage").eq("id", v.equipmentId).maybeSingle()).data
     : null;
 
-  const [{ data: svcs }, { data: prods }] = await Promise.all([
-    supabase.from("services").select("id, name").eq("is_active", true).eq("kind", "technical").limit(60),
-    supabase.from("products").select("id, name").eq("is_active", true).limit(30),
-  ]);
-  const catalog = [...(svcs ?? []), ...(prods ?? [])] as { id: string; name: string }[];
+  // Solo SERVICIOS como candidatos de la IA. Los productos se sugieren con reglas deterministas (no se inventa compatibilidad).
+  const { data: svcs } = await supabase.from("services").select("id, name").eq("is_active", true).eq("kind", "technical").limit(60);
+  const catalog = (svcs ?? []) as { id: string; name: string }[];
   const names = new Map(catalog.map((c) => [c.id, c.name]));
 
   const input = { service: service.name as string, equipment, problem: v.problem };
@@ -72,7 +79,8 @@ export async function previewDiagnosisAction(_p: AiPreviewState, fd: FormData): 
     .single();
   if (error || !row) return { ok: false, error: "No pudimos generar el diagnóstico en este momento." };
 
-  return {
+  const products = await findRelatedProducts(v.problem, output.causes.map((c) => c.text)).catch(() => []);
+  const state: AiPreviewState = {
     ok: true,
     aiId: row.id,
     source,
@@ -82,6 +90,10 @@ export async function previewDiagnosisAction(_p: AiPreviewState, fd: FormData): 
       causes: output.causes,
       urgency: output.urgency,
       recommendations: output.recommendations.map((r) => ({ name: names.get(r.id) ?? "Servicio", reason: r.reason })),
+      products,
     },
   };
+  cache.set(key, { at: Date.now(), state });
+  if (cache.size > 200) cache.delete(cache.keys().next().value as string);
+  return state;
 }

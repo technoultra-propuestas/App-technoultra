@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { FormDraft } from "@/components/forms/FormDraft";
 import { Alert, SubmitButton } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/layout";
 import { initialState } from "@/lib/auth/schemas";
@@ -22,7 +23,7 @@ export function QuoteDecision({ ticketId, quoteId, total }: { ticketId: string; 
       </form>
       <div className="grid grid-cols-2 gap-2">
         <button type="button" onClick={() => setMode(mode === "question" ? "none" : "question")} className="min-h-12 rounded-2xl border-[1.5px] border-line-strong bg-white text-[15px] font-extrabold">
-          Tengo una pregunta
+          Preguntar
         </button>
         <button type="button" onClick={() => setMode(mode === "reject" ? "none" : "reject")} className="min-h-12 rounded-2xl border-[1.5px] border-line-strong bg-white text-[15px] font-extrabold text-[#9A2B1E]">
           Rechazar
@@ -30,6 +31,7 @@ export function QuoteDecision({ ticketId, quoteId, total }: { ticketId: string; 
       </div>
       {mode !== "none" ? (
         <form action={action} className="flex flex-col gap-2 rounded-[14px] border border-line p-3">
+          <FormDraft id={`cotizacion-${quoteId}-${mode}`} />
           <input type="hidden" name="ticketId" value={ticketId} />
           <input type="hidden" name="quoteId" value={quoteId} />
           <input type="hidden" name="decision" value={mode} />

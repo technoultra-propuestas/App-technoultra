@@ -30,11 +30,11 @@ describe("«Enviar al cliente»: errores reales, claros y rastreables", () => {
     expect(rpc).toHaveBeenCalledWith("send_quote", { p_quote: Q });
   });
 
-  it("ticket en «Recibido»: explica qué hacer en lugar del mensaje genérico", async () => {
+  it("ticket en «Solicitud recibida»: explica qué hacer en lugar del mensaje genérico", async () => {
     state.error = { code: "P0001", message: "invalid_transition: received -> awaiting_approval" };
     const r = await sendQuoteAction({ ok: false }, fd());
     expect(r.ok).toBe(false);
-    expect(r.error).toMatch(/debe estar «En diagnóstico» \(ahora está «Recibido»\)/);
+    expect(r.error).toMatch(/debe estar «En diagnóstico» \(ahora está «Solicitud recibida»\)/);
     expect(r.error).not.toMatch(/No pudimos completar/);
   });
 

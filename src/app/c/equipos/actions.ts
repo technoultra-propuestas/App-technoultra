@@ -6,6 +6,7 @@ import { z } from "zod";
 import { assertRole } from "@/lib/auth/session";
 import { zodToState, type ActionState } from "@/lib/auth/schemas";
 import { equipmentSchema } from "@/lib/domain/equipment";
+import { safeReturnTo, withParam } from "@/lib/navigation";
 import { createClient } from "@/lib/supabase/server";
 
 async function myCustomerId() {
@@ -33,7 +34,9 @@ export async function createEquipmentAction(_p: ActionState, fd: FormData): Prom
     .single();
   if (error || !data) return { ok: false, error: "No pudimos guardar el equipo." };
   revalidatePath("/c/equipos");
-  redirect(`/c/equipos/${data.id}`);
+  // Si venía de una solicitud (u otra pantalla de la app), vuelve allí con el equipo recién creado seleccionado.
+  const back = safeReturnTo(fd.get("returnTo"));
+  redirect(back ? withParam(back, "equipo", data.id) : `/c/equipos/${data.id}`);
 }
 
 const idSchema = z.string().uuid();

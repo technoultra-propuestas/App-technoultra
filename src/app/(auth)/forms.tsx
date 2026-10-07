@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useState } from "react";
+import { FormDraft } from "@/components/forms/FormDraft";
 import { Alert, Field, SubmitButton } from "@/components/ui/form";
 import { GoogleG, IconBadge } from "@/components/ui/icons";
 import { initialState } from "@/lib/auth/schemas";
@@ -39,6 +40,8 @@ export function LoginForm({
   const [state, action] = useActionState(signInAction, initialState);
   return (
     <form action={action} className="flex flex-col gap-5" noValidate>
+      {/* Solo se recuerda el correo; la contraseña nunca se guarda (FormDraft la excluye por tipo). */}
+      <FormDraft id="login" />
       {next ? <input type="hidden" name="next" value={next} /> : null}
       {notice ? <Alert>{notice}</Alert> : null}
       <Field
@@ -77,6 +80,7 @@ export function RegisterForm() {
   const [state, action] = useActionState(signUpAction, initialState);
   return (
     <form action={action} className="flex flex-col gap-[18px]" noValidate>
+      <FormDraft id="registro" />
       <Field
         label="Nombre completo"
         name="fullName"

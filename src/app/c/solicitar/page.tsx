@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Card, EmptyState, PageTitle } from "@/components/ui/layout";
+import { ChipRow, FilterChip, SearchField, SegmentTabs } from "@/components/ui/kit";
+import { EmptyState } from "@/components/ui/layout";
 import { priceText } from "@/lib/domain/catalog";
 import { requireRole } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
@@ -9,11 +10,8 @@ export const metadata: Metadata = { title: "Solicitar un servicio", robots: { in
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-export default async function RequestCatalogPage({
-  searchParams,
-}: {
-  searchParams: Promise<Record<string, string | undefined>>;
-}) {
+/** Catálogo de servicios del cliente: pestañas, búsqueda y categorías en una línea; filas compactas con el precio visible. */
+export default async function RequestCatalogPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   await requireRole(["client"]);
   const sp = await searchParams;
   const tab = sp.tipo === "digital" ? "digital" : "technical";
@@ -35,93 +33,64 @@ export default async function RequestCatalogPage({
   const list = services ?? [];
   const groups = (categories ?? [])
     .map((c) => ({ ...c, items: list.filter((s) => s.category_id === c.id) }))
-    .concat([
-      {
-        id: "none",
-        name: "Otros",
-        items: list.filter((s) => !s.category_id || !(categories ?? []).some((c) => c.id === s.category_id)),
-      },
-    ])
+    .concat([{ id: "none", name: "Otros", items: list.filter((s) => !s.category_id || !(categories ?? []).some((c) => c.id === s.category_id)) }])
     .filter((g) => g.items.length > 0);
+  const href = (over: Record<string, string | undefined>) => {
+    const p = new URLSearchParams();
+    for (const [k, v] of Object.entries({ tipo: tab === "digital" ? "digital" : undefined, q: q || undefined, categoria: cat || undefined, ...over })) if (v) p.set(k, v);
+    const s = p.toString();
+    return `/c/solicitar${s ? `?${s}` : ""}`;
+  };
 
-  const tabCls = (on: boolean) =>
-    `flex min-h-12 flex-1 items-center justify-center rounded-[14px] px-4 text-[15px] font-extrabold no-underline ${on ? "bg-ink text-white" : "border border-line bg-white text-ink"}`;
-  const field = "h-12 rounded-[14px] border border-line bg-white px-4 text-[15px]";
   return (
-    <section className="flex flex-col gap-6">
-      <PageTitle
-        title="Solicitar un servicio"
-        subtitle="Elige lo que necesitas. Siempre te mostramos el precio o la cotización antes de cobrar o hacer cualquier trabajo."
-      />
+    <section className="flex flex-col gap-5">
+      <div>
+        <h1 className="m-0 text-[28px] font-extrabold tracking-[-0.025em] lg:text-[30px]">Solicitar un servicio</h1>
+        <div className="mt-2 h-1 w-10 rounded-sm bg-brand" />
+        <p className="m-0 mt-2 max-w-[640px] text-[15px] leading-normal text-muted">Siempre te mostramos el precio o la cotización antes de cobrar o hacer cualquier trabajo.</p>
+      </div>
       <Link href="/c/asistente" className="press flex min-h-14 items-center justify-between gap-3 rounded-card border border-brand bg-white px-5 py-3 text-ink no-underline shadow-card">
-        <span className="flex flex-col">
+        <span className="flex min-w-0 flex-col">
           <span className="text-[15px] font-extrabold">¿No sabes qué servicio necesitas?</span>
           <span className="text-[13px] font-semibold text-muted">Cuéntaselo al asistente y te sugiere opciones.</span>
         </span>
         <span className="flex-none text-[13px] font-extrabold text-brand">Abrir</span>
       </Link>
-      <div role="tablist" className="flex gap-2">
-        <Link role="tab" aria-selected={tab === "technical"} href="/c/solicitar" className={tabCls(tab === "technical")}>
-          Servicio técnico
-        </Link>
-        <Link role="tab" aria-selected={tab === "digital"} href="/c/solicitar?tipo=digital" className={tabCls(tab === "digital")}>
-          Soluciones digitales
-        </Link>
-      </div>
-      <form method="get" role="search" className="flex flex-wrap gap-2">
-        {tab === "digital" ? <input type="hidden" name="tipo" value="digital" /> : null}
-        <label className="flex-1 basis-60">
-          <span className="sr-only">Buscar un servicio</span>
-          <input name="q" type="search" defaultValue={q} maxLength={60} placeholder="Buscar: lento, SSD, impresora…" className={`${field} w-full`} />
-        </label>
-        <label>
-          <span className="sr-only">Categoría</span>
-          <select name="categoria" defaultValue={cat} className={field}>
-            <option value="">Todas las categorías</option>
-            {(categories ?? []).map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <button className="min-h-12 rounded-[14px] bg-brand px-5 text-[15px] font-extrabold text-ink">Buscar</button>
-      </form>
+      <SegmentTabs label="Tipo de servicio" active={tab} items={[{ key: "technical", label: "Servicio técnico", href: "/c/solicitar" }, { key: "digital", label: "Soluciones digitales", href: "/c/solicitar?tipo=digital" }]} />
+      <SearchField placeholder="Buscar: lento, SSD, impresora…" defaultValue={q} keep={{ tipo: tab === "digital" ? "digital" : undefined, categoria: cat || undefined }} />
+      {(categories ?? []).length > 1 ? (
+        <ChipRow label="Categorías">
+          <FilterChip href={href({ categoria: undefined })} on={!cat}>Todas</FilterChip>
+          {(categories ?? []).map((c) => (
+            <FilterChip key={c.id} href={href({ categoria: c.id })} on={cat === c.id}>{c.name}</FilterChip>
+          ))}
+        </ChipRow>
+      ) : null}
       {groups.length === 0 ? (
-        <EmptyState
-          title={q || cat ? "No encontramos servicios con ese filtro" : "Estamos preparando el catálogo"}
-          text={q || cat ? "Prueba con otra palabra o quita el filtro de categoría." : "Pronto verás aquí los servicios disponibles."}
-        />
+        <EmptyState title={q || cat ? "No encontramos servicios con ese filtro" : "Estamos preparando el catálogo"} text={q || cat ? "Prueba con otra palabra o quita el filtro de categoría." : "Pronto verás aquí los servicios disponibles."} />
       ) : (
         groups.map((g) => (
-          <div key={g.id} className="flex flex-col gap-3">
-            <h2 className="m-0 text-[18px] font-extrabold">{g.name}</h2>
-            {[...new Set(g.items.map((s) => s.subcategory_id ?? ""))].map((subId) => (
-              <div key={subId || "sin"} className="flex flex-col gap-2">
-                {subId ? <h3 className="m-0 text-[14px] font-extrabold text-ink-2">{(subs ?? []).find((x) => x.id === subId)?.name}</h3> : null}
-                <ul className="m-0 grid list-none grid-cols-[repeat(auto-fit,minmax(min(100%,300px),1fr))] gap-3 p-0">
-                  {g.items
-                    .filter((s) => (s.subcategory_id ?? "") === subId)
-                    .map((s) => (
-                      <li key={s.id}>
-                        <Link href={`/c/solicitar/${s.slug}`} className="block h-full no-underline">
-                          <Card className="flex h-full flex-col gap-1.5">
-                            <span className="text-[17px] font-extrabold text-ink">{s.name}</span>
-                            {s.short_description ? <span className="text-[14px] leading-snug text-muted">{s.short_description}</span> : null}
-                            <span className="mt-auto pt-2 text-[15px] font-extrabold text-ink">{priceText(s)}</span>
-                            {s.requires_diagnosis || s.estimated_time ? (
-                              <span className="text-[12px] font-bold text-muted">
-                                {[s.requires_diagnosis ? "Requiere diagnóstico" : null, s.estimated_time].filter(Boolean).join(" · ")}
-                              </span>
-                            ) : null}
-                          </Card>
-                        </Link>
-                      </li>
-                    ))}
-                </ul>
-              </div>
-            ))}
-          </div>
+          <section key={g.id} aria-label={g.name} className="flex flex-col gap-2">
+            <h2 className="m-0 text-[17px] font-extrabold">{g.name}</h2>
+            <ul className="m-0 flex list-none flex-col divide-y divide-line overflow-hidden rounded-card border border-line bg-white p-0 shadow-card">
+              {g.items.map((s) => {
+                const sub = (subs ?? []).find((x) => x.id === s.subcategory_id)?.name;
+                const meta = [sub, s.requires_diagnosis ? "Requiere diagnóstico" : null, s.estimated_time].filter(Boolean).join(" · ");
+                return (
+                  <li key={s.id}>
+                    <Link href={`/c/solicitar/${s.slug}`} className="press flex min-h-[72px] items-center gap-3 px-4 py-3 text-ink no-underline hover:bg-paper">
+                      <span className="flex min-w-0 flex-1 flex-col">
+                        <span className="text-[15.5px] font-extrabold leading-snug">{s.name}</span>
+                        {s.short_description ? <span className="line-clamp-2 text-[13.5px] leading-snug text-muted">{s.short_description}</span> : null}
+                        {meta ? <span className="mt-0.5 text-[12px] font-bold text-muted">{meta}</span> : null}
+                      </span>
+                      <span className="flex-none text-right text-[14.5px] font-extrabold">{priceText(s)}</span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
         ))
       )}
     </section>

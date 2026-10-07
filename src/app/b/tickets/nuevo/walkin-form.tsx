@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { FormDraft } from "@/components/forms/FormDraft";
 import { Alert, Field, SubmitButton } from "@/components/ui/form";
 import { EQUIPMENT_LABEL, MODALITY_LABEL, Select, Textarea } from "@/components/ui/layout";
 import { initialState } from "@/lib/auth/schemas";
@@ -20,6 +21,7 @@ export function WalkinForm({ customers, equipment, services, canSearch }: Props)
   const eq = equipment.filter((e) => e.customer_id === customerId);
   return (
     <form action={action} className="flex flex-col gap-[18px]" noValidate>
+      <FormDraft id="ticket-mostrador" />
       <fieldset className="flex flex-col gap-3 border-0 p-0">
         <legend className="mb-2 text-[17px] font-extrabold">Cliente</legend>
         {canSearch ? (

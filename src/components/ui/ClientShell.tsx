@@ -6,9 +6,9 @@ const ITEMS: NavItem[] = [
   { href: "/c", label: "Inicio", icon: "home", exact: true },
   { href: "/c/solicitar", label: "Servicios", icon: "wrench" },
   { href: "/c/tickets", label: "Tickets", icon: "ticket" },
-  { href: "/tienda", label: "Tienda", icon: "store", also: ["/c/tienda", "/c/carrito", "/c/pedidos"] },
+  { href: "/tienda", label: "Shop", icon: "store", also: ["/c/tienda", "/c/carrito", "/c/pedidos"] },
 ];
-const MORE_ALSO = ["/c/equipos", "/c/proyectos", "/c/documentos", "/c/direcciones", "/c/perfil", "/c/legal"];
+const MORE_ALSO = ["/c/equipos", "/c/proyectos", "/c/documentos", "/c/direcciones", "/c/perfil", "/c/legal", "/c/ayuda", "/c/asistente"];
 
 export function ClientShell({ children, name, unread }: { children: React.ReactNode; name: string; unread: number }) {
   return (

@@ -11,6 +11,7 @@ export const metadata: Metadata = { title: "Tienda · Productos", robots: { inde
 const STORE_TABS = [
   { key: "pedidos", label: "Pedidos", href: "/b/pedidos" },
   { key: "productos", label: "Productos", href: "/b/tienda" },
+  { key: "shop", label: "Shop", href: "/b/tienda/shop" },
   { key: "sync", label: "Sincronización", href: "/b/tienda/sincronizacion" },
 ];
 const PAGE = 50;

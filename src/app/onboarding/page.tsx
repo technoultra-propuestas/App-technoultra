@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { DraftProvider } from "@/components/forms/FormDraft";
 import { requireRole } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { OnboardingShell } from "./shell";
@@ -59,14 +60,16 @@ export default async function OnboardingPage() {
       : [];
 
   return (
-    <OnboardingShell step={step} title={TITLES[step]} subtitle={SUBTITLES[step]}>
-      {step === 0 ? <WelcomeStep name={profile.full_name} /> : null}
-      {step === 1 ? <PhoneStep /> : null}
-      {step === 2 ? <AddressStep cities={cities} /> : null}
-      {step === 3 ? <EquipmentStep /> : null}
-      {step === 4 ? <NotificationsStep /> : null}
-      {step === 5 ? <LegalStep docs={docs} /> : null}
-      {step > 0 ? <BackButton /> : null}
-    </OnboardingShell>
+    <DraftProvider scope={profile.id}>
+      <OnboardingShell step={step} title={TITLES[step]} subtitle={SUBTITLES[step]}>
+        {step === 0 ? <WelcomeStep name={profile.full_name} /> : null}
+        {step === 1 ? <PhoneStep /> : null}
+        {step === 2 ? <AddressStep cities={cities} /> : null}
+        {step === 3 ? <EquipmentStep /> : null}
+        {step === 4 ? <NotificationsStep /> : null}
+        {step === 5 ? <LegalStep docs={docs} /> : null}
+        {step > 0 ? <BackButton /> : null}
+      </OnboardingShell>
+    </DraftProvider>
   );
 }

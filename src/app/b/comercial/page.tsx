@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ListRow } from "@/components/ui/kit";
 import { Card, PageTitle } from "@/components/ui/layout";
 import { requireRole } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
@@ -35,6 +36,14 @@ export default async function CommercialPage({ searchParams }: { searchParams: P
       <PageTitle title="Configuración comercial" subtitle="Impuestos, recargo por urgencia y domicilio. Los cambios se auditan y nunca alteran cotizaciones, pagos ni órdenes ya emitidas." />
       {sp.ok ? <p role="status" className="m-0 rounded-xl bg-[#E3F3E8] px-4 py-3 text-[14px] font-bold text-[#1F6B3A]">Cambios guardados.</p> : null}
       {sp.error ? <p role="alert" className="m-0 rounded-xl bg-[#FBE4E1] px-4 py-3 text-[14px] font-bold text-[#9A2B1E]">No pudimos guardar: revisa los valores.</p> : null}
+
+      <div className="rounded-card border border-line bg-white p-2 shadow-card">
+        <ul className="m-0 flex list-none flex-col divide-y divide-line p-0">
+          <li><ListRow href="/b/tienda/shop" title="Shop y promociones" detail="Banner promocional, textos, envío de productos, mensaje de WhatsApp y destacados" icon="store" tone="neutral" /></li>
+          <li><ListRow href="/b/servicios" title="Servicios y precios" detail="Catálogo, precios de referencia y reglas de cobro" icon="wrench" tone="neutral" /></li>
+          <li><ListRow href="/b/cobertura" title="Cobertura y domicilio" detail="Municipios y tarifas de servicios presenciales" icon="map" tone="neutral" /></li>
+        </ul>
+      </div>
 
       <Card className="flex flex-col gap-3">
         <h2 className="m-0 text-[19px] font-extrabold">IVA</h2>

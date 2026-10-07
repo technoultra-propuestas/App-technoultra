@@ -5,7 +5,9 @@ import { SiteShell } from "@/components/site/SiteShell";
 import { ProductImage } from "@/components/store/ProductImage";
 import { optimizedImage } from "@/lib/catalog/image";
 import { ShippingInfo } from "@/components/store/ShippingInfo";
+import { AddToCartButton } from "@/components/shop/AddToCartButton";
 import { WhatsappCta } from "@/components/store/WhatsappCta";
+import { loadShopSettings } from "@/lib/shop/settings";
 import { copFormat } from "@/lib/catalog/normalize";
 import { getProductBySlug } from "@/lib/catalog/queries";
 import { productWhatsappUrl } from "@/lib/catalog/whatsapp";
@@ -29,10 +31,11 @@ export default async function ProductPage({ params }: { params: Params }) {
   const p = await getProductBySlug((await params).slug);
   // Sin disponibilidad, oculto por el administrador o inexistente: la base de datos (RLS) no lo devuelve → 404.
   if (!p) notFound();
-  const wa = productWhatsappUrl({ name: p.name, ref: p.source_ref, price: p.price, brand: p.brand, category: p.category?.name, subcategory: p.subcategory?.name });
+  const settings = await loadShopSettings();
+  const wa = productWhatsappUrl({ name: p.name, ref: p.source_ref, price: p.price, brand: p.brand, category: p.category?.name, subcategory: p.subcategory?.name }, { closing: settings.whatsapp_closing });
   const crumbs = [
     { name: "Inicio", path: "/" },
-    { name: "Tienda", path: "/tienda" },
+    { name: "Shop", path: "/tienda" },
     ...(p.category ? [{ name: p.category.name, path: `/tienda/categoria/${p.category.slug}` }] : []),
     ...(p.category && p.subcategory ? [{ name: p.subcategory.name, path: `/tienda/categoria/${p.category.slug}/${p.subcategory.slug}` }] : []),
     { name: p.name, path: `/tienda/producto/${p.slug}` },
@@ -48,7 +51,7 @@ export default async function ProductPage({ params }: { params: Params }) {
     offers: { "@type": "Offer", url: `${siteUrl()}/tienda/producto/${p.slug}`, priceCurrency: "COP", price: p.price, availability: "https://schema.org/InStock", seller: { "@type": "Organization", name: "TechnoUltra" } },
   };
   return (
-    <SiteShell>
+    <SiteShell wide>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbLd(crumbs)) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(product) }} />
       <nav aria-label="Ruta" className="mb-5 flex flex-wrap items-center gap-x-2 text-[13px] font-semibold text-muted">
@@ -71,8 +74,9 @@ export default async function ProductPage({ params }: { params: Params }) {
             <div className="text-[15px] font-extrabold text-ok">🟢 1 unidad disponible</div>
             <p className="m-0 mt-1 text-[13px] text-muted">Disponibilidad y precio sujetos a confirmación por WhatsApp.</p>
           </div>
-          <WhatsappCta productId={p.id} href={wa} />
-          <ShippingInfo />
+          <AddToCartButton productId={p.id} label="Agregar al carrito" size="large" />
+          <WhatsappCta productId={p.id} href={wa} label="Consultar este producto por WhatsApp" secondary />
+          <ShippingInfo urban={settings.shipping_urban_fee} outside={settings.shipping_outside_fee} note={settings.shipping_note} />
           {p.warranty_days > 0 ? <p className="m-0 text-[14px] font-semibold text-ink-2">Garantía: {p.warranty_days} días.</p> : null}
         </div>
       </div>

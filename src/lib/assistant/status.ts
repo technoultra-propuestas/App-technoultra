@@ -1,6 +1,6 @@
 /** Qué significa cada estado para el cliente (texto estable, sin IA). La base de conocimiento puede ampliarlo, nunca contradecirlo. */
 export const TICKET_STATUS_HELP: Record<string, { label: string; meaning: string }> = {
-  received: { label: "Recibido", meaning: "Tu solicitud quedó registrada y el equipo la va a gestionar." },
+  received: { label: "Solicitud recibida", meaning: "Tu solicitud quedó registrada. Si el servicio requiere tu equipo, en tu ticket ves cómo coordinar la entrega; «Equipo recibido» solo aparece cuando ya lo tenemos." },
   diagnosing: { label: "En diagnóstico", meaning: "Un técnico está revisando tu equipo para identificar la causa." },
   awaiting_approval: { label: "Esperando aprobación", meaning: "Te enviamos una cotización y esperamos tu decisión. No hacemos nada sin tu aprobación." },
   awaiting_part: { label: "Esperando repuesto", meaning: "Esperamos la llegada del repuesto necesario; te avisaremos." },

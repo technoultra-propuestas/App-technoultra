@@ -1,16 +1,19 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { FormDraft } from "@/components/forms/FormDraft";
 import { Alert, Field, SubmitButton } from "@/components/ui/form";
 import { Select } from "@/components/ui/layout";
 import { initialState } from "@/lib/auth/schemas";
 import { addAddressAction } from "./actions";
 
-export function AddressForm({ cities }: { cities: { dane_code: string; city_name: string }[] }) {
+export function AddressForm({ cities, returnTo }: { cities: { dane_code: string; city_name: string }[]; returnTo?: string | null }) {
   const [state, action] = useActionState(addAddressAction, initialState);
   const [dane, setDane] = useState(cities[0]?.dane_code ?? "other");
   return (
     <form action={action} className="flex flex-col gap-4" noValidate>
+      <FormDraft id="direccion-nueva" />
+      {returnTo ? <input type="hidden" name="returnTo" value={returnTo} /> : null}
       <Field label="Nombre (Casa, Oficina…)" name="label" defaultValue="Casa" />
       <Select label="Ciudad" name="dane" value={dane} onChange={(e) => setDane(e.target.value)}>
         {cities.map((c) => (

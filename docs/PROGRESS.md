@@ -91,3 +91,9 @@ Ticket automático al solicitar, pago inmediato de servicios de precio fijo (Mer
 
 ## Auditoría y E2E completos (2026-10-07)
 E2E: 314 comprobaciones OK (escenarios 01–07; nuevo 07 de la tienda). Corregidos: ficha de producto 500 en producción, IA sin ligar al ticket automático, privilegios de `service_role` del catálogo (migración 35). Detalle, pendientes y veredicto en `docs/AUDITORIA-PRE-PRODUCCION.md`.
+
+## Shop, flujos del cliente y backoffice (2026-10-07)
+- **Shop** (`/tienda`): rediseño tipo e-commerce (banner administrable, franja de envíos, filtros laterales en escritorio y hojas inferiores en móvil, rejilla de 2/4 columnas, tarjetas compactas con «+ Agregar»), carrito (ids y cantidades; precios del servidor), un solo mensaje de WhatsApp con todos los productos, CRM del Shop (`/b/tienda/shop`: banners, textos, tarifas de envío, mensaje de WhatsApp, categorías y productos destacados). Migraciones 36–37. Ver `docs/SHOP.md`.
+- **Formularios con memoria** (`FormDraft`), retorno de flujos seguro (solicitud → equipo/dirección → volver con selección), diagnóstico de IA contextual con productos relacionados por reglas, estados de pago sin «Pagar» duplicado ni nombre del proveedor, «Recibido» solo para el equipo y nuevo avance del ticket. Ver `docs/FORMULARIOS-Y-FLUJOS.md`.
+- **Rediseño**: cliente (servicios, equipos, documentos y firma electrónica, perfil con documentos aceptados, ayuda, proyectos, ticket) y personal (legal, comercial, cobertura, ajustes con integraciones, proyectos). Aceptación legal con el texto nuevo.
+- Verificación: `npm run check` (607 pruebas, build OK) y E2E completo (escenarios 01–09, con captura visual). Hallazgos corregidos por el E2E: el carrito se vaciaba al cargar, desbordes móviles en grids con formularios, cabecera pública en 375 px.

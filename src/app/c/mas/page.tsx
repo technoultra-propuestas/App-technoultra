@@ -9,12 +9,14 @@ export const metadata: Metadata = { title: "Más", robots: { index: false } };
 const LINKS: { href: string; label: string; text: string; icon: NavIconName }[] = [
   { href: "/c/asistente", label: "Asistente", text: "Te orienta con servicios, precios y el estado de tus solicitudes.", icon: "inbox" },
   { href: "/c/equipos", label: "Mis equipos", text: "Registra y consulta tus equipos y su historial.", icon: "box" },
-  { href: "/c/pedidos", label: "Mis pedidos", text: "Compras de la tienda y estado del pago.", icon: "store" },
+  { href: "/tienda", label: "Shop", text: "Productos con garantía; compra por WhatsApp.", icon: "store" },
+  { href: "/c/pedidos", label: "Mis pedidos", text: "Pedidos pagados en línea y estado del pago.", icon: "box" },
   { href: "/c/proyectos", label: "Mis proyectos", text: "Avance de tus soluciones digitales.", icon: "folder" },
   { href: "/c/documentos", label: "Documentos", text: "Actas, cotizaciones, garantías y firmas.", icon: "quote" },
   { href: "/c/direcciones", label: "Direcciones", text: "Dónde recogemos o atendemos.", icon: "map" },
   { href: "/c/perfil", label: "Mi perfil", text: "Tus datos y preferencias de avisos.", icon: "users" },
   { href: "/avisos", label: "Avisos", text: "Novedades de tus servicios.", icon: "bell" },
+  { href: "/c/ayuda", label: "Ayuda", text: "Preguntas frecuentes, asistente y contacto.", icon: "shield" },
   { href: "/soporte-remoto", label: "Soporte remoto", text: "Asistencia técnica desde tu casa.", icon: "wrench" },
 ];
 

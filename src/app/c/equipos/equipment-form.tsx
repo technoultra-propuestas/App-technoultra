@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { FormDraft } from "@/components/forms/FormDraft";
 import { Alert, Field, SubmitButton } from "@/components/ui/form";
 import { Select, Textarea } from "@/components/ui/layout";
 import { initialState } from "@/lib/auth/schemas";
@@ -18,7 +19,7 @@ type Values = {
   notes?: string | null;
 };
 
-export function EquipmentForm({ values }: { values?: Values }) {
+export function EquipmentForm({ values, returnTo }: { values?: Values; returnTo?: string | null }) {
   const editing = Boolean(values?.id);
   const [state, action] = useActionState(
     editing ? updateEquipmentAction : createEquipmentAction,
@@ -26,7 +27,10 @@ export function EquipmentForm({ values }: { values?: Values }) {
   );
   return (
     <form action={action} className="flex flex-col gap-[18px]" noValidate>
+      {editing ? null : <FormDraft id="equipo-nuevo" />}
       {editing ? <input type="hidden" name="id" value={values?.id} /> : null}
+      {/* Destino de retorno (ruta interna ya validada en el servidor; la acción la valida de nuevo). */}
+      {returnTo ? <input type="hidden" name="returnTo" value={returnTo} /> : null}
       <Select
         label="Tipo de equipo"
         name="type"

@@ -62,12 +62,12 @@ export function Select({
   ...rest
 }: { label: string; name: string; error?: string } & ComponentProps<"select">) {
   return (
-    <label className="flex flex-col gap-2 text-[15px] font-bold">
+    <label className="flex min-w-0 flex-col gap-2 text-[15px] font-bold">
       {label}
       <select
         name={name}
         aria-invalid={error ? true : undefined}
-        className="h-14 rounded-ctl border-[1.5px] border-line-strong bg-white px-4 text-[17px] font-semibold text-ink"
+        className="h-14 w-full min-w-0 rounded-ctl border-[1.5px] border-line-strong bg-white px-4 text-[17px] font-semibold text-ink"
         {...rest}
       >
         {children}
@@ -84,13 +84,13 @@ export function Textarea({
   ...rest
 }: { label: string; name: string; error?: string } & ComponentProps<"textarea">) {
   return (
-    <label className="flex flex-col gap-2 text-[15px] font-bold">
+    <label className="flex min-w-0 flex-col gap-2 text-[15px] font-bold">
       {label}
       <textarea
         name={name}
         aria-invalid={error ? true : undefined}
         rows={4}
-        className="rounded-ctl border-[1.5px] border-line-strong bg-white px-4 py-3 text-[17px] font-semibold text-ink"
+        className="w-full min-w-0 rounded-ctl border-[1.5px] border-line-strong bg-white px-4 py-3 text-[17px] font-semibold text-ink"
         {...rest}
       />
       {error ? <span className="text-[13px] font-bold text-[#9A2B1E]">{error}</span> : null}
@@ -102,9 +102,13 @@ export const money = (n: number | string | null | undefined) =>
   "$" + Math.round(Number(n ?? 0)).toLocaleString("es-CO");
 
 const STATUS: Record<string, { label: string; cls: string }> = {
-  received: { label: "Recibido", cls: "bg-[#EEF1F6] text-[#33507A]" },
+  // «Recibido» ya no existe como palabra suelta: se refería a la solicitud, al dinero o al equipo. Ver lib/domain/ticket-flow.ts.
+  received: { label: "Solicitud recibida", cls: "bg-[#EEF1F6] text-[#33507A]" },
+  requested: { label: "Solicitud recibida", cls: "bg-[#EEF1F6] text-[#33507A]" },
+  equipment_received: { label: "Equipo recibido", cls: "bg-[#E3F3E8] text-[#1F6B3A]" },
   diagnosing: { label: "En diagnóstico", cls: "bg-[#FBF1D9] text-[#6E4B00]" },
   awaiting_approval: { label: "Esperando aprobación", cls: "bg-[#FFE9CC] text-[#7A3E00]" },
+  // Pago (dimensión distinta del estado físico del equipo).
   awaiting_part: { label: "Esperando repuesto", cls: "bg-[#EDEDEA] text-ink-2" },
   in_service: { label: "En servicio", cls: "bg-ink text-[#FFB255]" },
   testing: { label: "En pruebas", cls: "bg-[#ECEBFA] text-[#3F3A8C]" },

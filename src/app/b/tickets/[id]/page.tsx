@@ -5,6 +5,7 @@ import { TextLink } from "@/components/ui/kit";
 import { InfoList, Panel, StatusHero, Timeline } from "@/components/ui/detail";
 import { Card, EQUIPMENT_LABEL, fmtDateTime, MODALITY_LABEL, statusLabel } from "@/components/ui/layout";
 import { requireRole } from "@/lib/auth/session";
+import { effectiveStatus } from "@/lib/domain/ticket-flow";
 import { createClient } from "@/lib/supabase/server";
 import { AssignForm, NoteForm, TransitionForm } from "./forms";
 import { AiDiagnosisCard, type AiRow } from "@/components/ai/AiDiagnosisCard";
@@ -40,6 +41,7 @@ export default async function StaffTicketPage({ params }: { params: Promise<{ id
       : Promise.resolve({ data: [] as { id: string; full_name: string; email: string }[] }),
   ]);
 
+  const { count: receptionCount } = await supabase.from("receptions").select("id", { count: "exact", head: true }).eq("ticket_id", t.id);
   const { data: ai } = await supabase
     .from("ai_diagnostics")
     .select("id, output, urgency, disclaimer, validation_status, model")
@@ -59,7 +61,7 @@ export default async function StaffTicketPage({ params }: { params: Promise<{ id
     <section className="grid gap-6 md:grid-cols-[1fr_380px]">
       <div className="flex flex-col gap-6">
         <TextLink href="/b/tickets" className="w-fit">← Tickets</TextLink>
-        <StatusHero code={t.code} subtitle={`${svc?.name ?? "Servicio"} · ${MODALITY_LABEL[t.modality]}`} status={t.status} message={t.problem} meta={<>Recibido {fmtDateTime(t.received_at)}{t.cancelled_reason ? ` · Cancelación: ${t.cancelled_reason}` : ""}</>} />
+        <StatusHero code={t.code} subtitle={`${svc?.name ?? "Servicio"} · ${MODALITY_LABEL[t.modality]}`} status={effectiveStatus(t.status, (receptionCount ?? 0) > 0, t.modality)} message={t.problem} meta={<>Solicitud creada el {fmtDateTime(t.received_at)}{t.cancelled_reason ? ` · Cancelación: ${t.cancelled_reason}` : ""}</>} />
         <div className="grid gap-4 sm:grid-cols-2">
           <Panel title="Cliente">
             <InfoList

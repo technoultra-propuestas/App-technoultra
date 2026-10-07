@@ -112,7 +112,8 @@ describe("WhatsApp", () => {
     expect(m).toContain("Producto: SSD Kingston 480 GB");
     expect(m).toContain("Referencia: SA400S37");
     expect(m).toContain("Precio publicado: $120.000");
-    expect(m).toContain("¿Me pueden confirmar disponibilidad, precio actual y opciones de entrega?");
+    expect(m).toContain("¿Me pueden confirmar disponibilidad y coordinar la entrega?");
+    expect(m).not.toMatch(/precio actual/i); // el precio publicado ya es el comercial: no se pregunta por él
     expect(m).toContain("Categoría: Almacenamiento › SSD SATA");
   });
   it("URL al número de TechnoUltra, codificada sin romper acentos, emojis ni saltos de línea", () => {

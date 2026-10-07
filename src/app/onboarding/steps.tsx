@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useActionState, useState } from "react";
+import { FormDraft } from "@/components/forms/FormDraft";
 import { Alert, Field, SubmitButton } from "@/components/ui/form";
 import { initialState } from "@/lib/auth/schemas";
 import {
@@ -55,6 +56,7 @@ export function PhoneStep() {
   const [state, action] = useActionState(savePhoneAction, initialState);
   return (
     <form action={action} className="flex flex-col gap-[18px]" noValidate>
+      <FormDraft id="onboarding-celular" />
       <Field
         label="Celular"
         name="phone"
@@ -77,6 +79,7 @@ export function AddressStep({ cities }: { cities: { dane_code: string; city_name
   const [dane, setDane] = useState(cities[0]?.dane_code ?? "other");
   return (
     <form action={action} className="flex flex-col gap-[18px]" noValidate>
+      <FormDraft id="onboarding-direccion" />
       <label className="flex flex-col gap-2 text-[15px] font-bold">
         Ciudad
         <select name="dane" value={dane} onChange={(e) => setDane(e.target.value)} className={selectCls}>
@@ -118,6 +121,7 @@ export function EquipmentStep() {
   return (
     <div className="flex flex-col gap-[18px]">
       <form action={action} className="flex flex-col gap-[18px]" noValidate>
+        <FormDraft id="onboarding-equipo" />
         <label className="flex flex-col gap-2 text-[15px] font-bold">
           Tipo de equipo
           <select name="type" defaultValue="laptop" className={selectCls}>

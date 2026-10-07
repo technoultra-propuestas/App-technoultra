@@ -95,7 +95,7 @@ export function ProductCategoryForm() {
 }
 
 /** Producto de proveedor: solo visibilidad manual y garantía. La visibilidad manual prevalece sobre la sincronización. */
-export function SourceProductForm({ id, isActive, warrantyDays }: { id: string; isActive: boolean; warrantyDays: number }) {
+export function SourceProductForm({ id, isActive, warrantyDays, isFeatured = false, featuredRank = 0 }: { id: string; isActive: boolean; warrantyDays: number; isFeatured?: boolean; featuredRank?: number }) {
   const [state, action] = useActionState(updateSourceProductAction, initialState);
   return (
     <form action={action} className="flex flex-col gap-4" noValidate>
@@ -104,6 +104,11 @@ export function SourceProductForm({ id, isActive, warrantyDays }: { id: string; 
         <input type="checkbox" name="isActive" defaultChecked={isActive} className="h-5 w-5" />
         Visible en la tienda (si lo desmarcas, la sincronización no lo vuelve a mostrar)
       </label>
+      <label className="flex min-h-11 items-center gap-3 text-[15px] font-bold">
+        <input type="checkbox" name="isFeatured" defaultChecked={isFeatured} className="h-5 w-5 accent-brand" />
+        Producto destacado en el Shop
+      </label>
+      <Field label="Orden entre destacados (menor primero)" name="featuredRank" defaultValue={String(featuredRank)} inputMode="numeric" />
       <Field label="Garantía (días)" name="warrantyDays" defaultValue={String(warrantyDays)} inputMode="numeric" />
       <Msg s={state} />
       <SubmitButton>Guardar</SubmitButton>

@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { z } from "zod";
-import { Card, fmtDate, fmtDateTime, PageTitle } from "@/components/ui/layout";
+import { Panel, Timeline } from "@/components/ui/detail";
+import { fmtDate, fmtDateTime } from "@/components/ui/layout";
+import { TextLink } from "@/components/ui/kit";
 import { requireRole } from "@/lib/auth/session";
 import { PROJECT_STATUS } from "@/lib/domain/projects";
 import { createClient } from "@/lib/supabase/server";
@@ -18,57 +20,58 @@ export default async function ClientProjectPage({ params }: { params: Promise<{ 
   if (!p) notFound();
   const [{ data: comments }, { data: history }] = await Promise.all([
     supabase.from("project_comments").select("id, body, created_at").eq("project_id", p.id).order("created_at", { ascending: false }),
-    supabase.from("project_status_history").select("id, to_status, created_at").eq("project_id", p.id).order("created_at"),
+    supabase.from("project_status_history").select("id, to_status, created_at").eq("project_id", p.id).order("created_at", { ascending: false }),
   ]);
   return (
-    <section className="mx-auto flex w-full max-w-[640px] flex-col gap-6">
-      <PageTitle title={p.title} subtitle={`${p.code} · ${PROJECT_STATUS[p.status]}`} />
-      <Card className="flex flex-col gap-3">
-        <div className="flex justify-between text-[14px] font-extrabold">
-          <span>Avance</span>
-          <span>{p.progress}%</span>
+    <section className="mx-auto flex w-full max-w-[680px] flex-col gap-5">
+      <TextLink href="/c/proyectos" className="w-fit">← Mis proyectos</TextLink>
+      <header className="flex flex-col gap-3 rounded-card bg-ink p-5 text-white shadow-card sm:p-6">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <span className="text-[12px] font-extrabold uppercase tracking-[0.05em] text-[#B9B9B4]">{p.code}</span>
+            <h1 className="m-0 text-[24px] font-extrabold leading-tight tracking-[-0.02em] text-brand">{p.title}</h1>
+          </div>
+          <span className="rounded-full bg-brand px-3 py-1 text-[13px] font-extrabold text-ink">{PROJECT_STATUS[p.status]}</span>
         </div>
-        <div className="h-3 overflow-hidden rounded-full bg-[#EDEDEA]" role="progressbar" aria-valuenow={p.progress} aria-valuemin={0} aria-valuemax={100}>
-          <div className="h-full bg-brand" style={{ width: `${p.progress}%` }} />
+        <div className="flex items-center gap-3">
+          <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-[#2B2B2A]" role="progressbar" aria-label="Avance del proyecto" aria-valuenow={p.progress} aria-valuemin={0} aria-valuemax={100}>
+            <div className="h-full bg-brand" style={{ width: `${p.progress}%` }} />
+          </div>
+          <span className="text-[15px] font-extrabold">{p.progress}%</span>
         </div>
-        <div className="text-[13px] text-muted">
-          {p.starts_on ? `Inicio ${fmtDate(p.starts_on)}` : ""}
-          {p.due_on ? ` · Entrega estimada ${fmtDate(p.due_on)}` : ""}
-        </div>
-      </Card>
+        {p.starts_on || p.due_on ? (
+          <p className="m-0 text-[13px] font-semibold text-[#D6D6D2]">
+            {p.starts_on ? `Inicio ${fmtDate(p.starts_on)}` : ""}
+            {p.starts_on && p.due_on ? " · " : ""}
+            {p.due_on ? `Entrega estimada ${fmtDate(p.due_on)}` : ""}
+          </p>
+        ) : null}
+      </header>
       {p.client_notes ? (
-        <Card className="flex flex-col gap-1">
-          <h2 className="m-0 text-[16px] font-extrabold">Actualización del equipo</h2>
+        <Panel title="Actualización del equipo">
           <p className="m-0 text-[15px] leading-normal">{p.client_notes}</p>
-        </Card>
+        </Panel>
       ) : null}
       {p.scope ? (
-        <Card className="flex flex-col gap-1">
-          <h2 className="m-0 text-[16px] font-extrabold">Alcance</h2>
+        <Panel title="Alcance">
           <p className="m-0 whitespace-pre-line text-[15px] leading-normal text-ink-2">{p.scope}</p>
-        </Card>
+        </Panel>
       ) : null}
       {(comments ?? []).length > 0 ? (
-        <Card className="flex flex-col gap-2">
-          <h2 className="m-0 text-[16px] font-extrabold">Mensajes</h2>
-          {(comments ?? []).map((m) => (
-            <p key={m.id} className="m-0 text-[15px] leading-normal">
-              {m.body} <span className="text-[12px] text-muted">· {fmtDateTime(m.created_at)}</span>
-            </p>
-          ))}
-        </Card>
+        <Panel title="Mensajes del equipo">
+          <ul className="m-0 flex list-none flex-col divide-y divide-line p-0">
+            {(comments ?? []).map((m) => (
+              <li key={m.id} className="flex flex-col gap-0.5 py-2.5 text-[15px] leading-normal">
+                <span>{m.body}</span>
+                <span className="text-[12px] font-semibold text-muted">{fmtDateTime(m.created_at)}</span>
+              </li>
+            ))}
+          </ul>
+        </Panel>
       ) : null}
-      <Card className="flex flex-col gap-2">
-        <h2 className="m-0 text-[16px] font-extrabold">Historial</h2>
-        <ul className="m-0 flex list-none flex-col gap-1 p-0 text-[14px] font-semibold">
-          {(history ?? []).map((h) => (
-            <li key={h.id} className="flex justify-between gap-2">
-              <span>{PROJECT_STATUS[h.to_status]}</span>
-              <span className="text-muted">{fmtDateTime(h.created_at)}</span>
-            </li>
-          ))}
-        </ul>
-      </Card>
+      <Panel title="Historial">
+        <Timeline items={(history ?? []).map((h) => ({ id: h.id, title: PROJECT_STATUS[h.to_status] ?? h.to_status, at: h.created_at }))} />
+      </Panel>
     </section>
   );
 }

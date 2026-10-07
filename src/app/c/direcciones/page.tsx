@@ -1,14 +1,16 @@
 import type { Metadata } from "next";
 import { Card, EmptyState, PageTitle } from "@/components/ui/layout";
 import { requireRole } from "@/lib/auth/session";
+import { safeReturnTo } from "@/lib/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { archiveAddressAction, setDefaultAddressAction } from "./actions";
 import { AddressForm } from "./address-form";
 
 export const metadata: Metadata = { title: "Mis direcciones", robots: { index: false } };
 
-export default async function AddressesPage() {
+export default async function AddressesPage({ searchParams }: { searchParams: Promise<{ returnTo?: string }> }) {
   await requireRole(["client"]);
+  const returnTo = safeReturnTo((await searchParams).returnTo);
   const supabase = await createClient();
   const [{ data: addresses }, { data: cities }] = await Promise.all([
     supabase
@@ -26,7 +28,7 @@ export default async function AddressesPage() {
         title="Mis direcciones"
         subtitle="Las usamos para recoger y entregar tu equipo o ir a tu domicilio."
       />
-      <div className="grid gap-6 md:grid-cols-[1fr_380px]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 md:grid-cols-[minmax(0,1fr)_380px]">
         <div className="flex flex-col gap-3">
           {list.length === 0 ? (
             <EmptyState
@@ -83,7 +85,7 @@ export default async function AddressesPage() {
         </div>
         <Card className="h-fit">
           <h2 className="m-0 mb-4 text-[19px] font-extrabold">Agregar dirección</h2>
-          <AddressForm cities={cities ?? []} />
+          <AddressForm cities={cities ?? []} returnTo={returnTo} />
         </Card>
       </div>
     </section>

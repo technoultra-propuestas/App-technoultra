@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 export default async function SubcategoryPage({ params, searchParams }: { params: Params; searchParams: Promise<Record<string, string | undefined>> }) {
   const { slug, sub } = await params;
   return (
-    <SiteShell>
+    <SiteShell wide>
       <CatalogView catSlug={slug} subSlug={sub} sp={await searchParams} />
     </SiteShell>
   );

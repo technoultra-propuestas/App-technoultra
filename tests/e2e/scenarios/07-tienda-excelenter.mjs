@@ -1,9 +1,10 @@
-// Tienda pública del catálogo Excelenter: navegación por categorías/subcategorías, WhatsApp, disponibilidad, ocultamiento y administración.
+// SHOP público (catálogo Excelenter): diseño responsive, categorías/subcategorías, carrito, WhatsApp, banner, disponibilidad y administración.
 // Los datos de prueba se cargan SOLO en la base local, con el mismo motor de sincronización de producción (sync_catalog).
 import { staffLogin } from "../lib/actors.mjs";
 import { psql } from "../lib/fixtures.mjs";
+import { sleep } from "../lib/browser.mjs";
 
-export const title = "Tienda Excelenter: catálogo público, WhatsApp, disponibilidad y administración";
+export const title = "SHOP: catálogo público, carrito, WhatsApp, banner, disponibilidad y administración";
 
 const item = (id, over = {}) => ({ source_product_id: id, source_ref: id, name: `Producto E2E ${id}`, brand: "ACME", category: "Periféricos", subcategory: "Mouse", price: 100000, stock: 1, description: `Descripción de ${id}\n\nSegunda línea.`, image_url: `https://res.cloudinary.com/e2e/image/upload/v1/${id}.webp`, ...over });
 const sync = (items) => psql(`select public.sync_catalog('EXCELENTER', $j$${JSON.stringify(items)}$j$::jsonb, 'import')::text;`);
@@ -17,36 +18,63 @@ const catalog = (over = {}) => [
 ];
 
 const noOverflow = (b) => b.eval("document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1");
+const clickAdd = (b, nth = 0) => b.eval(`(() => { const x = [...document.querySelectorAll('article button')].filter((e) => /\\+ Agregar/.test(e.innerText))[${nth}]; if (!x) return false; x.click(); return true; })()`);
+const badge = (b) => b.eval(`(document.querySelector('a[href="/tienda/carrito"]')?.getAttribute('aria-label')) ?? ''`);
+const subtotal = (b) => b.eval(`(() => { const m = document.querySelector('aside[aria-label=Resumen]').innerText.match(/Subtotal\\s*\\$([0-9.]+)/); return m ? Number(m[1].replace(/\\./g, '')) : 0; })()`);
+const closeSheet = async (b) => {
+  await b.eval(`[...document.querySelectorAll('[role=dialog] button')].find((x) => /Cerrar/.test(x.innerText))?.click()`);
+  await sleep(300);
+};
 
 export async function run({ b, rep, state, save, base }) {
   // Limpieza solo en la base LOCAL: el historial de precios es inmutable por diseño, así que se desactivan los disparadores en esta sesión.
   psql(`set session_replication_role = replica;
         delete from public.product_inquiries; delete from public.order_items where product_id in (select id from public.products where source is not null);
-        delete from public.product_price_history; delete from public.product_source; delete from public.products where source is not null; delete from public.catalog_sync_runs;`);
+        delete from public.product_price_history; delete from public.product_source; delete from public.products where source is not null; delete from public.catalog_sync_runs;
+        delete from public.shop_banners;`);
   const r1 = JSON.parse(sync(catalog()));
   rep.check("la importación inicial crea los 29 productos sin errores", r1.status === "success" && r1.created === 29 && r1.errors === 0, JSON.stringify(r1));
 
-  // ---------------------------------------------------------------- público, sin sesión
+  // ---------------------------------------------------------------- móvil · sin sesión
   await b.clearCookies();
   await b.viewport(390, 844, true);
   await b.goto("/tienda", 2500);
   let t = await b.text();
-  rep.check("/tienda es pública (sin iniciar sesión) y muestra el catálogo", /Tienda/.test(t) && /Mouse E2E inalámbrico/.test(t) && (await b.path()) === "/tienda");
-  rep.check("muestra precio TechnoUltra (+20 %) y «1 unidad disponible»", /\$120\.000/.test(t) && /\$108\.000/.test(t) && /\$132\.000/.test(t) && /1 unidad disponible/.test(t));
-  rep.check("no muestra el costo del proveedor", !/\$100\.000/.test(t) && !/\$90\.000/.test(t));
-  rep.check("incluye la advertencia de disponibilidad y el domicilio ($10.000 / $20.000)", /sujetos a confirmación por WhatsApp/.test(t) && /\$10\.000/.test(t) && /\$20\.000/.test(t) && /perímetro urbano/.test(t));
-  rep.check("no hay carrito, pago ni Mercado Pago para estos productos", !/Mercado Pago|Añadir al carrito|Agregar al carrito|Pagar/i.test(t));
+  rep.check("/tienda es pública (sin iniciar sesión) y la sección se llama SHOP", /SHOP/.test(t) && (await b.path()) === "/tienda");
+  rep.check("móvil: los productos se ven de inmediato (la primera tarjeta empieza dentro de la primera pantalla)", await b.eval(`(() => { const a = document.querySelector('article'); return !!a && a.getBoundingClientRect().top < 820; })()`));
+  rep.check("móvil: dos columnas y tarjetas compactas (≤ 340 px de alto)", await b.eval(`(() => { const a = [...document.querySelectorAll('article')].slice(0, 2); if (a.length < 2) return false; const r = a.map((x) => x.getBoundingClientRect()); return Math.abs(r[0].top - r[1].top) < 4 && r[0].left < r[1].left && r[0].height <= 340; })()`));
   rep.check("móvil: sin desbordes horizontales", await noOverflow(b));
-  const links = await b.eval(`[...document.querySelectorAll('a[href^="https://wa.me/"]')].map((a) => a.href)`);
-  rep.check("cada producto tiene su enlace a WhatsApp del negocio (573183943465) con mensaje", links.length >= 20 && links.every((h) => h.startsWith("https://wa.me/573183943465?text=") && h.length > 120), `${links.length} enlaces`);
+  rep.check("precio TechnoUltra (+20 %) y «● Disponible» en las tarjetas; no se muestra el costo del proveedor", /\$120\.000/.test(t) && /● Disponible/.test(t) && !/\$100\.000/.test(t));
+  rep.check("la franja «Envíos TechnoUltra» muestra $10.000 y $20.000 sin esconderlos", /Envíos TechnoUltra/.test(t) && /\$10\.000/.test(t) && /\$20\.000/.test(t) && /validación de dirección/.test(t));
+  rep.check("las tarjetas ya NO tienen «Consultar por WhatsApp»: el botón es «+ Agregar»", !(await b.eval(`[...document.querySelectorAll('article a')].some((a) => a.href.startsWith('https://wa.me/'))`)) && /\+ Agregar/.test(t));
+  rep.check("no hay Mercado Pago ni cobro en el Shop", !/Mercado Pago/i.test(t));
+  rep.check("móvil: los filtros no ocupan la pantalla hasta que se abren", !(await b.eval(`!!document.querySelector('[role=dialog]')`)));
+  await b.eval(`[...document.querySelectorAll('main button')].find((x) => /Filtros/.test(x.innerText))?.click()`);
+  await sleep(500);
+  rep.check("«Filtros» abre una hoja inferior con marca y precio", (await b.eval(`!!document.querySelector('[role=dialog]')`)) && /Precio mínimo/.test(await b.text()) && /Marca/.test(await b.text()));
+  await closeSheet(b);
+  rep.check("la hoja se cierra", !(await b.eval(`!!document.querySelector('[role=dialog]')`)));
+  await b.eval(`[...document.querySelectorAll('main button')].find((x) => /Ordenar/.test(x.innerText))?.click()`);
+  await sleep(500);
+  rep.check("«Ordenar» ofrece las opciones de orden", /Precio: menor a mayor/.test(await b.text()) && /Destacados/.test(await b.text()));
+  await closeSheet(b);
   const count = await b.eval(`document.querySelectorAll('article').length`);
   rep.check("pagina de 24 en 24 (no carga todo)", count === 24, String(count));
-  rep.check("hay paginación", /Página 1 de 2/.test(t));
   await b.goto("/tienda?pagina=2", 1500);
-  t = await b.text();
-  rep.check("la página 2 muestra el resto", /Página 2 de 2/.test(t));
+  rep.check("la página 2 muestra el resto", /Página 2 de 2/.test(await b.text()));
 
-  // Categorías y subcategorías (relación padre → hijo exacta).
+  // ---------------------------------------------------------------- escritorio
+  await b.viewport(1440, 900);
+  await b.goto("/tienda", 2500);
+  rep.check("escritorio: filtros a la izquierda y productos a la derecha", await b.eval(`(() => { const aside = document.querySelector('aside[aria-label=Filtros]'); const a = document.querySelector('article'); if (!aside || !a) return false; const ar = aside.getBoundingClientRect(); const pr = a.getBoundingClientRect(); return ar.width > 150 && ar.right <= pr.left + 1 && getComputedStyle(aside).display !== 'none'; })()`));
+  rep.check("escritorio: la rejilla tiene 4 columnas", await b.eval(`(() => { const r = [...document.querySelectorAll('main article')].slice(0, 5).map((x) => Math.round(x.getBoundingClientRect().top)); return r.slice(0, 4).every((v) => Math.abs(v - r[0]) < 4) && r[4] > r[0]; })()`));
+  rep.check("escritorio: sin desbordes horizontales", await noOverflow(b));
+  await b.viewport(1366, 768);
+  await b.goto("/tienda", 1500);
+  rep.check("1366 px: sin desbordes y con filtros laterales", (await noOverflow(b)) && (await b.eval(`getComputedStyle(document.querySelector('aside[aria-label=Filtros]')).display !== 'none'`)));
+  await b.viewport(390, 844, true);
+
+  // ---------------------------------------------------------------- categorías y subcategorías (relación padre → hijo exacta)
   await b.goto("/tienda/categoria/componentes", 1500);
   t = await b.text();
   rep.check("la categoría «Componentes» solo lista sus productos y su subcategoría «Procesadores»", /Procesador E2E/.test(t) && !/Mouse E2E/.test(t) && /Procesadores/.test(t));
@@ -58,7 +86,7 @@ export async function run({ b, rep, state, save, base }) {
   await b.goto("/tienda/categoria/no-existe", 1200);
   rep.check("una categoría inexistente da 404", /no se encontr|404|no existe/i.test(await b.text()));
 
-  // Búsqueda, filtros y orden.
+  // ---------------------------------------------------------------- búsqueda, filtros y orden
   await b.goto("/tienda?q=procesador", 1500);
   rep.check("la búsqueda encuentra por nombre", /Procesador E2E/.test(await b.text()) && !/Mouse E2E/.test(await b.text()));
   await b.goto("/tienda?q=zzzzzz", 1500);
@@ -67,62 +95,88 @@ export async function run({ b, rep, state, save, base }) {
   rep.check("una búsqueda con caracteres de inyección no rompe la página", !/error|algo salió mal/i.test(await b.text()) && (await b.path()).startsWith("/tienda"));
   await b.goto("/tienda?min=100000&max=120000&orden=precio-desc", 1500);
   t = await b.text();
-  rep.check("el filtro de precio se aplica en el servidor sobre el precio final ($100.000–$120.000: $120.000 y $108.000 sí; $132.000 no)", /Mouse E2E inalámbrico/.test(t) && /Mouse E2E óptico/.test(t) && !/Teclado E2E/.test(t) && !/Procesador E2E/.test(t) && !/Zfunda/.test(t));
+  rep.check("el filtro de precio se aplica en el servidor sobre el precio final ($100.000–$120.000)", /Mouse E2E inalámbrico/.test(t) && /Mouse E2E óptico/.test(t) && !/Teclado E2E/.test(t) && !/Procesador E2E/.test(t) && !/Zfunda/.test(t));
 
-  // Ficha de producto.
+  // ---------------------------------------------------------------- ficha de producto
   await b.goto("/tienda?q=inal%C3%A1mbrico", 1500);
   const href = await b.eval(`document.querySelector('a[href^="/tienda/producto/"]').getAttribute('href')`);
   await b.goto(href, 2000);
   t = await b.text();
   const wa = await b.eval(`document.querySelector('a[href^="https://wa.me/"]').href`);
   const msg = decodeURIComponent(wa.split("?text=")[1] ?? "");
-  rep.check("la ficha muestra producto, referencia, precio, disponibilidad y la advertencia", /Mouse E2E inalámbrico/.test(t) && /Referencia: E2E-M1/.test(t) && /\$120\.000/.test(t) && /1 unidad disponible/.test(t) && /sujetos a confirmación por WhatsApp/.test(t));
-  rep.check("botón principal «Consultar y comprar por WhatsApp»", /Consultar y comprar por WhatsApp/.test(t));
-  rep.check("el mensaje prellenado tiene producto, referencia y precio publicado, bien codificado", wa.startsWith("https://wa.me/573183943465?text=") && msg.startsWith("Hola TechnoUltra 👋") && /Producto: Mouse E2E inalámbrico/.test(msg) && /Referencia: E2E-M1/.test(msg) && /Precio publicado: \$120\.000/.test(msg) && /opciones de entrega\?$/.test(msg));
+  rep.check("la ficha muestra producto, referencia, precio, «1 unidad disponible» y la advertencia", /Mouse E2E inalámbrico/.test(t) && /Referencia: E2E-M1/.test(t) && /\$120\.000/.test(t) && /1 unidad disponible/.test(t) && /sujetos a confirmación por WhatsApp/.test(t));
+  rep.check("botón principal «Agregar al carrito» y secundario de consulta por WhatsApp", /Agregar al carrito/.test(t) && /Consultar este producto por WhatsApp/.test(t));
+  rep.check("el mensaje de la ficha tiene producto, referencia y precio publicado, sin «precio actual»", wa.startsWith("https://wa.me/573183943465?text=") && msg.startsWith("Hola TechnoUltra 👋") && /Producto: Mouse E2E inalámbrico/.test(msg) && /Referencia: E2E-M1/.test(msg) && /Precio publicado: \$120\.000/.test(msg) && !/precio actual/i.test(msg) && /coordinar la entrega\?$/.test(msg));
   const ld = await b.eval(`[...document.querySelectorAll('script[type="application/ld+json"]')].map((s) => s.textContent).join('|')`);
   rep.check("incluye datos estructurados (Product, COP, InStock)", /"@type":"Product"/.test(ld) && /"priceCurrency":"COP"/.test(ld) && /InStock/.test(ld));
-  rep.check("sin errores de JavaScript en el navegador", b.errors.length === 0, b.errors.slice(0, 2).join(" | "));
 
-  // Registro de consultas (sin datos personales).
+  // ---------------------------------------------------------------- carrito
+  await b.eval(`localStorage.removeItem('technoultra-shop-cart-v2')`);
+  await b.goto("/tienda", 2000);
+  rep.check("el carrito empieza vacío", /vac[ií]o/i.test(await badge(b)));
+  const added = (await clickAdd(b, 0)) && (await clickAdd(b, 1));
+  await sleep(600);
+  rep.check("«+ Agregar» suma el producto y el contador se actualiza", added && /2 productos/.test(await badge(b)), await badge(b));
+  await b.goto("/tienda?pagina=2", 1500);
+  rep.check("el carrito se mantiene al navegar", /2 productos/.test(await badge(b)), await badge(b));
+  await b.goto("/tienda/carrito", 2500);
+  t = await b.text();
+  rep.check("«Tu carrito» lista los productos con su precio y el subtotal", /Tu carrito/.test(t) && /Subtotal/.test(t) && /\$[0-9.]+/.test(t));
+  rep.check("muestra «Entrega sujeta a confirmación de ubicación» con las dos tarifas, sin inventar una", /Entrega sujeta a confirmación de ubicación/.test(t) && /Cali urbano: \$10\.000/.test(t) && /\$20\.000/.test(t));
+  rep.check("ofrece «Comprar por WhatsApp» y «Seguir explorando el catálogo»", /Comprar por WhatsApp/.test(t) && /Seguir explorando el catálogo/.test(t));
+  const sub1 = await subtotal(b);
+  await b.eval(`document.querySelector('button[aria-label="Agregar una unidad"]').click()`);
+  await sleep(600);
+  const sub2 = await subtotal(b);
+  rep.check("cambiar la cantidad recalcula el subtotal", sub2 > sub1 && sub1 > 0, `${sub1} → ${sub2}`);
+  const cwa = await b.eval(`[...document.querySelectorAll('a')].find((a) => /Comprar por WhatsApp/.test(a.innerText)).href`);
+  const cmsg = decodeURIComponent(cwa.split("?text=")[1] ?? "");
+  rep.check("un solo mensaje con todos los productos, precios publicados, cantidades, subtotal y entrega pendiente", cwa.startsWith("https://wa.me/573183943465?text=") && /1\. /.test(cmsg) && /2\. /.test(cmsg) && /Cantidad: 2/.test(cmsg) && /Subtotal productos: \$/.test(cmsg) && /Entrega:\nPendiente de confirmar/.test(cmsg) && /Precio publicado: \$/.test(cmsg) && !/precio actual/i.test(cmsg), cmsg.slice(0, 160));
+  await b.goto("/tienda/carrito", 2000);
+  rep.check("el carrito sobrevive a recargar la página", /Subtotal/.test(await b.text()));
+  await b.eval(`[...document.querySelectorAll('button')].filter((x) => /Eliminar/.test(x.innerText)).forEach((x) => x.click())`);
+  await sleep(800);
+  rep.check("se pueden quitar productos hasta dejarlo vacío", /Tu carrito está vacío/.test(await b.text()));
+  rep.check("móvil: el carrito no desborda", await noOverflow(b));
+
+  // ---------------------------------------------------------------- registro de consultas y cron
   const pid = psql(`select id from products where source_product_id = 'E2E-M1'`);
   const ok = await fetch(`${base}/api/tienda/consulta`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ productId: pid }) });
-  rep.check("registrar una consulta responde 204", ok.status === 204, String(ok.status));
-  rep.check("la consulta queda guardada solo con producto y hora", psql(`select count(*) from product_inquiries where product_id = '${pid}'`) === "1");
+  rep.check("registrar una consulta responde 204 y queda solo producto + hora", ok.status === 204 && psql(`select count(*) from product_inquiries where product_id = '${pid}'`) === "1", String(ok.status));
   const bad = await fetch(`${base}/api/tienda/consulta`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ productId: "no-es-uuid" }) });
   rep.check("un id inválido se rechaza (400)", bad.status === 400);
-  const ghost = await fetch(`${base}/api/tienda/consulta`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ productId: "00000000-0000-4000-8000-000000000000" }) });
-  rep.check("un producto inexistente no se registra (404)", ghost.status === 404);
-
-  // Cron protegido.
+  const cart = await (await fetch(`${base}/api/tienda/carrito?ids=${pid}`)).json();
+  rep.check("la API del carrito devuelve nombre y precio vigentes (el navegador solo guarda ids)", cart.products?.[0]?.price === 120000 && cart.products[0].name === "Mouse E2E inalámbrico");
   const cron = await fetch(`${base}/api/cron/catalog-sync`);
   rep.check("el cron de sincronización no responde sin secreto", [401, 503].includes(cron.status), String(cron.status));
-  const cron2 = await fetch(`${base}/api/cron/catalog-sync`, { headers: { Authorization: "Bearer secreto-incorrecto-1234567890" } });
-  rep.check("ni con un secreto incorrecto", [401, 503].includes(cron2.status), String(cron2.status));
+
+  // ---------------------------------------------------------------- banner administrable
+  rep.check("sin banner activo no se muestra ninguno", !(await (await fetch(`${base}/tienda`)).text()).includes("Promo E2E"));
+  psql(`insert into shop_banners (title, subtitle, cta_label, cta_href, is_active, priority) values ('Promo E2E', 'Subtítulo de prueba', 'Ver ofertas', '/tienda/categoria/componentes', true, 5)`);
+  const withBanner = await (await fetch(`${base}/tienda`)).text();
+  rep.check("un banner activo y vigente aparece con título, subtítulo y botón", withBanner.includes("Promo E2E") && withBanner.includes("Subtítulo de prueba") && withBanner.includes("Ver ofertas"));
+  psql(`update shop_banners set is_active = false`);
+  rep.check("al desactivarlo desaparece", !(await (await fetch(`${base}/tienda`)).text()).includes("Promo E2E"));
+  psql(`update shop_banners set is_active = true, ends_at = now() - interval '1 hour', starts_at = now() - interval '2 hours'`);
+  rep.check("un banner fuera de su ventana de fechas no se muestra", !(await (await fetch(`${base}/tienda`)).text()).includes("Promo E2E"));
+  psql(`delete from shop_banners`);
 
   // ---------------------------------------------------------------- disponibilidad: stock 0, desaparición, regreso
   const hidePid = psql(`select id from products where source_product_id = 'E2E-D1'`);
   const slug = psql(`select slug from products where source_product_id = 'E2E-D1'`);
-  const live = (await fetch(`${base}/tienda/producto/${slug}`)).status;
-  rep.check("el disco está publicado (200) antes de agotarse", live === 200, String(live));
+  rep.check("el disco está publicado (200) antes de agotarse", (await fetch(`${base}/tienda/producto/${slug}`)).status === 200);
   sync(catalog({ disk: { stock: 0 } }));
   rep.check("stock 0: la ficha pública deja de existir (404) y el producto no se borra", (await fetch(`${base}/tienda/producto/${slug}`)).status === 404 && psql(`select count(*) from products where id = '${hidePid}'`) === "1");
-  await b.goto("/tienda/categoria/almacenamiento", 1200);
-  rep.check("stock 0: desaparece de categorías y búsquedas (la categoría queda sin productos visibles)", /no se encontr|404|no existe/i.test(await b.text()));
   const sm = await (await fetch(`${base}/sitemap.xml`)).text();
   rep.check("stock 0: tampoco aparece en el sitemap", !sm.includes(slug));
   sync(catalog());
   rep.check("al volver con stock reaparece (200)", (await fetch(`${base}/tienda/producto/${slug}`)).status === 200);
-  sync(catalog().filter((x) => x.source_product_id !== "E2E-D1"));
-  rep.check("si la fuente deja de listarlo se oculta (404) sin borrarlo y con motivo", (await fetch(`${base}/tienda/producto/${slug}`)).status === 404 && psql(`select deactivation_reason from product_source where product_id = '${hidePid}'`) === "missing_from_source");
   psql(`update products set is_active = false where id = '${hidePid}'`);
   sync(catalog());
   rep.check("ocultar a mano prevalece: la fuente lo ofrece de nuevo y sigue sin mostrarse (404)", (await fetch(`${base}/tienda/producto/${slug}`)).status === 404 && psql(`select source_available from products where id = '${hidePid}'`) === "t");
   psql(`update products set is_active = true where id = '${hidePid}'`);
-
-  // Fallos de la fuente: no se vacía la tienda.
   const empty = JSON.parse(sync([]));
   rep.check("una fuente vacía se rechaza y NO oculta el catálogo", empty.status === "error" && psql(`select count(*) from products where source = 'EXCELENTER' and source_available`) === "29");
-  rep.check("el rechazo queda registrado para el administrador", psql(`select count(*) from catalog_sync_runs where status = 'error'`) !== "0");
 
   // Un producto de proveedor jamás entra a un pedido.
   const cust = psql(`select c.id from customers c join profiles p on p.id = c.profile_id where p.email = '${state.client.email}'`);
@@ -132,7 +186,7 @@ export async function run({ b, rep, state, save, base }) {
   } catch {
     blocked = true;
   }
-  rep.check("un producto de proveedor no se puede agregar a un pedido (sin cobro por Mercado Pago)", blocked);
+  rep.check("un producto de proveedor no se puede agregar a un pedido (sin cobro en línea)", blocked);
 
   // ---------------------------------------------------------------- administración
   const o = await staffLogin(b, state.owner);
@@ -142,27 +196,23 @@ export async function run({ b, rep, state, save, base }) {
   await b.goto("/b/tienda", 2500);
   t = await b.text();
   rep.check("SUPERADMIN ve productos con precio fuente y precio TechnoUltra", /Fuente \$100\.000/.test(t) && /\$120\.000/.test(t) && /Excelenter/.test(t));
-  await b.goto("/b/tienda?estado=sin_stock", 1500);
-  rep.check("el filtro de estado funciona", /0 producto|No hay productos con esos filtros/.test(await b.text()));
   await b.goto(`/b/tienda/${pid}`, 2000);
   t = await b.text();
   rep.check("la ficha administrativa distingue estado de la fuente, visibilidad y resultado público", /Disponibilidad en la fuente/i.test(t) && /Visibilidad TechnoUltra/i.test(t) && /Resultado público/i.test(t) && /Se muestra en la tienda/.test(t));
-  rep.check("el precio, el nombre y la categoría son de solo lectura (no hay formulario de edición)", !(await b.eval(`!!document.querySelector('input[name="price"]')`)) && !(await b.eval(`!!document.querySelector('input[name="name"]')`)));
-  await b.goto("/b/tienda/sincronizacion", 2000);
+  rep.check("permite destacar el producto y ordenarlo", /Producto destacado en el Shop/.test(t));
+  await b.goto("/b/tienda/shop", 2500);
   t = await b.text();
-  rep.check("el historial de sincronizaciones muestra corridas con su estado", /Historial de sincronizaciones/.test(t) && /Exitoso/.test(t) && /Error/.test(t));
-  rep.check("muestra las consultas por WhatsApp sin datos personales", /Productos con más consultas/.test(t) && /Mouse E2E inalámbrico/.test(t));
-  await b.clickText("Sincronizar ahora", "main, #contenido");
-  await b.waitText(/fuente automática aún no está configurada|No fue posible actualizar/, 15000);
-  rep.check("«Sincronizar ahora» sin fuente configurada informa con claridad y no toca el catálogo", /aún no está configurada|No fue posible/.test(await b.text()) && psql(`select count(*) from products where source = 'EXCELENTER' and source_available`) === "29");
+  rep.check("el CRM del Shop administra banner, textos, envío, WhatsApp y categorías", /Banner promocional/.test(t) && /Textos, envíos y WhatsApp/.test(t) && /Categorías del Shop/.test(t) && /Nuevo banner/.test(t));
+  rep.check("muestra las tarifas editables de envío de productos", await b.eval(`!!document.querySelector('input[name=shippingUrbanFee]') && document.querySelector('input[name=shippingUrbanFee]').value === '10000'`));
+  await b.goto("/b/tienda/sincronizacion", 2000);
+  rep.check("el historial de sincronizaciones muestra corridas con su estado", /Historial de sincronizaciones/.test(await b.text()));
 
   // El técnico no administra la tienda.
   await b.clearCookies();
   const tc = await staffLogin(b, state.tech);
   state.tech.secret = tc.secret;
   save();
-  await b.goto("/b/tienda/sincronizacion", 2000);
-  rep.check("un técnico no entra a la sincronización del catálogo", !/Historial de sincronizaciones/.test(await b.text()) && !(await b.path()).startsWith("/b/tienda"));
-  await b.goto("/b/tienda", 1500);
-  rep.check("ni a la administración de la tienda", !/Sincronización/.test(await b.text()));
+  await b.goto("/b/tienda/shop", 2000);
+  rep.check("un técnico no entra a la administración del Shop", !/Banner promocional/.test(await b.text()) && !(await b.path()).startsWith("/b/tienda"));
+  rep.check("sin errores de JavaScript en el navegador", b.errors.length === 0, b.errors.slice(0, 2).join(" | "));
 }

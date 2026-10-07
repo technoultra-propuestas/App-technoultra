@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useActionState, useState } from "react";
+import { FormDraft } from "@/components/forms/FormDraft";
 import { Alert, Field, SubmitButton } from "@/components/ui/form";
 import { initialState } from "@/lib/auth/schemas";
 import {
@@ -21,6 +22,7 @@ export function StaffLoginForm({ next, notice }: { next?: string; notice?: strin
   const [state, action] = useActionState(staffSignInAction, initialState);
   return (
     <form action={action} className="flex flex-col gap-5" noValidate>
+      <FormDraft id="staff-login" />
       {next ? <input type="hidden" name="next" value={next} /> : null}
       {notice ? <Alert>{notice}</Alert> : null}
       <Field label="Correo electrónico" name="email" type="email" inputMode="email" autoComplete="username" required error={state.fieldErrors?.email} />

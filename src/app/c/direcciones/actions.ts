@@ -1,7 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
+import { safeReturnTo, withParam } from "@/lib/navigation";
 import { assertRole } from "@/lib/auth/session";
 import { zodToState, type ActionState } from "@/lib/auth/schemas";
 import { addressSchema, resolveAddressPlace } from "@/lib/domain/address";
@@ -31,18 +33,25 @@ export async function addAddressAction(_p: ActionState, fd: FormData): Promise<A
     .from("addresses")
     .select("id", { count: "exact", head: true })
     .is("deleted_at", null);
-  const { error } = await supabase.from("addresses").insert({
-    customer_id: customerId,
-    label: v.label || "Casa",
-    line1: v.line1,
-    neighborhood: v.neighborhood || null,
-    city_name: place.city_name,
-    department: place.department,
-    dane_code: place.dane_code,
-    is_default: (count ?? 0) === 0,
-  });
-  if (error) return { ok: false, error: "No pudimos guardar la dirección." };
+  const { data: created, error } = await supabase
+    .from("addresses")
+    .insert({
+      customer_id: customerId,
+      label: v.label || "Casa",
+      line1: v.line1,
+      neighborhood: v.neighborhood || null,
+      city_name: place.city_name,
+      department: place.department,
+      dane_code: place.dane_code,
+      is_default: (count ?? 0) === 0,
+    })
+    .select("id")
+    .single();
+  if (error || !created) return { ok: false, error: "No pudimos guardar la dirección." };
   revalidatePath("/c/direcciones");
+  // Si venía de una solicitud (ruta interna validada), vuelve allí con la dirección nueva seleccionada.
+  const back = safeReturnTo(fd.get("returnTo"));
+  if (back) redirect(withParam(back, "direccion", created.id));
   return { ok: true, message: "Dirección guardada." };
 }
 

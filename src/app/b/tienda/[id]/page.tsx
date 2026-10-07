@@ -51,7 +51,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
               />
             </Panel>
             <Panel title="Ajustes del administrador">
-              <SourceProductForm id={p.id} isActive={p.is_active} warrantyDays={p.warranty_days} />
+              <SourceProductForm id={p.id} isActive={p.is_active} warrantyDays={p.warranty_days} isFeatured={p.is_featured} featuredRank={p.featured_rank} />
             </Panel>
             <Panel title="Historial de precios">
               <ul className="m-0 flex list-none flex-col gap-1 p-0 text-[14px] font-semibold">

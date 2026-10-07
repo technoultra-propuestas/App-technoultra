@@ -2122,6 +2122,7 @@ export type Database = {
           created_at: string
           id: string
           is_active: boolean
+          is_featured: boolean
           name: string
           slug: string
           sort_order: number
@@ -2131,6 +2132,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean
+          is_featured?: boolean
           name: string
           slug: string
           sort_order?: number
@@ -2140,6 +2142,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean
+          is_featured?: boolean
           name?: string
           slug?: string
           sort_order?: number
@@ -2333,10 +2336,12 @@ export type Database = {
           created_at: string
           deleted_at: string | null
           description: string | null
+          featured_rank: number
           id: string
           image_public_ids: string[]
           image_url: string | null
           is_active: boolean
+          is_featured: boolean
           last_synced_at: string | null
           name: string
           price: number
@@ -2356,10 +2361,12 @@ export type Database = {
           created_at?: string
           deleted_at?: string | null
           description?: string | null
+          featured_rank?: number
           id?: string
           image_public_ids?: string[]
           image_url?: string | null
           is_active?: boolean
+          is_featured?: boolean
           last_synced_at?: string | null
           name: string
           price: number
@@ -2379,10 +2386,12 @@ export type Database = {
           created_at?: string
           deleted_at?: string | null
           description?: string | null
+          featured_rank?: number
           id?: string
           image_public_ids?: string[]
           image_url?: string | null
           is_active?: boolean
+          is_featured?: boolean
           last_synced_at?: string | null
           name?: string
           price?: number
@@ -3277,6 +3286,121 @@ export type Database = {
             columns: ["subcategory_id"]
             isOneToOne: false
             referencedRelation: "service_subcategories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shop_banners: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          cta_href: string | null
+          cta_label: string | null
+          ends_at: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          priority: number
+          starts_at: string | null
+          subtitle: string | null
+          title: string
+          tone: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          cta_href?: string | null
+          cta_label?: string | null
+          ends_at?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          priority?: number
+          starts_at?: string | null
+          subtitle?: string | null
+          title: string
+          tone?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          cta_href?: string | null
+          cta_label?: string | null
+          ends_at?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          priority?: number
+          starts_at?: string | null
+          subtitle?: string | null
+          title?: string
+          tone?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_banners_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shop_settings: {
+        Row: {
+          id: boolean
+          shipping_enabled: boolean
+          shipping_note: string
+          shipping_outside_fee: number
+          shipping_title: string
+          shipping_urban_fee: number
+          show_featured: boolean
+          subtitle: string | null
+          title: string
+          updated_at: string
+          updated_by: string | null
+          whatsapp_closing: string
+          whatsapp_intro: string
+        }
+        Insert: {
+          id?: boolean
+          shipping_enabled?: boolean
+          shipping_note?: string
+          shipping_outside_fee?: number
+          shipping_title?: string
+          shipping_urban_fee?: number
+          show_featured?: boolean
+          subtitle?: string | null
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+          whatsapp_closing?: string
+          whatsapp_intro?: string
+        }
+        Update: {
+          id?: boolean
+          shipping_enabled?: boolean
+          shipping_note?: string
+          shipping_outside_fee?: number
+          shipping_title?: string
+          shipping_urban_fee?: number
+          show_featured?: boolean
+          subtitle?: string | null
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+          whatsapp_closing?: string
+          whatsapp_intro?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_settings_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]

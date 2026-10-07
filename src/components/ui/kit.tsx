@@ -80,7 +80,7 @@ export function FilterChip({ href, children, count, on }: { href: string; childr
 /** Fila de chips con desplazamiento horizontal (sin barra visible en móvil). */
 export function ChipRow({ children, label }: { children: ReactNode; label: string }) {
   return (
-    <nav aria-label={label} className="-mx-5 overflow-x-auto px-5 pb-1 [scrollbar-width:thin]">
+    <nav aria-label={label} className="-mx-5 overflow-x-auto px-5 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       <div className="flex gap-2">{children}</div>
     </nav>
   );
@@ -139,9 +139,9 @@ export function PrimaryLink({ icon, children, ...props }: { icon?: NavIconName }
 /** Pestañas segmentadas como enlaces (el destino es una ruta: funciona sin JavaScript y se puede compartir). */
 export function SegmentTabs({ label, items, active }: { label: string; items: { href: string; label: string; key: string }[]; active: string }) {
   return (
-    <div role="group" aria-label={label} className="grid w-full max-w-[420px] rounded-card border border-line bg-white p-1 shadow-card" style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}>
+    <div role="group" aria-label={label} className="grid w-full rounded-card border border-line bg-white p-1 shadow-card" style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))`, maxWidth: Math.max(420, items.length * 150) }}>
       {items.map((i) => (
-        <Link key={i.key} href={i.href} aria-current={active === i.key ? "page" : undefined} className={`press flex min-h-11 items-center justify-center rounded-[16px] px-3 text-[15px] font-extrabold no-underline ${active === i.key ? "bg-ink text-white" : "text-ink"}`}>
+        <Link key={i.key} href={i.href} aria-current={active === i.key ? "page" : undefined} className={`press flex min-h-11 items-center justify-center rounded-[16px] px-2 text-center text-[13.5px] font-extrabold leading-tight no-underline sm:px-3 sm:text-[15px] ${active === i.key ? "bg-ink text-white" : "text-ink"}`}>
           {i.label}
         </Link>
       ))}

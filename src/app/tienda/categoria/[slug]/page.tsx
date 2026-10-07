@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 
 export default async function CategoryPage({ params, searchParams }: { params: Params; searchParams: Promise<Record<string, string | undefined>> }) {
   return (
-    <SiteShell>
+    <SiteShell wide>
       <CatalogView catSlug={(await params).slug} sp={await searchParams} />
     </SiteShell>
   );

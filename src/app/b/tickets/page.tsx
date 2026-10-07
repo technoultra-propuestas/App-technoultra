@@ -10,7 +10,7 @@ export const metadata: Metadata = { title: "Tickets", robots: { index: false } }
 const FILTERS = [
   ["open", "Activos"],
   ["all", "Todos"],
-  ["received", "Recibido"],
+  ["received", "Solicitud recibida"],
   ["diagnosing", "En diagnóstico"],
   ["awaiting_approval", "Esperando aprobación"],
   ["awaiting_part", "Esperando repuesto"],

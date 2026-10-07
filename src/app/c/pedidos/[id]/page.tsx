@@ -5,21 +5,22 @@ import { ClearCartOnMount } from "@/components/store/ClearCartOnMount";
 import { Alert } from "@/components/ui/form";
 import { Card, fmtDateTime, money, PageTitle } from "@/components/ui/layout";
 import { requireRole } from "@/lib/auth/session";
+import { derivePaymentUi, PAYMENT_MESSAGE, type DbPaymentStatus } from "@/lib/payments/state";
 import { createClient } from "@/lib/supabase/server";
 import { cancelOrderAction, startPaymentAction } from "../actions";
 
 export const metadata: Metadata = { title: "Pedido", robots: { index: false } };
 
 const NOTICE: Record<string, string> = {
-  exito: "Estamos confirmando tu pago con Mercado Pago. Se actualizará aquí en unos instantes.",
-  pendiente: "Tu pago está pendiente de confirmación.",
+  exito: "Estamos validando tu pago. Te avisaremos cuando quede confirmado.",
+  pendiente: "Estamos validando tu pago. Te avisaremos cuando quede confirmado.",
   fallo: "El pago no se completó. Puedes intentarlo de nuevo.",
   no_configurado: "Los pagos en línea todavía no están habilitados. Escríbenos para coordinar el pago.",
   no_disponible: "Este pedido ya no se puede pagar.",
   error: "No pudimos iniciar el pago. Inténtalo de nuevo.",
   limite: "Demasiados intentos. Espera unos minutos.",
 };
-const PAYMENT: Record<string, string> = { pending: "Pendiente", approved: "Aprobado", rejected: "Rechazado", cancelled: "Cancelado", refunded: "Reembolsado", expired: "Vencido" };
+const PAYMENT: Record<string, string> = { pending: "En validación", approved: "Confirmado", rejected: "Rechazado", cancelled: "Cancelado", refunded: "Reembolsado", expired: "Vencido" };
 
 export default async function OrderDetailPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<Record<string, string | undefined>> }) {
   await requireRole(["client"]);
@@ -33,7 +34,9 @@ export default async function OrderDetailPage({ params, searchParams }: { params
     supabase.from("order_items").select("id, description, qty, unit_price, line_total").eq("order_id", o.id),
     supabase.from("payments").select("id, code, status, provider, method, created_at").eq("order_id", o.id).order("created_at", { ascending: false }),
   ]);
-  const payable = o.status === "new" && !o.paid_at && (!o.expires_at || new Date(o.expires_at) > new Date());
+  const payUi = derivePaymentUi((payments ?? []).map((p) => ({ status: p.status as DbPaymentStatus, provider: p.provider, created_at: p.created_at })), Boolean(o.paid_at));
+  // Solo se ofrece «Pagar» si el servidor no ve un pago ya iniciado o confirmado de este pedido.
+  const payable = o.status === "new" && !o.paid_at && payUi.canPay && (!o.expires_at || new Date(o.expires_at) > new Date());
   // La confirmación de pago SIEMPRE sale de la base de datos (webhook verificado); ?pago= solo muestra un aviso informativo.
   return (
     <section className="mx-auto flex w-full max-w-[640px] flex-col gap-6">
@@ -61,9 +64,10 @@ export default async function OrderDetailPage({ params, searchParams }: { params
       <Card className="flex flex-col gap-3">
         <h2 className="m-0 text-[17px] font-extrabold">Pago</h2>
         {o.paid_at ? <Alert tone="ok">Pago confirmado el {fmtDateTime(o.paid_at)}.</Alert> : null}
+        {!o.paid_at && payUi.state === "validating" ? <Alert tone="ok">{PAYMENT_MESSAGE.validating}</Alert> : null}
         {(payments ?? []).map((p) => (
           <div key={p.id} className="flex justify-between text-[14px] font-semibold">
-            <span>{p.code} · {p.provider === "mercadopago" ? "Mercado Pago" : "Manual"}</span>
+            <span>{p.code}</span>
             <span>{PAYMENT[p.status] ?? p.status}</span>
           </div>
         ))}
@@ -71,7 +75,7 @@ export default async function OrderDetailPage({ params, searchParams }: { params
           <>
             <form action={startPaymentAction}>
               <input type="hidden" name="orderId" value={o.id} />
-              <button type="submit" className="min-h-[58px] w-full rounded-2xl bg-brand text-[17px] font-extrabold text-ink">Pagar con Mercado Pago</button>
+              <button type="submit" className="min-h-[58px] w-full rounded-2xl bg-brand text-[17px] font-extrabold text-ink">{payUi.state === "none" ? "Pagar" : "Pagar de nuevo"}</button>
             </form>
             {o.expires_at ? <p className="m-0 text-[12px] text-muted">Reservamos tu pedido hasta el {fmtDateTime(o.expires_at)}.</p> : null}
             <form action={cancelOrderAction}>

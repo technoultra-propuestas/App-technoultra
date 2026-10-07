@@ -20,7 +20,7 @@ export async function run({ b, rep, state, save }) {
   save();
   await b.goto(`/b/tickets/${ticket}`, 1500);
   const text = await b.text();
-  rep.check("el ticket está en «Recibido» y la cotización en «Borrador»", /Recibido/.test(text) && /Borrador/.test(text));
+  rep.check("el ticket está en «Solicitud recibida» y la cotización en «Borrador»", /Solicitud recibida/.test(text) && /Borrador/.test(text));
   const disabled = await b.eval(`(() => { const x = [...document.querySelectorAll('button')].find((e) => e.innerText.trim() === 'Enviar al cliente'); return !!x && x.disabled; })()`);
   rep.check("«Enviar al cliente» aparece deshabilitado (no ofrece una acción inválida)", disabled);
   rep.check("explica que el ticket debe estar «En diagnóstico»", /debe estar «En diagnóstico»/.test(text));

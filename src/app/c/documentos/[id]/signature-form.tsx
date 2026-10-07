@@ -45,7 +45,7 @@ export function SignatureForm({ documentId, code }: { documentId: string; code: 
     <form action={action} className="flex flex-col gap-3">
       <input type="hidden" name="documentId" value={documentId} />
       <input type="hidden" name="signature" value={data} />
-      <div className="text-[15px] font-bold">Firma aquí</div>
+      <div className="text-[15px] font-bold">Dibuja tu firma en el recuadro</div>
       <canvas
         ref={canvas}
         aria-label="Zona de firma. Dibuja tu firma con el dedo, el mouse o un lápiz."
@@ -68,7 +68,7 @@ export function SignatureForm({ documentId, code }: { documentId: string; code: 
       </label>
       {state.error ? <Alert>{state.error}</Alert> : null}
       <div className={empty ? "pointer-events-none opacity-50" : ""}>
-        <SubmitButton pendingText="Firmando…">Firmar documento</SubmitButton>
+        <SubmitButton pendingText="Registrando…">Firmar y aceptar</SubmitButton>
       </div>
     </form>
   );

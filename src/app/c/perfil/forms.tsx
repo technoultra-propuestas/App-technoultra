@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { FormDraft } from "@/components/forms/FormDraft";
 import { Alert, Field, SubmitButton } from "@/components/ui/form";
 import { Select } from "@/components/ui/layout";
 import { initialState } from "@/lib/auth/schemas";
@@ -21,6 +22,7 @@ export function ProfileForm({
   const [state, action] = useActionState(updateProfileAction, initialState);
   return (
     <form action={action} className="flex flex-col gap-[18px]" noValidate>
+      <FormDraft id="perfil" />
       <Field
         label="Nombre completo"
         name="fullName"

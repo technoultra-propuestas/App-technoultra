@@ -1,18 +1,18 @@
 import { copFormat } from "@/lib/catalog/normalize";
 import { PRODUCT_SHIPPING_CALI_OUTSIDE, PRODUCT_SHIPPING_CALI_URBAN } from "@/lib/catalog/config";
 
-/** Domicilio de productos: informativo (no se cobra en la app). La tarifa final se confirma por WhatsApp según la dirección. */
-export function ShippingInfo({ compact = false }: { compact?: boolean }) {
+/** Domicilio de productos: informativo (no se cobra en la app). Las tarifas las administra el SUPERADMIN (shop_settings); la final se confirma por dirección. */
+export function ShippingInfo({ compact = false, urban = PRODUCT_SHIPPING_CALI_URBAN, outside = PRODUCT_SHIPPING_CALI_OUTSIDE, note = "Valor sujeto a validación de dirección." }: { compact?: boolean; urban?: number; outside?: number; note?: string }) {
   return (
     <div className="flex flex-col gap-1 rounded-[14px] bg-paper p-4 text-[14px] leading-snug text-ink-2">
-      <div className="font-extrabold text-ink">Entrega en Cali desde {copFormat(PRODUCT_SHIPPING_CALI_URBAN)}</div>
+      <div className="font-extrabold text-ink">Entrega en Cali desde {copFormat(urban)}</div>
       {compact ? null : (
         <ul className="m-0 flex list-none flex-col gap-0.5 p-0 font-semibold">
-          <li>{copFormat(PRODUCT_SHIPPING_CALI_URBAN)} dentro del perímetro urbano de Cali.</li>
-          <li>{copFormat(PRODUCT_SHIPPING_CALI_OUTSIDE)} fuera del perímetro urbano y zonas aledañas.</li>
+          <li>{copFormat(urban)} dentro del perímetro urbano de Cali.</li>
+          <li>{copFormat(outside)} fuera del perímetro urbano y zonas aledañas.</li>
         </ul>
       )}
-      <div className="text-[13px] text-muted">La tarifa final se confirma según la dirección. Valor sujeto a verificación.</div>
+      <div className="text-[13px] text-muted">La tarifa final se confirma según la dirección. {note}</div>
     </div>
   );
 }

@@ -679,6 +679,7 @@ describe("superficie de API", () => {
       "product_service_links",
       "push_subscriptions",
       "quote_items",
+      "shop_banners", // banners del Shop: solo el SUPERADMIN (RLS catalog.manage) los elimina
       "urgency_level_services",
     ]);
   });

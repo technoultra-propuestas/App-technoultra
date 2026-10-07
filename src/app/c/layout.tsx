@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { DraftProvider } from "@/components/forms/FormDraft";
 import { ClientShell } from "@/components/ui/ClientShell";
 import { requireRole } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
@@ -15,8 +16,10 @@ export default async function ClientLayout({ children }: { children: React.React
   if ((pending ?? []).length > 0 && !onLegal) redirect("/c/legal");
   const { count: unread } = await supabase.from("notifications").select("id", { count: "exact", head: true }).is("read_at", null).eq("channel", "in_app");
   return (
-    <ClientShell name={profile.full_name} unread={unread ?? 0}>
-      {children}
-    </ClientShell>
+    <DraftProvider scope={profile.id}>
+      <ClientShell name={profile.full_name} unread={unread ?? 0}>
+        {children}
+      </ClientShell>
+    </DraftProvider>
   );
 }

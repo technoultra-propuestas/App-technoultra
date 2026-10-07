@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default async function StorePage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   return (
-    <SiteShell>
+    <SiteShell wide>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbLd([{ name: "Inicio", path: "/" }, { name: "Tienda", path: "/tienda" }])) }} />
       <CatalogView sp={await searchParams} />
     </SiteShell>

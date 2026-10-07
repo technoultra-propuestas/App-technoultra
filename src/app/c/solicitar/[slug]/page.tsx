@@ -11,9 +11,12 @@ import { RequestForm } from "./request-form";
 
 export const metadata: Metadata = { title: "Solicitar servicio", robots: { index: false } };
 
-export default async function RequestServicePage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function RequestServicePage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ equipo?: string; direccion?: string }> }) {
   await requireRole(["client"]);
   const { slug } = await params;
+  const sp = await searchParams;
+  const equipo = sp.equipo;
+  const direccion = sp.direccion;
   if (!/^[a-z0-9-]{2,80}$/.test(slug)) notFound();
   const supabase = await createClient();
   const { data: svc } = await supabase
@@ -66,11 +69,10 @@ export default async function RequestServicePage({ params }: { params: Promise<{
         <span className="text-[18px] font-extrabold">{priceText(svc)}</span>
       </Card>
       {svc.is_diagnostic_fee ? <Alert>{DIAGNOSIS_CONDITION}</Alert> : null}
-      {svc.includes_text || svc.excludes_text || svc.estimated_time || svc.requires_diagnosis || svc.price_treatment ? (
+      {svc.includes_text || svc.excludes_text || svc.estimated_time || svc.requires_diagnosis ? (
         <Card className="flex flex-col gap-2 text-[14px] leading-snug">
           {svc.includes_text ? <p className="m-0"><strong>Incluye:</strong> {svc.includes_text}</p> : null}
           {svc.excludes_text ? <p className="m-0"><strong>No incluye:</strong> {svc.excludes_text}</p> : null}
-          {svc.price_treatment ? <p className="m-0 text-muted">{svc.price_treatment}</p> : null}
           {svc.estimated_time ? <p className="m-0"><strong>Tiempo estimado:</strong> {svc.estimated_time}</p> : null}
           {svc.requires_diagnosis ? <p className="m-0 font-bold">Requiere diagnóstico previo; la cotización final te llega para aprobar.</p> : null}
         </Card>
@@ -85,6 +87,9 @@ export default async function RequestServicePage({ params }: { params: Promise<{
         }))}
         addresses={addresses}
         days={days}
+        returnPath={`/c/solicitar/${slug}`}
+        initialEquipmentId={equipo && /^[0-9a-f-]{36}$/i.test(equipo) ? equipo : undefined}
+        initialAddressId={direccion && /^[0-9a-f-]{36}$/i.test(direccion) ? direccion : undefined}
       />
     </section>
   );

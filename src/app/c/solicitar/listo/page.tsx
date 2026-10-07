@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { SubmitButton } from "@/components/ui/form";
 import { Card, LinkButton, money } from "@/components/ui/layout";
 import { requireRole } from "@/lib/auth/session";
+import { paidNextStep } from "@/lib/domain/ticket-flow";
+import { derivePaymentUi, PAYMENT_LABEL, PAYMENT_MESSAGE, type DbPaymentStatus } from "@/lib/payments/state";
 import { createClient } from "@/lib/supabase/server";
 import { startServicePaymentAction } from "../../tickets/pay-actions";
 
@@ -41,9 +43,12 @@ export default async function RequestDonePage({ searchParams }: { searchParams: 
   const { data: credit } = t && svc?.is_diagnostic_fee ? await supabase.from("diagnosis_credits").select("id").eq("ticket_id", t.id).maybeSingle() : { data: null };
 
   const price = Number((t?.service_snapshot as { base_price?: number } | null)?.base_price ?? svc?.base_price ?? 0);
-  const paid = Boolean(t?.prepaid_at || credit);
-  const payNow = Boolean(t && svc && flow === "immediate" && !paid && svc.allow_online_payment && price > 0 && !["cancelled", "delivered"].includes(t.status));
   const kind = svc?.is_diagnostic_fee ? "diagnosis" : "service";
+  const paid = Boolean(t?.prepaid_at || credit);
+  // El estado del pago sale del servidor (filas de payments): si ya hay un pago iniciado o confirmado NO se vuelve a ofrecer «Pagar».
+  const { data: pays } = t ? await supabase.from("payments").select("status, provider, created_at").eq("ticket_id", t.id).eq("purpose", kind) : { data: [] };
+  const payUi = derivePaymentUi((pays ?? []).map((p) => ({ status: p.status as DbPaymentStatus, provider: p.provider, created_at: p.created_at })), paid);
+  const payNow = Boolean(t && svc && flow === "immediate" && payUi.canPay && svc.allow_online_payment && price > 0 && !["cancelled", "delivered"].includes(t.status));
 
   return (
     <section className="mx-auto flex w-full max-w-[560px] flex-col gap-5">
@@ -64,7 +69,7 @@ export default async function RequestDonePage({ searchParams }: { searchParams: 
               "Nuestro equipo creará tu ticket enseguida"
             )}
           </Step>
-          {t && flow === "immediate" ? <Step done={paid}>{paid ? "Pago recibido" : "Pago pendiente"}</Step> : null}
+          {t && flow === "immediate" ? <Step done={payUi.state === "confirmed"}>{payUi.state === "none" ? "Pago pendiente" : PAYMENT_LABEL[payUi.state]}</Step> : null}
         </ul>
       </Card>
 
@@ -81,20 +86,28 @@ export default async function RequestDonePage({ searchParams }: { searchParams: 
             <input type="hidden" name="kind" value={kind} />
             <input type="hidden" name="ticketId" value={t.id} />
             <input type="hidden" name="ref" value={t.id} />
-            <SubmitButton pendingText="Abriendo Mercado Pago…">Pagar {money(price)}</SubmitButton>
+            <SubmitButton pendingText="Abriendo el pago…">{payUi.state === "none" ? `Pagar ${money(price)}` : `Pagar de nuevo ${money(price)}`}</SubmitButton>
           </form>
+          {payUi.state !== "none" ? <p className="m-0 text-[13px] font-semibold text-danger">{PAYMENT_MESSAGE[payUi.state]}</p> : null}
           <p className="m-0 text-[12px] text-muted">También puedes pagar en el local; el equipo lo registrará.</p>
         </Card>
       ) : null}
 
-      {t && flow === "immediate" && paid ? (
-        <Card className="border-ok">
-          <div className="text-[17px] font-extrabold text-ok">✓ Todo listo</div>
-          <p className="m-0 mt-1 text-[14px] text-muted">Recibimos tu pago. Nuestro equipo ya tiene tu solicitud.</p>
+      {t && flow === "immediate" && payUi.state === "validating" ? (
+        <Card className="border-brand">
+          <div className="text-[17px] font-extrabold text-warn">{PAYMENT_LABEL.validating}</div>
+          <p className="m-0 mt-1 text-[14px] text-muted">{PAYMENT_MESSAGE.validating}</p>
         </Card>
       ) : null}
 
-      {t && flow === "immediate" && !paid && !payNow ? (
+      {t && flow === "immediate" && payUi.state === "confirmed" ? (
+        <Card className="border-ok">
+          <div className="text-[17px] font-extrabold text-ok">✓ {PAYMENT_LABEL.confirmed}</div>
+          <p className="m-0 mt-1 text-[14px] leading-snug text-muted">{paidNextStep(t.modality)}</p>
+        </Card>
+      ) : null}
+
+      {t && flow === "immediate" && !paid && !payNow && payUi.state === "none" ? (
         <Card>
           <div className="text-[17px] font-extrabold">Siguiente paso</div>
           <p className="m-0 mt-1 text-[14px] text-muted">Este servicio se paga en el local; el equipo registrará tu pago.</p>

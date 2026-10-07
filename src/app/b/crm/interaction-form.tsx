@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { FormDraft } from "@/components/forms/FormDraft";
 import { Alert, Field, SubmitButton } from "@/components/ui/form";
 import { Select, Textarea } from "@/components/ui/layout";
 import { initialState } from "@/lib/auth/schemas";
@@ -11,6 +12,7 @@ export function InteractionForm({ taskId }: { taskId: string }) {
   const [state, action] = useActionState(logInteractionAction, initialState);
   return (
     <form action={action} className="flex flex-col gap-3" noValidate>
+      <FormDraft id={`crm-contacto-${taskId}`} />
       <input type="hidden" name="taskId" value={taskId} />
       <div className="grid grid-cols-2 gap-3">
         <Select label="Canal" name="channel" defaultValue="whatsapp">

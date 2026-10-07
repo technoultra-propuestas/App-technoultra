@@ -18,7 +18,7 @@ export default async function NewTicketPage() {
   ]);
   return (
     <section className="mx-auto flex w-full max-w-[600px] flex-col gap-6">
-      <PageTitle title="Nuevo ticket de mostrador" subtitle="Para clientes que llegan al local o llaman. El ticket nace en «Recibido» y queda asignado a ti." />
+      <PageTitle title="Nuevo ticket de mostrador" subtitle="Para clientes que llegan al local o llaman. El ticket nace en «Solicitud recibida» y queda asignado a ti; al registrar la recepción del equipo pasa a «Equipo recibido»." />
       <WalkinForm
         canSearch={isAdmin}
         customers={(customers.data ?? []).map((c) => ({ id: c.id, name: c.full_name, phone: c.phone }))}

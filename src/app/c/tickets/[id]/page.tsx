@@ -1,5 +1,7 @@
 import { TextLink } from "@/components/ui/kit";
-import { Panel, ProgressSteps, StatusHero, Timeline } from "@/components/ui/detail";
+import { Panel, ProgressSteps, StatusHero, StatusRow, Timeline } from "@/components/ui/detail";
+import { effectiveStatus, equipmentWhere, progressSteps, ticketMessage } from "@/lib/domain/ticket-flow";
+import { PAYMENT_LABEL } from "@/lib/payments/state";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { z } from "zod";
@@ -20,17 +22,6 @@ import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Servicio", robots: { index: false } };
 
-const MESSAGES: Record<string, string> = {
-  received: "Ya tenemos tu equipo. Pronto empieza la revisión.",
-  diagnosing: "Un técnico está revisando tu equipo para confirmar qué necesita.",
-  awaiting_approval: "Revisa la cotización. No hacemos ningún trabajo sin tu aprobación.",
-  awaiting_part: "Estamos esperando un repuesto para continuar.",
-  in_service: "Estamos trabajando en tu equipo.",
-  testing: "Estamos probando que todo funcione bien.",
-  ready: "Tu equipo está listo. Coordinemos la entrega.",
-  delivered: "Servicio finalizado. Tu garantía ya está activa.",
-  cancelled: "Este servicio fue cancelado.",
-};
 
 export default async function TicketDetail({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ pago?: string }> }) {
   await requireRole(["client"]);
@@ -44,11 +35,22 @@ export default async function TicketDetail({ params, searchParams }: { params: P
   const { data: t } = await supabase
     .from("tickets")
     .select(
-      "id, code, status, modality, problem, received_at, delivered_at, cancelled_reason, equipment(brand, model)",
+      "id, code, status, modality, problem, received_at, delivered_at, cancelled_reason, prepaid_at, equipment(brand, model)",
     )
     .eq("id", id.data)
     .maybeSingle();
   if (!t) notFound();
+  const [{ count: receptions }, { data: pays }, { data: credit }] = await Promise.all([
+    supabase.from("receptions").select("id", { count: "exact", head: true }).eq("ticket_id", t.id),
+    supabase.from("payments").select("status").eq("ticket_id", t.id),
+    supabase.from("diagnosis_credits").select("id").eq("ticket_id", t.id).maybeSingle(),
+  ]);
+  // «Equipo recibido» solo existe cuando TechnoUltra ya levantó el acta de recepción (tiene físicamente el equipo).
+  const equipmentReceived = (receptions ?? 0) > 0;
+  const view = effectiveStatus(t.status, equipmentReceived, t.modality);
+  const flow = progressSteps(t.status, equipmentReceived, t.modality);
+  const payConfirmed = Boolean(t.prepaid_at || credit || (pays ?? []).some((p) => p.status === "approved"));
+  const payValidating = !payConfirmed && (pays ?? []).some((p) => p.status === "pending");
   const [{ data: history }, { data: notes }, { data: diag }] = await Promise.all([
     supabase
       .from("ticket_status_history")
@@ -93,13 +95,25 @@ export default async function TicketDetail({ params, searchParams }: { params: P
       <StatusHero
         code={t.code}
         subtitle={eq ? `${eq.brand} ${eq.model} · ${MODALITY_LABEL[t.modality]}` : MODALITY_LABEL[t.modality]}
-        status={t.status}
-        message={t.cancelled_reason ? `${MESSAGES[t.status]} ${t.cancelled_reason}` : MESSAGES[t.status]}
-        meta={`Recibido ${fmtDateTime(t.received_at)}`}
+        status={view}
+        message={t.cancelled_reason ? `${ticketMessage(view, t.modality)} ${t.cancelled_reason}` : ticketMessage(view, t.modality)}
+        meta={`Solicitud creada el ${fmtDateTime(t.received_at)}`}
       />
-      <Card>
-        <ProgressSteps status={t.status} />
-      </Card>
+      {flow ? (
+        <Card>
+          <ProgressSteps steps={flow.steps} current={flow.current} />
+        </Card>
+      ) : null}
+      <Panel title="¿Cómo va tu servicio?" hint="Cada línea es independiente: el pago no cambia el estado de tu equipo.">
+        <ul className="m-0 flex list-none flex-col divide-y divide-line p-0">
+          <StatusRow label="Solicitud" value="Registrada" tone="ok" />
+          <StatusRow label="Pago" value={payConfirmed ? PAYMENT_LABEL.confirmed : payValidating ? PAYMENT_LABEL.validating : "Pendiente o no requerido por ahora"} tone={payConfirmed ? "ok" : payValidating ? "wait" : "neutral"} />
+          <StatusRow label="Equipo" value={equipmentWhere(t.status, equipmentReceived, t.modality)} tone={t.modality === "remote" || equipmentReceived || ["delivered", "ready"].includes(t.status) ? "ok" : "wait"} />
+          <StatusRow label="Diagnóstico" value={diag?.[0] ? "Listo" : t.status === "diagnosing" ? "En curso" : "Pendiente"} tone={diag?.[0] ? "ok" : t.status === "diagnosing" ? "wait" : "neutral"} />
+          <StatusRow label="Servicio" value={["ready", "delivered"].includes(t.status) ? "Completado" : ["in_service", "testing", "awaiting_part"].includes(t.status) ? "En curso" : "Pendiente"} tone={["ready", "delivered"].includes(t.status) ? "ok" : ["in_service", "testing", "awaiting_part"].includes(t.status) ? "wait" : "neutral"} />
+          <StatusRow label="Entrega" value={t.status === "delivered" ? "Entregado" : t.status === "ready" ? "Listo para entregar" : "Pendiente"} tone={t.status === "delivered" ? "ok" : t.status === "ready" ? "wait" : "neutral"} />
+        </ul>
+      </Panel>
       <Panel title="Lo que nos contaste">
         <p className="m-0 text-[15px] leading-normal text-ink-2">{t.problem}</p>
       </Panel>

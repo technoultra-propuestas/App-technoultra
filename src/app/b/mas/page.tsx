@@ -29,6 +29,7 @@ const GROUPS: Group[] = [
     items: [
       { href: "/b/servicios", title: "Servicios", detail: "Catálogo, precios y reglas", icon: "wrench" },
       { href: "/b/tienda", title: "Productos", detail: "Inventario, precios y garantía", icon: "store" },
+      { href: "/b/tienda/shop", title: "Shop", detail: "Banner, textos, envíos y destacados", icon: "store" },
       { href: "/b/conocimiento", title: "Centro de conocimiento", detail: "Respuestas del asistente y uso de IA", icon: "folder" },
       { href: "/b/comercial", title: "Comercial", detail: "IVA, urgencia, domicilio y diagnóstico", icon: "quote" },
       { href: "/b/cobertura", title: "Cobertura", detail: "Ciudades con servicio presencial", icon: "map" },
