@@ -256,7 +256,7 @@ export async function routeAssistantRequest(input: { message: string }, deps: As
     }
     const { system, user } = buildAiPrompt({ message: raw, candidates, retrieved });
     const t1 = now();
-    const res = await deps.ai(system, user, { maxTokens: 350, timeoutMs: 15_000 }).catch(() => ({ ok: false as const, reason: "provider_error" as const }));
+    const res = await deps.ai(system, user, { maxTokens: 450, timeoutMs: 15_000 }).catch(() => ({ ok: false as const, reason: "provider_error" as const }));
     if (res.ok) {
       const parsed = parseAiReply(res.text, candidates);
       if (parsed) {

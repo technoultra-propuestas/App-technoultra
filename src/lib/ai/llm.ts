@@ -37,6 +37,8 @@ async function openrouter(cfg: Cfg, system: string, user: string, opts: LlmOptio
         { role: "user", content: user },
       ],
       response_format: { type: "json_object" },
+      // Los modelos con razonamiento pueden gastar todos los tokens «pensando» y devolver vacío: se pide razonamiento mínimo y oculto.
+      reasoning: { effort: "low", exclude: true },
       temperature: 0.2,
       max_tokens: opts.maxTokens ?? 900,
     }),

@@ -133,7 +133,7 @@ describe("IA solo para lo ambiguo, con contexto mínimo", () => {
     expect(r.route).toBe("ai");
     expect(r.suggestions?.map((s) => s.slug)).toEqual(["diagnostico-basico", "mantenimiento-preventivo"]);
     expect(ai).toHaveBeenCalledTimes(1);
-    expect(ai.mock.calls[0][2]).toEqual({ maxTokens: 350, timeoutMs: 15_000 });
+    expect(ai.mock.calls[0][2]).toEqual({ maxTokens: 450, timeoutMs: 15_000 });
   });
   it("el prompt es mínimo: sin datos personales ni consultas a tickets, pagos, pedidos ni direcciones", async () => {
     ai.mockResolvedValue(aiOk({ reply: "Te sugiero el diagnóstico básico.", service_ids: ["s-diag"] }));

@@ -28,7 +28,7 @@ El navegador solo dice QUÉ quiere (servicio, modalidad, texto). El servidor rec
 1. **Datos propios** (mi ticket, pago, pedido, cotización): consulta con la sesión de la persona (RLS). 0 tokens, sin caché.
 2. **Reglas deterministas:** precio y alcance de un servicio («Desde» nunca como precio final), cobertura y tarifa, significado de estados, saludos. 0 tokens.
 3. **FAQ publicada** (`knowledge_entries`): plantillas `{price}`, `{cities}`… rellenadas desde `services`, `coverage_areas` y `app_settings`; si la fuente no existe, la entrada no se responde a medias. 0 tokens.
-4. **IA (OpenRouter, solo servidor)** únicamente si lo anterior no resuelve: contexto mínimo (hasta 8 servicios candidatos + hasta 3 entradas recuperadas + el mensaje delimitado como NO confiable), `max_tokens 350`, timeout 15 s, **sin reintentos**, máximo 12 consultas con IA por hora y persona, caché 10 min. Salida validada fuera del modelo (JSON estricto, solo ids de candidatos, sin enlaces/HTML).
+4. **IA (OpenRouter, solo servidor)** únicamente si lo anterior no resuelve: contexto mínimo (hasta 8 servicios candidatos + hasta 3 entradas recuperadas + el mensaje delimitado como NO confiable), `max_tokens 450`, timeout 15 s, **sin reintentos**, máximo 12 consultas con IA por hora y persona, caché 10 min. Salida validada fuera del modelo (JSON estricto, solo ids de candidatos, sin enlaces/HTML).
 5. **Respaldo:** si la IA falla → FAQ aproximada o respuesta segura con enlaces. El asistente nunca bloquea solicitar, pagar, consultar ni aprobar.
 Todas las respuestas se ven igual para el cliente (sin «respuesta sin IA»).
 
