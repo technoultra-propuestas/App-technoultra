@@ -9,12 +9,12 @@ import { serverEnv } from "@/lib/env.server";
 import { createOrder } from "@/lib/payments/mercadopago";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-const schema = z.object({ kind: z.enum(["diagnosis", "quote"]), ticketId: z.string().uuid(), ref: z.string().uuid() });
+const schema = z.object({ kind: z.enum(["diagnosis", "quote", "service"]), ticketId: z.string().uuid(), ref: z.string().uuid() });
 
 /** Códigos de error de la BD → resultado que se muestra al cliente (nunca el mensaje interno). */
 const REASONS: [RegExp, string][] = [
-  [/diagnosis_already_paid|quote_already_paid/, "ya_pagado"],
-  [/quote_not_payable|ticket_closed|ticket_not_diagnosis/, "no_disponible"],
+  [/diagnosis_already_paid|quote_already_paid|service_already_paid/, "ya_pagado"],
+  [/quote_not_payable|ticket_closed|ticket_not_diagnosis|ticket_is_diagnosis|service_not_payable/, "no_disponible"],
   [/nothing_to_pay/, "sin_saldo"],
 ];
 

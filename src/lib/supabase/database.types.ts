@@ -2747,6 +2747,7 @@ export type Database = {
       }
       services: {
         Row: {
+          allow_online_payment: boolean
           allowed_modalities: Database["public"]["Enums"]["service_modality"][]
           base_price: number | null
           catalog_order: number | null
@@ -2759,6 +2760,7 @@ export type Database = {
           duration_minutes: number | null
           estimated_time: string | null
           excludes_text: string | null
+          flow_override: string | null
           id: string
           image_public_id: string | null
           includes_text: string | null
@@ -2784,6 +2786,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          allow_online_payment?: boolean
           allowed_modalities: Database["public"]["Enums"]["service_modality"][]
           base_price?: number | null
           catalog_order?: number | null
@@ -2796,6 +2799,7 @@ export type Database = {
           duration_minutes?: number | null
           estimated_time?: string | null
           excludes_text?: string | null
+          flow_override?: string | null
           id?: string
           image_public_id?: string | null
           includes_text?: string | null
@@ -2821,6 +2825,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          allow_online_payment?: boolean
           allowed_modalities?: Database["public"]["Enums"]["service_modality"][]
           base_price?: number | null
           catalog_order?: number | null
@@ -2833,6 +2838,7 @@ export type Database = {
           duration_minutes?: number | null
           estimated_time?: string | null
           excludes_text?: string | null
+          flow_override?: string | null
           id?: string
           image_public_id?: string | null
           includes_text?: string | null
@@ -3032,6 +3038,8 @@ export type Database = {
           needs_part: boolean
           order_id: string | null
           order_item_id: string | null
+          prepaid_amount: number | null
+          prepaid_at: string | null
           problem: string
           received_at: string
           service_id: string | null
@@ -3057,6 +3065,8 @@ export type Database = {
           needs_part?: boolean
           order_id?: string | null
           order_item_id?: string | null
+          prepaid_amount?: number | null
+          prepaid_at?: string | null
           problem: string
           received_at?: string
           service_id?: string | null
@@ -3082,6 +3092,8 @@ export type Database = {
           needs_part?: boolean
           order_id?: string | null
           order_item_id?: string | null
+          prepaid_amount?: number | null
+          prepaid_at?: string | null
           problem?: string
           received_at?: string
           service_id?: string | null
@@ -3376,6 +3388,7 @@ export type Database = {
         Args: { p_staff: string; p_ticket: string }
         Returns: undefined
       }
+      auto_create_ticket: { Args: { p_request: string }; Returns: string }
       begin_payment: {
         Args: { p_actor: string; p_order: string }
         Returns: {
@@ -3509,6 +3522,13 @@ export type Database = {
       revise_quote: { Args: { p_quote: string }; Returns: string }
       run_housekeeping: { Args: never; Returns: Json }
       send_quote: { Args: { p_quote: string }; Returns: undefined }
+      service_flow: {
+        Args: {
+          p_modality: Database["public"]["Enums"]["service_modality"]
+          p_service: string
+        }
+        Returns: string
+      }
       set_quote_delivery: {
         Args: { p_apply: boolean; p_quote: string }
         Returns: undefined

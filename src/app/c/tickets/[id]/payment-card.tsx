@@ -23,17 +23,20 @@ const RESULT: Record<string, { tone: "ok" | "error"; text: string }> = {
 export async function PaymentCard({ ticketId, result }: { ticketId: string; result?: string }) {
   const supabase = await createClient();
   const [{ data: t }, { data: credit }, { data: quote }] = await Promise.all([
-    supabase.from("tickets").select("service_id, service_snapshot, status").eq("id", ticketId).maybeSingle(),
+    supabase.from("tickets").select("service_id, service_snapshot, status, modality, prepaid_at").eq("id", ticketId).maybeSingle(),
     supabase.from("diagnosis_credits").select("amount, status").eq("ticket_id", ticketId).maybeSingle(),
     supabase.from("quotes").select("id, code, status, total, paid_at").eq("ticket_id", ticketId).eq("status", "approved").order("version", { ascending: false }).limit(1).maybeSingle(),
   ]);
   if (!t) return null;
-  const { data: svc } = t.service_id ? await supabase.from("services").select("is_diagnostic_fee, base_price").eq("id", t.service_id).maybeSingle() : { data: null };
+  const { data: svc } = t.service_id ? await supabase.from("services").select("is_diagnostic_fee, base_price, allow_online_payment").eq("id", t.service_id).maybeSingle() : { data: null };
+  const { data: flow } = t.service_id ? await supabase.rpc("service_flow", { p_service: t.service_id, p_modality: t.modality }) : { data: null };
   const isDiag = Boolean(svc?.is_diagnostic_fee) && !["cancelled", "delivered"].includes(t.status);
   const diagPrice = (t.service_snapshot as { base_price?: number } | null)?.base_price ?? svc?.base_price ?? null;
   const owesQuote = quote && !quote.paid_at && Number(quote.total) > 0;
+  // Servicio de precio fijo (pago inmediato): se paga una sola vez y el importe lo recalcula el servidor.
+  const isImmediate = !svc?.is_diagnostic_fee && flow === "immediate" && !t.prepaid_at && Boolean(svc?.allow_online_payment) && Number(diagPrice) > 0 && !quote && !["cancelled", "delivered"].includes(t.status);
   const msg = result ? RESULT[result] : undefined;
-  if (!msg && !(isDiag && !credit) && !credit && !quote) return null;
+  if (!msg && !(isDiag && !credit) && !credit && !quote && !isImmediate && !t.prepaid_at) return null;
   return (
     <Card className="flex flex-col gap-3">
       <h2 className="m-0 text-[17px] font-extrabold">Pagos</h2>
@@ -53,6 +56,22 @@ export async function PaymentCard({ ticketId, result }: { ticketId: string; resu
           </form>
         </div>
       ) : null}
+      {isImmediate ? (
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between gap-3 text-[15px] font-bold">
+            <span>Servicio</span>
+            <span>{money(diagPrice)}</span>
+          </div>
+          <form action={startServicePaymentAction}>
+            <input type="hidden" name="kind" value="service" />
+            <input type="hidden" name="ticketId" value={ticketId} />
+            <input type="hidden" name="ref" value={ticketId} />
+            <SubmitButton pendingText="Abriendo Mercado Pago…">Pagar el servicio · {money(diagPrice)}</SubmitButton>
+          </form>
+          <p className="m-0 text-[12px] text-muted">También puedes pagar en el local; el equipo lo registrará.</p>
+        </div>
+      ) : null}
+      {t.prepaid_at ? <p className="m-0 text-[15px] font-semibold">✓ Servicio pagado.</p> : null}
       {credit ? (
         <p className="m-0 text-[15px] font-semibold">
           ✓ Diagnóstico pagado ({money(credit.amount)}).{" "}
