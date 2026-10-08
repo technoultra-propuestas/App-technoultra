@@ -103,3 +103,6 @@ Pagos manuales con método, referencia y comprobante de datáfono (sin duplicado
 
 ## Auditoría de rendimiento del Shop (2026-10-07)
 Medición real en producción (ficha 0,61–0,84 s, `/tienda` 0,86–1,10 s; funciones en iad1 y base en us-west-2), esqueletos `loading.tsx`, shell único del Shop (`layout.tsx`), caché de 60 s con invalidación por etiqueta para lecturas públicas del catálogo y consultas en paralelo. Detalle, riesgos (ficha retirada = 200 + noindex) y pendientes en `PERFORMANCE-AUDIT-REPORT.md`. Estado: NEEDS WORK hasta medir en producción tras desplegar.
+
+## Cierre técnico para producción (2026-10-08)
+Migraciones 38–40 aplicadas al remoto verificado (agosikmonvjujxzokdlc), despliegue del commit 9d0f50f en producción, Sentry con source maps (release unificado), 404 real con esqueleto, contraste AA automático (0 incumplimientos), barrido de secretos y auditoría de esquema (sin tablas sin RLS). 649 pruebas y E2E de 11 escenarios (418 comprobaciones) correctos. Estado y acciones del propietario en `PRODUCTION-READINESS-REPORT.md`. Mercado Pago sigue pendiente a propósito.
