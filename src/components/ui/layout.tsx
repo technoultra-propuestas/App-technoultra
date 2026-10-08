@@ -24,8 +24,8 @@ export function PageTitle({
   );
 }
 
-export function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return <div className={`rounded-card border border-line bg-white p-5 shadow-card ${className}`}>{children}</div>;
+export function Card({ children, className = "", id }: { children: ReactNode; className?: string; id?: string }) {
+  return <div id={id} className={`scroll-mt-24 rounded-card border border-line bg-white p-5 shadow-card ${className}`}>{children}</div>;
 }
 
 export function EmptyState({ title, text, action }: { title: string; text?: string; action?: ReactNode }) {

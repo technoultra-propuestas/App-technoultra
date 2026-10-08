@@ -5,6 +5,7 @@ import { Alert, Field, SubmitButton } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/layout";
 import { initialState } from "@/lib/auth/schemas";
 import { DIAGNOSTIC_COMPONENTS } from "@/lib/domain/reception";
+import { finalizeDiagnosisAction } from "../proposal-actions";
 import { completeChecklistAction, saveDeliveryAction, saveDiagnosisAction } from "../work-actions";
 
 const Result = ({ state }: { state: { ok: boolean; error?: string; message?: string; fieldErrors?: Record<string, string> } }) => (
@@ -43,12 +44,21 @@ export function DiagnosisForm({
       <Textarea label="Pruebas realizadas" name="testsPerformed" defaultValue={defaults.tests} />
       <Textarea label="Recomendaciones" name="recommendations" defaultValue={defaults.recommendations} />
       <Field label="Repuestos sugeridos" name="suggestedParts" defaultValue={defaults.parts} />
-      <label className="flex items-center gap-3 text-[14px] font-semibold">
-        <input type="checkbox" name="visible" defaultChecked={defaults.visible} className="h-5 w-5 accent-[#FF8A00]" />
-        Mostrar este diagnóstico al cliente
-      </label>
       <Result state={state} />
-      <SubmitButton pendingText="Guardando…">Guardar diagnóstico</SubmitButton>
+      <SubmitButton variant={defaults.summary ? "dark" : "primary"} pendingText="Guardando…">Guardar diagnóstico</SubmitButton>
+    </form>
+  );
+}
+
+/** «Finalizar diagnóstico»: emite el informe en PDF para el cliente (versión nueva si ya se había emitido). */
+export function FinalizeDiagnosisForm({ ticketId, reissue }: { ticketId: string; reissue: boolean }) {
+  const [state, action] = useActionState(finalizeDiagnosisAction, initialState);
+  return (
+    <form action={action} className="flex flex-col gap-2">
+      <input type="hidden" name="ticketId" value={ticketId} />
+      <Result state={state} />
+      <SubmitButton pendingText="Generando informe…">{reissue ? "Emitir nueva versión del diagnóstico" : "Finalizar diagnóstico"}</SubmitButton>
+      <p className="m-0 text-[12.5px] text-muted">Guarda primero tus cambios. Al finalizar, el cliente podrá ver el informe y se prepara la propuesta de cotización.</p>
     </form>
   );
 }

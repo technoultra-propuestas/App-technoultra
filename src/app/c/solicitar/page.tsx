@@ -54,7 +54,7 @@ export default async function RequestCatalogPage({ searchParams }: { searchParam
           <span className="text-[15px] font-extrabold">¿No sabes qué servicio necesitas?</span>
           <span className="text-[13px] font-semibold text-muted">Cuéntaselo al asistente y te sugiere opciones.</span>
         </span>
-        <span className="flex-none text-[13px] font-extrabold text-brand">Abrir</span>
+        <span className="flex-none text-[13px] font-extrabold text-brand-text">Abrir</span>
       </Link>
       <SegmentTabs label="Tipo de servicio" active={tab} items={[{ key: "technical", label: "Servicio técnico", href: "/c/solicitar" }, { key: "digital", label: "Soluciones digitales", href: "/c/solicitar?tipo=digital" }]} />
       <SearchField placeholder="Buscar: lento, SSD, impresora…" defaultValue={q} keep={{ tipo: tab === "digital" ? "digital" : undefined, categoria: cat || undefined }} />

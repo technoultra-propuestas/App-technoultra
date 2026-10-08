@@ -4,6 +4,8 @@
 @theme inline {
   --color-brand: #ff8a00;
   --color-brand-soft: #ff9f2a;
+  /* Naranja de marca para TEXTO pequeño sobre fondo claro: #ff8a00 da 2,4:1 (AA exige 4,5:1); este da ≥5:1 sobre blanco y #f6f6f5. Sobre fondos oscuros se sigue usando --color-brand. */
+  --color-brand-text: #a35500;
   --color-ink: #121212;
   --color-black: #000000;
   --color-paper: #f6f6f5;

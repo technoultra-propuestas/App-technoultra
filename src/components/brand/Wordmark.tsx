@@ -5,6 +5,7 @@ export function Wordmark({ size = 28, className }: Props) {
   return (
     <span
       className={className}
+      data-logotype
       style={{ display: "inline-flex", alignItems: "center", fontWeight: 800, fontSize: size, lineHeight: 1 }}
     >
       <span>TECHN</span>

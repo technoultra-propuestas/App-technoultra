@@ -76,7 +76,7 @@ describe("importes y utilidades", () => {
     for (const bad of [0, -1, 30100.5, NaN, Infinity, 1e12]) expect(copAmount(bad)).toBeNull();
   });
   it("el id de aplicación sale del access token y los ids de Order se validan", () => {
-    expect(applicationIdFromToken("APP_USR-6180208665021480-061515-abcdef-3474234217")).toBe("6180208665021480");
+    expect(applicationIdFromToken("APP_USR-1111111111111111-061515-abcdef-2222222222")).toBe("1111111111111111");
     expect(applicationIdFromToken("basura")).toBeNull();
     expect(ORDER_ID.test(OID)).toBe(true);
     for (const bad of ["123", "ord01M49SFQXVAVQGG19A6SF4GN05", "ORD", `${OID}/../x`, ""]) expect(ORDER_ID.test(bad)).toBe(false);

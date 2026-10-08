@@ -15,9 +15,7 @@ const DEFAULT_CLOSING = "¿Me pueden confirmar disponibilidad y coordinar la ent
 export function buildWhatsappMessage(p: InquiryProduct, copy: WhatsappCopy = {}): string {
   const lines = ["Hola TechnoUltra 👋", "", "Quiero consultar la compra de:", "", `Producto: ${p.name}`];
   if (p.ref) lines.push(`Referencia: ${p.ref}`);
-  if (p.brand) lines.push(`Marca: ${p.brand}`);
-  if (p.category) lines.push(`Categoría: ${[p.category, p.subcategory].filter(Boolean).join(" › ")}`);
-  lines.push(`Precio publicado: ${copFormat(p.price)}`, "", copy.closing?.trim() || DEFAULT_CLOSING);
+  lines.push(`Precio: ${copFormat(p.price)}`, "Cantidad: 1", "", copy.closing?.trim() || DEFAULT_CLOSING);
   return lines.join("\n");
 }
 

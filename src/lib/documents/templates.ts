@@ -1,5 +1,6 @@
 import { PdfBuilder, type PdfMeta } from "./pdf";
 import { quoteBreakdown, type QuotePricing } from "@/lib/domain/pricing";
+import { creditExplanation, groupQuoteItems } from "@/lib/quotes/concepts";
 
 export type Party = { name: string; phone?: string | null; email?: string | null };
 export type EquipmentInfo = { type: string; brand: string; model: string; serial?: string | null } | null;
@@ -48,6 +49,7 @@ export async function buildReceptionPdf(d: ReceptionData, meta: PdfMeta) {
 export type DiagnosisData = {
   ticketCode: string; customer: Party; equipment: EquipmentInfo; summary: string; components: { component: string; state: string }[];
   tests?: string | null; recommendations?: string | null; parts?: string | null;
+  problem?: string | null; technician?: string | null; issuedAt?: string | Date | null;
   ai?: { summary: string; disclaimer: string; validation: string } | null;
 };
 const STATE: Record<string, string> = { ok: "OK", review: "Revisar", fail: "Falla" };
@@ -55,10 +57,13 @@ const VALIDATION: Record<string, string> = { pending: "pendiente de validación 
 export async function buildDiagnosisPdf(d: DiagnosisData, meta: PdfMeta) {
   const b = await PdfBuilder.create(meta);
   parties(b, d.customer, d.equipment, d.ticketCode);
+  b.section("Revisión del equipo");
+  b.kv([["Fecha del informe", d.issuedAt ? day(d.issuedAt) : null], ["Técnico", d.technician], ["Síntomas reportados", d.problem]]);
   b.section("Diagnóstico técnico");
   b.para(d.summary);
   if (d.components.length) b.table(["Componente", "Resultado"], d.components.map((c) => [c.component, STATE[c.state] ?? c.state]), [3, 1]);
   b.kv([["Pruebas realizadas", d.tests], ["Recomendaciones", d.recommendations], ["Repuestos sugeridos", d.parts]]);
+  b.note("Este informe resume la revisión técnica del equipo. Ningún trabajo se realiza sin tu aprobación; si hace falta una reparación, recibirás una cotización para revisar.");
   if (d.ai) {
     b.section("Apoyo de inteligencia artificial");
     b.para(d.ai.summary);
@@ -69,24 +74,31 @@ export async function buildDiagnosisPdf(d: DiagnosisData, meta: PdfMeta) {
 
 export type QuoteData = {
   ticketCode?: string | null; customer: Party; equipment: EquipmentInfo; validUntil?: string | null; notes?: string | null; terms?: string | null;
-  items: { description: string; qty: number; unitPrice: number; discount: number; lineSubtotal: number; warrantyDays: number; warrantyKind: string }[];
+  items: { description: string; qty: number; unitPrice: number; discount: number; lineSubtotal: number; warrantyDays: number; warrantyKind: string; kind?: string; concept?: string | null }[];
   subtotal: number; discountTotal: number; taxTotal: number; total: number;
   pricing?: QuotePricing; // desglose con snapshots (urgencia, domicilio, abono, IVA informativo)
 };
 export async function buildQuotePdf(d: QuoteData, meta: PdfMeta) {
   const b = await PdfBuilder.create(meta);
   parties(b, d.customer, d.equipment, d.ticketCode ?? "-");
-  b.section("Detalle de la cotización");
-  b.table(
-    ["Descripción", "Cant.", "Valor unit.", "Desc.", "Total", "Garantía"],
-    d.items.map((i) => [i.description, String(i.qty), COP(i.unitPrice), i.discount > 0 ? COP(i.discount) : "-", COP(i.lineSubtotal), i.warrantyDays > 0 ? `${i.warrantyDays} d (${i.warrantyKind === "product" ? "producto" : "trabajo"})` : "-"]),
-    [5, 1.2, 2, 1.5, 2, 2.4],
-  );
+  // Mano de obra, repuestos, productos y otros conceptos por separado: la cuenta se entiende de un vistazo.
+  const groups = groupQuoteItems(d.items.map((i, n) => ({ id: String(n), kind: i.kind ?? "custom", concept: i.concept ?? null, description: i.description, qty: i.qty, unit_price: i.unitPrice, line_subtotal: i.lineSubtotal, warranty_days: i.warrantyDays, i })));
+  for (const g of groups) {
+    b.section(`${g.label} · ${COP(g.subtotal)}`);
+    b.table(
+      ["Descripción", "Cant.", "Valor unit.", "Desc.", "Total", "Garantía"],
+      g.items.map((x) => [x.i.description, String(x.i.qty), COP(x.i.unitPrice), x.i.discount > 0 ? COP(x.i.discount) : "-", COP(x.i.lineSubtotal), x.i.warrantyDays > 0 ? `${x.i.warrantyDays} d (${x.i.warrantyKind === "product" ? "producto" : "trabajo"})` : "-"]),
+      [5, 1.2, 2, 1.5, 2, 2.4],
+    );
+  }
+  b.section("Resumen");
   b.kv(
     d.pricing
       ? quoteBreakdown(d.pricing).map((l): [string, string] => [l.key === "total" ? "TOTAL" : l.label, `${l.sign === -1 ? "-" : ""}${COP(l.amount)}`])
       : [["Subtotal", COP(d.subtotal)], ["Descuentos", d.discountTotal > 0 ? `-${COP(d.discountTotal)}` : null], ["Impuestos", d.taxTotal > 0 ? COP(d.taxTotal) : null], ["TOTAL", COP(d.total)]],
   );
+  const why = creditExplanation(Number(d.pricing?.diagnosis_credit ?? 0));
+  if (why) b.note(why);
   b.kv([["Vigencia", d.validUntil ? `Hasta el ${day(d.validUntil)}` : null], ["Observaciones", d.notes], ["Condiciones", d.terms]]);
   b.note("No se realiza ningún trabajo sin la aprobación del cliente. Los valores corresponden al catálogo vigente al momento de emitir esta cotización.");
   return b.finish();

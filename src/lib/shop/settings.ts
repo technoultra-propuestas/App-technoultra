@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import { createPublicClient } from "@/lib/supabase/public";
 import { PRODUCT_SHIPPING_CALI_OUTSIDE, PRODUCT_SHIPPING_CALI_URBAN } from "@/lib/catalog/config";
 
@@ -29,7 +30,7 @@ export const DEFAULT_SHOP_SETTINGS: ShopSettings = {
   whatsapp_closing: "¿Me pueden confirmar disponibilidad y coordinar la entrega?",
 };
 
-export async function loadShopSettings(): Promise<ShopSettings> {
+async function loadShopSettingsRaw(): Promise<ShopSettings> {
   try {
     const { data } = await createPublicClient().from("shop_settings").select("title, subtitle, show_featured, shipping_enabled, shipping_title, shipping_urban_fee, shipping_outside_fee, shipping_note, whatsapp_intro, whatsapp_closing").maybeSingle();
     return data ? { ...DEFAULT_SHOP_SETTINGS, ...data } : DEFAULT_SHOP_SETTINGS;
@@ -39,7 +40,7 @@ export async function loadShopSettings(): Promise<ShopSettings> {
 }
 
 /** Banner vigente de mayor prioridad (la política RLS ya filtra activo + fechas). Sin banner activo no se muestra nada. */
-export async function loadActiveBanner(): Promise<ShopBanner | null> {
+async function loadActiveBannerRaw(): Promise<ShopBanner | null> {
   try {
     const { data } = await createPublicClient().from("shop_banners").select("id, title, subtitle, image_url, cta_label, cta_href, tone").order("priority", { ascending: false }).order("created_at", { ascending: false }).limit(1).maybeSingle();
     return data ? ({ ...data, tone: data.tone as ShopBanner["tone"] }) : null;
@@ -47,3 +48,7 @@ export async function loadActiveBanner(): Promise<ShopBanner | null> {
     return null;
   }
 }
+
+/** Cacheados 60 s (datos públicos); se invalidan al guardar el CRM del Shop (`revalidateTag("catalog")`). */
+export const loadShopSettings = unstable_cache(loadShopSettingsRaw, ["shop:settings"], { revalidate: Math.max(1, Number(process.env.CATALOG_CACHE_SECONDS) || 60), tags: ["catalog"] });
+export const loadActiveBanner = unstable_cache(loadActiveBannerRaw, ["shop:banner"], { revalidate: Math.max(1, Number(process.env.CATALOG_CACHE_SECONDS) || 60), tags: ["catalog"] });

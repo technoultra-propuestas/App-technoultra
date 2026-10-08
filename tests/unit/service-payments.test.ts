@@ -7,7 +7,7 @@ const state = {
   rpc: { data: [{ payment_id: "p1", amount: "150000", title: "Cotización · COT-1", external_reference: "pay-p1", ticket_id: "t1" }] as unknown, error: null as null | { code?: string; message: string } },
   order: { id: OID, checkoutUrl: `https://www.mercadopago.com.co/checkout/v1/redirect?order_id=${OID}` } as { id: string; checkoutUrl: string } | null,
   pending: [{ id: "p1", external_id: OID }] as { id: string; external_id: string }[],
-  fetched: { id: OID, status: "processed", status_detail: "accredited", external_reference: "pay-p1", total_amount: "150000", total_paid_amount: "150000", currency: "COP", last_updated_date: "2026-10-05T10:00:00Z", integration_data: { application_id: "6180208665021480" } } as unknown,
+  fetched: { id: OID, status: "processed", status_detail: "accredited", external_reference: "pay-p1", total_amount: "150000", total_paid_amount: "150000", currency: "COP", last_updated_date: "2026-10-05T10:00:00Z", integration_data: { application_id: "1111111111111111" } } as unknown,
   apply: { data: "approved", error: null } as { data: unknown; error: null | { code?: string } },
 };
 const rpc = vi.fn(async (name: string) => (name === "begin_service_payment" ? state.rpc : state.apply));
@@ -36,7 +36,7 @@ vi.mock("@/lib/env.server", () => ({
   serverEnv: {
     mercadopago: () => {
       if (!state.mp) throw new Error("not_configured");
-      return { MERCADOPAGO_ACCESS_TOKEN: "APP_USR-6180208665021480-061515-secreto-3474234217", MERCADOPAGO_WEBHOOK_SECRET: "secreto-de-prueba" };
+      return { MERCADOPAGO_ACCESS_TOKEN: "APP_USR-1111111111111111-000000-token-de-prueba-0000000000", MERCADOPAGO_WEBHOOK_SECRET: "secreto-de-prueba" };
     },
   },
 }));
@@ -79,7 +79,7 @@ beforeEach(() => {
   state.rpc = { data: [{ payment_id: "p1", amount: "150000", title: "Cotización · COT-1", external_reference: "pay-p1", ticket_id: "t1" }], error: null };
   state.order = { id: OID, checkoutUrl: `https://www.mercadopago.com.co/checkout/v1/redirect?order_id=${OID}` };
   state.pending = [{ id: "p1", external_id: OID }];
-  state.fetched = { id: OID, status: "processed", status_detail: "accredited", external_reference: "pay-p1", total_amount: "150000", total_paid_amount: "150000", currency: "COP", last_updated_date: "2026-10-05T10:00:00Z", integration_data: { application_id: "6180208665021480" } };
+  state.fetched = { id: OID, status: "processed", status_detail: "accredited", external_reference: "pay-p1", total_amount: "150000", total_paid_amount: "150000", currency: "COP", last_updated_date: "2026-10-05T10:00:00Z", integration_data: { application_id: "1111111111111111" } };
   state.apply = { data: "approved", error: null };
   allow.mockResolvedValue(true);
 });
@@ -152,7 +152,7 @@ describe("conciliación con Mercado Pago (cron)", () => {
     state.mp = false;
     expect(await reconcilePendingPayments()).toEqual({ configured: false, checked: 0, applied: 0, cancelled: 0 });
     state.mp = true;
-    state.fetched = { id: OID, status: "created", external_reference: "pay-p1", total_amount: "150000", currency: "COP", integration_data: { application_id: "6180208665021480" } };
+    state.fetched = { id: OID, status: "created", external_reference: "pay-p1", total_amount: "150000", currency: "COP", integration_data: { application_id: "1111111111111111" } };
     state.apply = { data: "noop", error: null };
     expect((await reconcilePendingPayments()).applied).toBe(0);
     fetchOrder.mockResolvedValueOnce("not_found");
@@ -163,7 +163,7 @@ describe("conciliación con Mercado Pago (cron)", () => {
     expect(rpc).not.toHaveBeenCalled(); // Order de otra aplicación: ni siquiera se aplica
   });
   it("aprobado con importe cobrado distinto al esperado se envía con el monto real (la base de datos lo rechaza como amount_mismatch)", async () => {
-    state.fetched = { id: OID, status: "processed", status_detail: "accredited", external_reference: "pay-p1", total_amount: "150000", total_paid_amount: "1000", currency: "COP", integration_data: { application_id: "6180208665021480" } };
+    state.fetched = { id: OID, status: "processed", status_detail: "accredited", external_reference: "pay-p1", total_amount: "150000", total_paid_amount: "1000", currency: "COP", integration_data: { application_id: "1111111111111111" } };
     state.apply = { data: "amount_mismatch", error: null };
     await reconcilePendingPayments();
     expect(rpc).toHaveBeenCalledWith("apply_payment_event", expect.objectContaining({ p_amount: 1000, p_status: "approved" }));

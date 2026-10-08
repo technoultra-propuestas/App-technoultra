@@ -191,7 +191,7 @@ function WeekGrid({ from, byDay, today }: { from: string; byDay: Map<string, Ev[
         <div />
         {cols.map((k, i) => (
           <div key={k} className="px-2 pb-2 pt-3">
-            <div className={`text-[11px] font-extrabold ${k === today ? "text-brand" : "text-muted"}`}>{WD[i]}</div>
+            <div className={`text-[11px] font-extrabold ${k === today ? "text-brand-text" : "text-muted"}`}>{WD[i]}</div>
             <div className={`mt-0.5 inline-flex min-w-9 items-center justify-center rounded-[10px] px-1.5 py-1 text-[20px] font-extrabold leading-none ${k === today ? "bg-brand text-ink" : ""}`}>{Number(k.slice(8))}</div>
           </div>
         ))}

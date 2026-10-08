@@ -932,6 +932,8 @@ export type Database = {
       diagnostics: {
         Row: {
           created_at: string
+          finalized_at: string | null
+          finalized_by: string | null
           id: string
           recommendations: string | null
           suggested_parts: string | null
@@ -945,6 +947,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          finalized_at?: string | null
+          finalized_by?: string | null
           id?: string
           recommendations?: string | null
           suggested_parts?: string | null
@@ -958,6 +962,8 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          finalized_at?: string | null
+          finalized_by?: string | null
           id?: string
           recommendations?: string | null
           suggested_parts?: string | null
@@ -2018,6 +2024,9 @@ export type Database = {
           id: string
           idempotency_key: string | null
           method: string | null
+          note: string | null
+          reference: string | null
+          voucher_evidence_id: string | null
           order_id: string | null
           pricing_snapshot: Json | null
           provider: Database["public"]["Enums"]["payment_provider"]
@@ -2040,6 +2049,9 @@ export type Database = {
           id?: string
           idempotency_key?: string | null
           method?: string | null
+          note?: string | null
+          reference?: string | null
+          voucher_evidence_id?: string | null
           order_id?: string | null
           pricing_snapshot?: Json | null
           provider: Database["public"]["Enums"]["payment_provider"]
@@ -2062,6 +2074,9 @@ export type Database = {
           id?: string
           idempotency_key?: string | null
           method?: string | null
+          note?: string | null
+          reference?: string | null
+          voucher_evidence_id?: string | null
           order_id?: string | null
           pricing_snapshot?: Json | null
           provider?: Database["public"]["Enums"]["payment_provider"]
@@ -2656,6 +2671,7 @@ export type Database = {
       }
       quote_items: {
         Row: {
+          concept: string | null
           description: string
           discount: number
           id: string
@@ -2663,17 +2679,20 @@ export type Database = {
           line_subtotal: number | null
           line_tax: number | null
           position: number
+          priority: string | null
           product_id: string | null
           qty: number
           quote_id: string
           service_id: string | null
           service_snapshot: Json | null
+          suggested_by_system: boolean
           tax_rate: number
           unit_price: number
           warranty_days: number
           warranty_kind: Database["public"]["Enums"]["warranty_kind"]
         }
         Insert: {
+          concept?: string | null
           description: string
           discount?: number
           id?: string
@@ -2681,17 +2700,20 @@ export type Database = {
           line_subtotal?: number | null
           line_tax?: number | null
           position?: number
+          priority?: string | null
           product_id?: string | null
           qty: number
           quote_id: string
           service_id?: string | null
           service_snapshot?: Json | null
+          suggested_by_system?: boolean
           tax_rate?: number
           unit_price: number
           warranty_days?: number
           warranty_kind?: Database["public"]["Enums"]["warranty_kind"]
         }
         Update: {
+          concept?: string | null
           description?: string
           discount?: number
           id?: string
@@ -2699,11 +2721,13 @@ export type Database = {
           line_subtotal?: number | null
           line_tax?: number | null
           position?: number
+          priority?: string | null
           product_id?: string | null
           qty?: number
           quote_id?: string
           service_id?: string | null
           service_snapshot?: Json | null
+          suggested_by_system?: boolean
           tax_rate?: number
           unit_price?: number
           warranty_days?: number
@@ -4039,6 +4063,30 @@ export type Database = {
         Args: { p_actor: string; p_method: string; p_order: string }
         Returns: string
       }
+      cancel_pending_payment: {
+        Args: { p_actor: string; p_payment: string; p_reason: string }
+        Returns: undefined
+      }
+      confirm_manual_payment: {
+        Args: { p_actor: string; p_payment: string }
+        Returns: undefined
+      }
+      finalize_diagnosis: {
+        Args: { p_ticket: string }
+        Returns: string
+      }
+      record_manual_service_payment_v2: {
+        Args: {
+          p_actor: string
+          p_kind: string
+          p_method: string
+          p_note?: string
+          p_ref: string
+          p_reference?: string
+          p_voucher?: string
+        }
+        Returns: string
+      }
       record_manual_service_payment: {
         Args: {
           p_actor: string
@@ -4141,6 +4189,7 @@ export type Database = {
         | "service"
         | "testing"
         | "delivery"
+        | "payment"
       item_kind: "service" | "product" | "custom"
       legal_status: "draft" | "published" | "retired"
       notification_status: "pending" | "sent" | "failed" | "read"
@@ -4369,6 +4418,7 @@ export const Constants = {
         "service",
         "testing",
         "delivery",
+        "payment",
       ],
       item_kind: ["service", "product", "custom"],
       legal_status: ["draft", "published", "retired"],

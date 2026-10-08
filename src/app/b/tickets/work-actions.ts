@@ -32,7 +32,6 @@ export async function saveDiagnosisAction(_p: ActionState, fd: FormData): Promis
     tests_performed: v.testsPerformed || null,
     recommendations: v.recommendations || null,
     suggested_parts: v.suggestedParts || null,
-    visible_to_customer: v.visible === "on",
   };
   const { data: existing } = await supabase.from("diagnostics").select("id").eq("ticket_id", v.ticketId).order("version", { ascending: false }).limit(1).maybeSingle();
   let id = existing?.id as string | undefined;

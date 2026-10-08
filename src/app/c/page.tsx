@@ -69,7 +69,7 @@ export default async function ClientHome() {
           <span className="text-[15px] font-extrabold">Asistente TechnoUltra</span>
           <span className="text-[13px] font-semibold text-muted">Pregunta por servicios, precios, cobertura o tu solicitud.</span>
         </span>
-        <span className="flex-none text-[13px] font-extrabold text-brand">Abrir</span>
+        <span className="flex-none text-[13px] font-extrabold text-brand-text">Abrir</span>
       </Link>
       <Section title="Lo que sigue">
         {rows.length === 0 ? (

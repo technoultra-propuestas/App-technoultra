@@ -30,8 +30,8 @@ export function quoteBreakdown(q: QuotePricing): BreakdownLine[] {
     lines.push({ key: "urgency", label: `Recargo por urgencia · ${s?.label ?? "urgencia"}${pct}`, amount: n(q.urgency_amount), sign: 1 });
   }
   if (n(q.delivery_fee) > 0) lines.push({ key: "delivery", label: `Domicilio${q.delivery_snapshot?.city ? ` · ${q.delivery_snapshot.city}` : ""}`, amount: n(q.delivery_fee), sign: 1 });
-  if (n(q.diagnosis_credit) > 0) lines.push({ key: "credit", label: "Abono del diagnóstico ya pagado", amount: n(q.diagnosis_credit), sign: -1 });
-  lines.push({ key: "total", label: "Total", amount: n(q.total), sign: 1, strong: true });
+  if (n(q.diagnosis_credit) > 0) lines.push({ key: "credit", label: "Crédito por diagnóstico (ya lo pagaste)", amount: n(q.diagnosis_credit), sign: -1 });
+  lines.push({ key: "total", label: "Total a pagar", amount: n(q.total), sign: 1, strong: true });
   // El IVA solo se informa (el precio ya es el final): únicamente si TechnoUltra es responsable de IVA.
   if (q.tax_snapshot?.responsible && n(q.vat_included) > 0) {
     lines.push({ key: "vat", label: `Incluye IVA (${q.tax_snapshot.rate ?? 19}%)`, amount: n(q.vat_included), sign: 1, info: true });

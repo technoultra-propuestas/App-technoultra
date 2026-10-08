@@ -211,7 +211,7 @@ export async function CatalogView({ catSlug, subSlug, sp }: { catSlug?: string; 
                 <li key={l}>
                   <Link href={`${base}${qs({ orden: k, pagina: undefined })}`} aria-current={(f.orden ?? undefined) === k ? "true" : undefined} className="flex min-h-12 items-center justify-between border-b border-line text-[15px] font-bold text-ink no-underline">
                     {l}
-                    {(f.orden ?? undefined) === k ? <span aria-hidden className="text-brand">✓</span> : null}
+                    {(f.orden ?? undefined) === k ? <span aria-hidden className="text-brand-text">✓</span> : null}
                   </Link>
                 </li>
               ))}

@@ -42,7 +42,7 @@ export function derivePaymentUi(rows: PaymentRow[], settled: boolean): { state: 
   switch (latest.status) {
     case "pending":
       // Un pago manual pendiente no existe (nace aprobado); un pago en línea pendiente se muestra «en validación».
-      return { state: "validating", canPay: false, canResume: true };
+      return { state: "validating", canPay: false, canResume: latest.provider === "mercadopago" };
     case "refunded":
       return { state: "refunded", canPay: false, canResume: false };
     case "expired":

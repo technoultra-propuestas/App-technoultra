@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-import { SiteShell } from "@/components/site/SiteShell";
 import { loadFacets } from "@/lib/catalog/queries";
-import { CatalogView } from "../../catalog-view";
+import { CatalogView } from "../../../catalog-view";
 
 type Params = Promise<{ slug: string }>;
 
@@ -18,8 +17,9 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 
 export default async function CategoryPage({ params, searchParams }: { params: Params; searchParams: Promise<Record<string, string | undefined>> }) {
   return (
-    <SiteShell wide>
+    <>
       <CatalogView catSlug={(await params).slug} sp={await searchParams} />
-    </SiteShell>
+    </>
   );
 }
+

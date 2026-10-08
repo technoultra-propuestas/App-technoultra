@@ -23,6 +23,8 @@ export function CartView({ copy, shipping }: Props) {
   // Lista de ids para la que YA se obtuvieron los datos del servidor. Mientras no coincida con el carrito actual, no se poda nada.
   const [fetchedFor, setFetchedFor] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
+  // El carrito NO es un checkout: «enviado» solo significa que se abrió WhatsApp con el pedido; no hay cobro ni pedido confirmado.
+  const [sent, setSent] = useState(false);
   const loading = ids !== "" && fetchedFor !== ids && !failed;
 
   useEffect(() => {
@@ -109,9 +111,15 @@ export function CartView({ copy, shipping }: Props) {
             </>
           ) : null}
         </div>
-        <a href={wa} target="_blank" rel="noopener noreferrer" onClick={() => haptic("tap")} aria-disabled={lines.length === 0 || loading} className={`press inline-flex min-h-[54px] items-center justify-center rounded-[14px] bg-brand px-5 text-[16px] font-extrabold text-ink no-underline shadow-card ${lines.length === 0 || loading ? "pointer-events-none opacity-50" : ""}`}>
-          Comprar por WhatsApp
+        <a href={wa} target="_blank" rel="noopener noreferrer" onClick={() => { haptic("tap"); setSent(true); }} aria-disabled={lines.length === 0 || loading} className={`press inline-flex min-h-[54px] items-center justify-center rounded-[14px] bg-brand px-5 text-[16px] font-extrabold text-ink no-underline shadow-card ${lines.length === 0 || loading ? "pointer-events-none opacity-50" : ""}`}>
+          {sent ? "Abrir WhatsApp de nuevo" : "Comprar por WhatsApp"}
         </a>
+        {sent ? (
+          <div role="status" className="flex flex-col gap-1 rounded-[14px] bg-ok-soft p-3.5 text-ok">
+            <span className="text-[15px] font-extrabold">✓ Pedido enviado a WhatsApp</span>
+            <span className="text-[13.5px] font-semibold leading-snug">Te responderemos en ese chat para confirmar disponibilidad y entrega. Todavía no hay ningún cobro: el pago se coordina contigo allá.</span>
+          </div>
+        ) : null}
         <Link href="/tienda" className="flex min-h-11 items-center justify-center text-[14px] font-extrabold text-ink underline decoration-brand underline-offset-[3px]">Seguir explorando el catálogo</Link>
       </aside>
     </div>

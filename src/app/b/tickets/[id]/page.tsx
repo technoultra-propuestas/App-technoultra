@@ -10,8 +10,9 @@ import { createClient } from "@/lib/supabase/server";
 import { AssignForm, NoteForm, TransitionForm } from "./forms";
 import { AiDiagnosisCard, type AiRow } from "@/components/ai/AiDiagnosisCard";
 import { reviewAiAction } from "../ai-actions";
-import { DiagnosisBox } from "./diagnosis-box";
-import { PaymentBox } from "./payment-box";
+import { NextActionPanel } from "./next-action-panel";
+import { PaymentsPanel } from "./payments-panel";
+import { ProposalPanel } from "./proposal-panel";
 import { QuoteSection } from "./quote-section";
 import { ReceptionSection } from "./reception-section";
 import { WorkSection } from "./work-section";
@@ -62,6 +63,7 @@ export default async function StaffTicketPage({ params }: { params: Promise<{ id
       <div className="flex flex-col gap-6">
         <TextLink href="/b/tickets" className="w-fit">← Tickets</TextLink>
         <StatusHero code={t.code} subtitle={`${svc?.name ?? "Servicio"} · ${MODALITY_LABEL[t.modality]}`} status={effectiveStatus(t.status, (receptionCount ?? 0) > 0, t.modality)} message={t.problem} meta={<>Solicitud creada el {fmtDateTime(t.received_at)}{t.cancelled_reason ? ` · Cancelación: ${t.cancelled_reason}` : ""}</>} />
+        <NextActionPanel ticketId={t.id} />
         <div className="grid gap-4 sm:grid-cols-2">
           <Panel title="Cliente">
             <InfoList
@@ -96,11 +98,11 @@ export default async function StaffTicketPage({ params }: { params: Promise<{ id
             ) : null}
           </AiDiagnosisCard>
         ) : null}
-        <ReceptionSection ticketId={t.id} problem={t.problem} open={!["delivered", "cancelled"].includes(t.status) && ["received", "diagnosing"].includes(t.status)} />
+        <div id="recepcion" className="scroll-mt-24"><ReceptionSection ticketId={t.id} problem={t.problem} open={!["delivered", "cancelled"].includes(t.status) && ["received", "diagnosing"].includes(t.status)} /></div>
         <WorkSection ticketId={t.id} status={t.status} />
-        <DiagnosisBox ticketId={t.id} isAdmin={me.role === "superadmin"} />
+        <ProposalPanel ticketId={t.id} status={t.status} />
         <QuoteSection ticketId={t.id} canQuote ticketOpen={!(["delivered", "cancelled"] as string[]).includes(t.status)} />
-        <PaymentBox ticketId={t.id} isOwner={me.role === "superadmin"} />
+        <PaymentsPanel ticketId={t.id} role={me.role === "superadmin" ? "superadmin" : "technician"} />
         <DocumentsSection ticketId={t.id} status={t.status} />
         <Panel title="Historial">
           <Timeline items={[...(history ?? [])].reverse().map((h) => ({ id: h.id, title: statusLabel(h.to_status), at: h.created_at, detail: h.reason }))} />
@@ -119,8 +121,8 @@ export default async function StaffTicketPage({ params }: { params: Promise<{ id
         </Card>
       </div>
       <aside className="flex flex-col gap-4">
-        <Card className="flex flex-col gap-3">
-          <h2 className="m-0 text-[17px] font-extrabold">Cambiar estado</h2>
+        <Card id="estado" className="flex flex-col gap-3">
+          <h2 className="m-0 text-[17px] font-extrabold">Cambiar estado manualmente</h2>
           <TransitionForm ticketId={t.id} options={options} />
         </Card>
         {me.role === "superadmin" ? (

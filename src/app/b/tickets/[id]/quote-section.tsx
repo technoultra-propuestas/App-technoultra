@@ -1,6 +1,7 @@
 import { Card, fmtDate, fmtDateTime, money, statusLabel } from "@/components/ui/layout";
 import { createClient } from "@/lib/supabase/server";
 import { quoteBreakdown } from "@/lib/domain/pricing";
+import { creditExplanation, groupQuoteItems } from "@/lib/quotes/concepts";
 import { removeItemAction, setDeliveryAction, setNeedsPartAction, setUrgencyAction } from "../quote-actions";
 import { AddItemForm, CreateQuoteForm, QuoteActionForm } from "./quote-forms";
 
@@ -27,7 +28,7 @@ export async function QuoteSection({ ticketId, canQuote, ticketOpen }: { ticketI
 
   if (!quote) {
     return (
-      <Card className="flex flex-col gap-3">
+      <Card id="cotizacion" className="flex flex-col gap-3">
         <h2 className="m-0 text-[17px] font-extrabold">Cotización</h2>
         <p className="m-0 text-[14px] text-muted">Todavía no hay una cotización para este ticket.</p>
         {canQuote && ticketOpen ? <CreateQuoteForm ticketId={ticketId} /> : null}
@@ -41,11 +42,12 @@ export async function QuoteSection({ ticketId, canQuote, ticketOpen }: { ticketI
   ]);
   const homeLike = tk?.modality === "home" || tk?.modality === "pickup";
   const [{ data: items }, { data: events }] = await Promise.all([
-    supabase.from("quote_items").select("id, position, description, qty, unit_price, discount, line_subtotal, warranty_days").eq("quote_id", quote.id).order("position"),
+    supabase.from("quote_items").select("id, position, kind, concept, priority, description, qty, unit_price, discount, line_subtotal, warranty_days").eq("quote_id", quote.id).order("position"),
     supabase.from("quote_events").select("id, event_type, actor_role, message, created_at").eq("quote_id", quote.id).order("created_at"),
   ]);
   const draft = quote.status === "draft";
   const lastQuestion = [...(events ?? [])].reverse().find((e) => e.event_type === "question");
+  const rejection = [...(events ?? [])].reverse().find((e) => e.event_type === "rejected");
   const [{ data: services }, { data: products }] = draft && canQuote
     ? await Promise.all([
         supabase.from("services").select("id, name").eq("is_active", true).neq("price_mode", "quote").order("name"),
@@ -54,7 +56,7 @@ export async function QuoteSection({ ticketId, canQuote, ticketOpen }: { ticketI
     : [{ data: [] }, { data: [] }];
 
   return (
-    <Card className="flex flex-col gap-4">
+    <Card id="cotizacion" className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="m-0 text-[17px] font-extrabold">
           Cotización {quote.code} · v{quote.version}
@@ -62,34 +64,48 @@ export async function QuoteSection({ ticketId, canQuote, ticketOpen }: { ticketI
         <span className="rounded-full bg-[#FFE9CC] px-3 py-1 text-[13px] font-extrabold text-[#7A3E00]">{QUOTE_STATUS[quote.status] ?? quote.status}</span>
       </div>
       {quote.valid_until ? <p className="m-0 text-[13px] text-muted">Vigente hasta {fmtDate(quote.valid_until)}</p> : null}
+      {quote.status === "rejected" ? (
+        <div role="status" className="flex flex-col gap-1 rounded-[14px] bg-[#FDE8E4] p-3 text-[#9A2B1E]">
+          <span className="text-[14px] font-extrabold">Cotización rechazada por el cliente.</span>
+          {rejection?.message ? <span className="text-[14px] font-semibold">Motivo: {rejection.message}</span> : null}
+        </div>
+      ) : null}
 
-      <ul className="m-0 flex list-none flex-col gap-2 p-0">
-        {(items ?? []).map((i) => (
-          <li key={i.id} className="flex items-start justify-between gap-3 text-[15px]">
-            <div className="min-w-0">
-              <div className="font-semibold">
-                {i.description} <span className="text-muted">× {Number(i.qty)}</span>
-              </div>
-              <div className="text-[12px] text-muted">
-                {money(i.unit_price)} c/u{Number(i.discount) > 0 ? ` · desc. ${money(i.discount)}` : ""}
-                {i.warranty_days > 0 ? ` · garantía ${i.warranty_days} días` : ""}
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="font-extrabold">{money(i.line_subtotal)}</span>
-              {draft && canQuote ? (
-                <form action={removeItemAction}>
-                  <input type="hidden" name="ticketId" value={ticketId} />
-                  <input type="hidden" name="itemId" value={i.id} />
-                  <button type="submit" aria-label={`Quitar ${i.description}`} className="min-h-9 rounded-[10px] border border-line-strong bg-white px-2 text-[13px] font-bold text-[#9A2B1E]">
-                    Quitar
-                  </button>
-                </form>
-              ) : null}
-            </div>
-          </li>
-        ))}
-      </ul>
+      {groupQuoteItems(items ?? []).map((g) => (
+        <section key={g.concept} aria-label={g.label} className="flex flex-col gap-2">
+          <div className="flex items-baseline justify-between border-b border-line pb-1 text-[13px] font-extrabold uppercase tracking-[0.04em] text-muted">
+            <span>{g.label}</span>
+            <span>{money(g.subtotal)}</span>
+          </div>
+          <ul className="m-0 flex list-none flex-col gap-2 p-0">
+            {g.items.map((i) => (
+              <li key={i.id} className="flex items-start justify-between gap-3 text-[15px]">
+                <div className="min-w-0">
+                  <div className="font-semibold">
+                    {i.description} <span className="text-muted">× {Number(i.qty)}</span>
+                  </div>
+                  <div className="text-[12px] text-muted">
+                    {money(i.unit_price)} c/u{Number(i.discount) > 0 ? ` · desc. ${money(i.discount)}` : ""}
+                    {i.warranty_days > 0 ? ` · garantía ${i.warranty_days} días` : ""}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="font-extrabold">{money(i.line_subtotal)}</span>
+                  {draft && canQuote ? (
+                    <form action={removeItemAction}>
+                      <input type="hidden" name="ticketId" value={ticketId} />
+                      <input type="hidden" name="itemId" value={i.id} />
+                      <button type="submit" aria-label={`Quitar ${i.description}`} className="min-h-9 rounded-[10px] border border-line-strong bg-white px-2 text-[13px] font-bold text-[#9A2B1E]">
+                        Quitar
+                      </button>
+                    </form>
+                  ) : null}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))}
       <div className="flex flex-col gap-1 border-t border-line pt-3 text-[14px] font-semibold">
         {quoteBreakdown(quote as unknown as Parameters<typeof quoteBreakdown>[0]).map((l) => (
           <div key={l.key} className={`flex justify-between ${l.strong ? "text-[18px] font-extrabold" : l.info ? "text-[13px] text-muted" : l.key === "subtotal" ? "" : "text-muted"}`}>
@@ -100,6 +116,7 @@ export async function QuoteSection({ ticketId, canQuote, ticketOpen }: { ticketI
             </span>
           </div>
         ))}
+        {creditExplanation(Number(quote.diagnosis_credit)) ? <p className="m-0 pt-1 text-[12.5px] font-semibold text-muted">{creditExplanation(Number(quote.diagnosis_credit))}</p> : null}
       </div>
 
       {draft && canQuote ? (
@@ -146,7 +163,7 @@ export async function QuoteSection({ ticketId, canQuote, ticketOpen }: { ticketI
             </button>
           </form>
           <details className="rounded-[14px] border border-line p-3">
-            <summary className="cursor-pointer text-[15px] font-extrabold">Agregar ítem</summary>
+            <summary className="cursor-pointer text-[15px] font-extrabold">Agregar un concepto</summary>
             <div className="pt-3">
               <AddItemForm ticketId={ticketId} quoteId={quote.id} services={services ?? []} products={products ?? []} />
             </div>

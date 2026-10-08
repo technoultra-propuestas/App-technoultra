@@ -4,7 +4,7 @@ import { NextRequest } from "next/server";
 
 const OID = "ORD01M49SFQXVAVQGG19A6SF4GN05";
 const SECRET = "whsec_test_1234567890";
-const TOKEN = "APP_USR-6180208665021480-061515-secreto-3474234217";
+const TOKEN = "APP_USR-1111111111111111-000000-token-de-prueba-0000000000";
 const state = { configured: true, order: null as unknown, apply: "approved" as string, applyError: null as null | { code: string } };
 const seen = new Set<string>();
 const rpc = vi.fn(async (_n: string, p: Record<string, unknown>) => {
@@ -30,7 +30,7 @@ vi.mock("@/lib/payments/mercadopago", async (orig) => ({ ...((await orig()) as o
 
 import { POST } from "@/app/api/webhooks/mercadopago/route";
 
-const order = (over: Record<string, unknown> = {}) => ({ id: OID, status: "processed", status_detail: "accredited", external_reference: "pay-p1", total_amount: "30100", total_paid_amount: "30100", currency: "COP", last_updated_date: "2026-10-06T10:00:00Z", integration_data: { application_id: "6180208665021480" }, ...over });
+const order = (over: Record<string, unknown> = {}) => ({ id: OID, status: "processed", status_detail: "accredited", external_reference: "pay-p1", total_amount: "30100", total_paid_amount: "30100", currency: "COP", last_updated_date: "2026-10-06T10:00:00Z", integration_data: { application_id: "1111111111111111" }, ...over });
 const signed = (dataId = OID, ts = String(Date.now()), reqId = "req-1") => `ts=${ts},v1=${createHmac("sha256", SECRET).update(`id:${dataId.toLowerCase()};request-id:${reqId};ts:${ts};`).digest("hex")}`;
 function call(opts: { body?: unknown; raw?: string; sig?: string | null; type?: string; dataId?: string } = {}) {
   const dataId = opts.dataId ?? OID;

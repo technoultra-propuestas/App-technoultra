@@ -105,16 +105,16 @@ describe("catálogo: categorías, subcategorías, duplicados y faltantes", () =>
 
 describe("WhatsApp", () => {
   const p = { name: "SSD Kingston 480 GB", ref: "SA400S37", price: 120000, brand: "Kingston", category: "Almacenamiento", subcategory: "SSD SATA" };
-  it("mensaje con producto, referencia, marca, categoría y precio", () => {
+  it("mensaje con producto, referencia, precio y cantidad (formato de la ficha)", () => {
     const m = buildWhatsappMessage(p);
     expect(m).toContain("Hola TechnoUltra 👋");
     expect(m).toContain("Quiero consultar la compra de:");
     expect(m).toContain("Producto: SSD Kingston 480 GB");
     expect(m).toContain("Referencia: SA400S37");
-    expect(m).toContain("Precio publicado: $120.000");
+    expect(m).toContain("Precio: $120.000");
+    expect(m).toContain("Cantidad: 1");
     expect(m).toContain("¿Me pueden confirmar disponibilidad y coordinar la entrega?");
     expect(m).not.toMatch(/precio actual/i); // el precio publicado ya es el comercial: no se pregunta por él
-    expect(m).toContain("Categoría: Almacenamiento › SSD SATA");
   });
   it("URL al número de TechnoUltra, codificada sin romper acentos, emojis ni saltos de línea", () => {
     const url = productWhatsappUrl(p);

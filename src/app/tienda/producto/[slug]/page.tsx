@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { SiteShell } from "@/components/site/SiteShell";
 import { ProductImage } from "@/components/store/ProductImage";
 import { optimizedImage } from "@/lib/catalog/image";
 import { ShippingInfo } from "@/components/store/ShippingInfo";
@@ -28,10 +27,10 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 }
 
 export default async function ProductPage({ params }: { params: Params }) {
-  const p = await getProductBySlug((await params).slug);
+  // Producto y ajustes del Shop son independientes: se piden a la vez (antes eran secuenciales).
+  const [p, settings] = await Promise.all([params.then((x) => getProductBySlug(x.slug)), loadShopSettings()]);
   // Sin disponibilidad, oculto por el administrador o inexistente: la base de datos (RLS) no lo devuelve → 404.
   if (!p) notFound();
-  const settings = await loadShopSettings();
   const wa = productWhatsappUrl({ name: p.name, ref: p.source_ref, price: p.price, brand: p.brand, category: p.category?.name, subcategory: p.subcategory?.name }, { closing: settings.whatsapp_closing });
   const crumbs = [
     { name: "Inicio", path: "/" },
@@ -51,7 +50,7 @@ export default async function ProductPage({ params }: { params: Params }) {
     offers: { "@type": "Offer", url: `${siteUrl()}/tienda/producto/${p.slug}`, priceCurrency: "COP", price: p.price, availability: "https://schema.org/InStock", seller: { "@type": "Organization", name: "TechnoUltra" } },
   };
   return (
-    <SiteShell wide>
+    <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbLd(crumbs)) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(product) }} />
       <nav aria-label="Ruta" className="mb-5 flex flex-wrap items-center gap-x-2 text-[13px] font-semibold text-muted">
@@ -86,6 +85,6 @@ export default async function ProductPage({ params }: { params: Params }) {
           <p className="m-0 whitespace-pre-line text-[15px] leading-relaxed text-ink-2">{p.description}</p>
         </section>
       ) : null}
-    </SiteShell>
+    </>
   );
 }

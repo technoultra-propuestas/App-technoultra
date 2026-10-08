@@ -1,4 +1,5 @@
 import { timingSafeEqual } from "node:crypto";
+import { revalidateTag } from "next/cache";
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { excelenterCsvUrlProvider } from "@/lib/catalog/provider";
@@ -22,6 +23,7 @@ export async function GET(request: NextRequest) {
   const header = request.headers.get("authorization") ?? "";
   if (!header.startsWith("Bearer ") || !safeEqual(header.slice(7), secret.data)) return reply(401, { error: "unauthorized" });
   const outcome = await runCatalogSync(createAdminClient() as unknown as RpcClient, excelenterCsvUrlProvider(), "automatic");
+  if (outcome.ok) revalidateTag("catalog", { expire: 0 });
   if (!outcome.ok && outcome.reason === "not_configured") return reply(200, { ok: true, skipped: "source_not_configured" });
   return reply(outcome.ok ? 200 : 502, { ok: outcome.ok, status: outcome.status, ...(outcome.ok ? { summary: outcome.summary } : { reason: outcome.reason }) });
 }

@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { assertRole } from "@/lib/auth/session";
 import { zodToState, type ActionState } from "@/lib/auth/schemas";
-import { generateTicketDocument, type DocKind } from "@/lib/documents/generate";
+import { autoDocuments } from "@/lib/tickets/auto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { scheduleEmailFlush } from "@/lib/email/outbox";
 import { createClient } from "@/lib/supabase/server";
@@ -24,21 +24,6 @@ const TRANSITION_ERRORS: [RegExp, string][] = [
 ];
 const friendlyTransitionError = (m?: string) =>
   TRANSITION_ERRORS.find(([re]) => m && re.test(m))?.[1] ?? "No pudimos cambiar el estado. Inténtalo de nuevo.";
-
-/** Documentos que se generan solos al llegar a cada etapa (mejor esfuerzo: un fallo no deshace la transición). */
-async function autoDocuments(ticketId: string, to: string, actorId: string) {
-  const wanted: DocKind[] = to === "diagnosing" ? ["reception"] : to === "delivered" ? ["delivery", "warranty_product", "warranty_labor"] : [];
-  if (!wanted.length) return;
-  const admin = createAdminClient();
-  for (const kind of wanted) {
-    try {
-      const { count } = await admin.from("documents").select("id", { count: "exact", head: true }).eq("ticket_id", ticketId).eq("doc_type", kind);
-      if (!count) await generateTicketDocument(kind, ticketId, actorId);
-    } catch (e) {
-      console.error("documents.auto", kind, (e as Error).message);
-    }
-  }
-}
 
 const transitionSchema = z.object({
   ticketId: z.string().uuid(),

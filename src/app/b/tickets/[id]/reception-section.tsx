@@ -70,7 +70,7 @@ export async function ReceptionSection({ ticketId, problem, open }: { ticketId: 
       <div className="flex items-center justify-between gap-2">
         <h2 className="m-0 text-[17px] font-extrabold">Recepción del equipo</h2>
         <span className={`rounded-full px-3 py-1 text-[12px] font-extrabold ${requiredDone === requiredTotal ? "bg-[#E3F3E8] text-[#1F6B3A]" : "bg-[#FBF1D9] text-[#6E4B00]"}`}>
-          Fotos obligatorias {requiredDone}/{requiredTotal}
+          {requiredDone === requiredTotal && reception ? "✓ Recepción completada" : `Fotos obligatorias ${requiredDone}/${requiredTotal}`}
         </span>
       </div>
       {open ? <ReceptionForm ticketId={ticketId} defaults={{ reason: reception?.reason ?? problem, accessories: reception?.accessories ?? [], damage: reception?.visible_damage ?? [], physicalCondition: reception?.physical_condition ?? "", observations: reception?.observations ?? "" }} saved={Boolean(reception)} /> : null}

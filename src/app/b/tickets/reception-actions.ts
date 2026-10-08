@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { advanceAfterReception } from "@/lib/tickets/auto";
 import { assertRole } from "@/lib/auth/session";
 import { zodToState, type ActionState } from "@/lib/auth/schemas";
 import { ACCESSORIES, DAMAGES } from "@/lib/domain/reception";
@@ -18,7 +19,7 @@ const schema = z.object({
 const pick = (fd: FormData, key: string, allowed: string[]) => fd.getAll(key).map(String).filter((v) => allowed.includes(v));
 
 export async function saveReceptionAction(_p: ActionState, fd: FormData): Promise<ActionState> {
-  await assertRole(["technician", "superadmin"]);
+  const actor = await assertRole(["technician", "superadmin"]);
   const parsed = schema.safeParse(Object.fromEntries(fd.entries()));
   if (!parsed.success) return zodToState(parsed.error);
   const v = parsed.data;
@@ -35,6 +36,8 @@ export async function saveReceptionAction(_p: ActionState, fd: FormData): Promis
     ? await supabase.from("receptions").update(row).eq("id", existing.id)
     : await supabase.from("receptions").insert({ ticket_id: v.ticketId, ...row });
   if (error) return { ok: false, error: "No pudimos guardar la recepción. Verifica que el ticket sea tuyo y siga abierto." };
+  const advanced = await advanceAfterReception(v.ticketId, actor.id);
   revalidatePath(`/b/tickets/${v.ticketId}`);
-  return { ok: true, message: "Recepción guardada." };
+  revalidatePath("/b/tickets");
+  return { ok: true, message: advanced ? "Recepción completa. El ticket pasó a «En diagnóstico»." : "Recepción guardada." };
 }

@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-import { SiteShell } from "@/components/site/SiteShell";
 import { breadcrumbLd, jsonLd } from "@/lib/seo";
-import { CatalogView } from "./catalog-view";
+import { CatalogView } from "../catalog-view";
 
 export const metadata: Metadata = {
   title: "Tienda de tecnología",
@@ -11,9 +10,10 @@ export const metadata: Metadata = {
 
 export default async function StorePage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   return (
-    <SiteShell wide>
+    <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbLd([{ name: "Inicio", path: "/" }, { name: "Tienda", path: "/tienda" }])) }} />
       <CatalogView sp={await searchParams} />
-    </SiteShell>
+    </>
   );
 }
+

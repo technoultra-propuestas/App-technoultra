@@ -98,7 +98,7 @@ export async function PaymentCard({ ticketId, result }: { ticketId: string; resu
   const msg = returnMessage(result) ?? (result ? RESULT[result] : undefined);
   if (!msg && !showDiag && !showService && !showQuote) return null;
   return (
-    <Card className="flex flex-col gap-4">
+    <Card id="pago" className="flex flex-col gap-4">
       <h2 className="m-0 text-[17px] font-extrabold">Pago</h2>
       {msg ? <Alert tone={msg.tone}>{msg.text}</Alert> : null}
       {showDiag ? (

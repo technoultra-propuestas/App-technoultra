@@ -2,14 +2,15 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { advanceAfterReception } from "@/lib/tickets/auto";
 import { assertRole } from "@/lib/auth/session";
 import { allow, TOO_MANY } from "@/lib/auth/rate-limit";
 import { fetchAsset, signedUpload, ticketFolder, validateAsset } from "@/lib/cloudinary";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
-const STAGES = ["reception", "diagnosis", "service", "testing", "delivery"] as const;
-const SLOTS = ["front", "back", "screen", "serial", "left", "right", "charger", "damage", "other"] as const;
+const STAGES = ["reception", "diagnosis", "service", "testing", "delivery", "payment"] as const;
+const SLOTS = ["front", "back", "screen", "serial", "left", "right", "charger", "damage", "other", "voucher"] as const;
 
 const signSchema = z.object({
   ticketId: z.string().uuid(),
@@ -55,7 +56,7 @@ const registerSchema = signSchema.extend({
  * Registra la evidencia SOLO después de verificar en Cloudinary que el archivo existe, es privado, pertenece a la
  * carpeta del ticket y cumple formato/tamaño. La inserción usa service_role porque el cliente no tiene permiso de INSERT.
  */
-export async function registerEvidenceAction(input: unknown): Promise<{ ok: boolean; error?: string }> {
+export async function registerEvidenceAction(input: unknown): Promise<{ ok: boolean; error?: string; id?: string }> {
   const parsed = registerSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: "Datos no válidos." };
   const v = parsed.data;
@@ -68,7 +69,7 @@ export async function registerEvidenceAction(input: unknown): Promise<{ ok: bool
   const check = validateAsset(asset, v.ticketId);
   if (!check.ok) return { ok: false, error: check.reason === "size" ? "El archivo es demasiado grande." : "Formato de archivo no permitido." };
 
-  const { error } = await createAdminClient().from("evidence").insert({
+  const { data: row, error } = await createAdminClient().from("evidence").insert({
     ticket_id: v.ticketId,
     stage: v.stage,
     slot: v.slot ?? null,
@@ -77,10 +78,11 @@ export async function registerEvidenceAction(input: unknown): Promise<{ ok: bool
     format: asset.format,
     bytes: asset.bytes,
     uploaded_by: ctx.profile.id,
-  });
+  }).select("id").single();
   if (error) return { ok: false, error: error.code === "23505" ? "Ese archivo ya fue registrado." : "No pudimos registrar el archivo." };
+  if (v.stage === "reception") await advanceAfterReception(v.ticketId, ctx.profile.id);
   revalidatePath(`/b/tickets/${v.ticketId}`);
-  return { ok: true };
+  return { ok: true, id: row.id };
 }
 
 const deleteSchema = z.object({ ticketId: z.string().uuid(), evidenceId: z.string().uuid() });

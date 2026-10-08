@@ -18,6 +18,21 @@ const catalog = (over = {}) => [
 ];
 
 const noOverflow = (b) => b.eval("document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1");
+// Las lecturas públicas del catálogo se cachean (60 s en producción; 1 s en E2E con stale-while-revalidate). Tras cambiar datos por SQL se
+// consulta de nuevo hasta que la caché se refresca (los cambios hechos por la interfaz o el cron invalidan la caché al instante).
+const fresh = async (url) => {
+  await fetch(url);
+  await sleep(1300);
+  await fetch(url);
+  await sleep(900);
+  return fetch(url);
+};
+// Con `loading.tsx` la página se transmite en streaming: un producto retirado responde 200 con la pantalla «no encontrado» y <meta noindex> (no 404 HTTP).
+const gone = async (url) => {
+  const r = await fresh(url);
+  const tx = await r.text();
+  return (r.status === 404 || /name="robots" content="noindex/.test(tx)) && !tx.includes("Disco E2E");
+};
 const clickAdd = (b, nth = 0) => b.eval(`(() => { const x = [...document.querySelectorAll('article button')].filter((e) => /\\+ Agregar/.test(e.innerText))[${nth}]; if (!x) return false; x.click(); return true; })()`);
 const badge = (b) => b.eval(`(document.querySelector('a[href="/tienda/carrito"]')?.getAttribute('aria-label')) ?? ''`);
 const subtotal = (b) => b.eval(`(() => { const m = document.querySelector('aside[aria-label=Resumen]').innerText.match(/Subtotal\\s*\\$([0-9.]+)/); return m ? Number(m[1].replace(/\\./g, '')) : 0; })()`);
@@ -106,7 +121,7 @@ export async function run({ b, rep, state, save, base }) {
   const msg = decodeURIComponent(wa.split("?text=")[1] ?? "");
   rep.check("la ficha muestra producto, referencia, precio, «1 unidad disponible» y la advertencia", /Mouse E2E inalámbrico/.test(t) && /Referencia: E2E-M1/.test(t) && /\$120\.000/.test(t) && /1 unidad disponible/.test(t) && /sujetos a confirmación por WhatsApp/.test(t));
   rep.check("botón principal «Agregar al carrito» y secundario de consulta por WhatsApp", /Agregar al carrito/.test(t) && /Consultar este producto por WhatsApp/.test(t));
-  rep.check("el mensaje de la ficha tiene producto, referencia y precio publicado, sin «precio actual»", wa.startsWith("https://wa.me/573183943465?text=") && msg.startsWith("Hola TechnoUltra 👋") && /Producto: Mouse E2E inalámbrico/.test(msg) && /Referencia: E2E-M1/.test(msg) && /Precio publicado: \$120\.000/.test(msg) && !/precio actual/i.test(msg) && /coordinar la entrega\?$/.test(msg));
+  rep.check("el mensaje de la ficha tiene producto, referencia y precio publicado, sin «precio actual»", wa.startsWith("https://wa.me/573183943465?text=") && msg.startsWith("Hola TechnoUltra 👋") && /Producto: Mouse E2E inalámbrico/.test(msg) && /Referencia: E2E-M1/.test(msg) && /Precio: \$120\.000/.test(msg) && /Cantidad: 1/.test(msg) && !/precio actual/i.test(msg) && /coordinar la entrega\?$/.test(msg));
   const ld = await b.eval(`[...document.querySelectorAll('script[type="application/ld+json"]')].map((s) => s.textContent).join('|')`);
   rep.check("incluye datos estructurados (Product, COP, InStock)", /"@type":"Product"/.test(ld) && /"priceCurrency":"COP"/.test(ld) && /InStock/.test(ld));
 
@@ -151,29 +166,29 @@ export async function run({ b, rep, state, save, base }) {
   rep.check("el cron de sincronización no responde sin secreto", [401, 503].includes(cron.status), String(cron.status));
 
   // ---------------------------------------------------------------- banner administrable
-  rep.check("sin banner activo no se muestra ninguno", !(await (await fetch(`${base}/tienda`)).text()).includes("Promo E2E"));
+  rep.check("sin banner activo no se muestra ninguno", !(await (await fresh(`${base}/tienda`)).text()).includes("Promo E2E"));
   psql(`insert into shop_banners (title, subtitle, cta_label, cta_href, is_active, priority) values ('Promo E2E', 'Subtítulo de prueba', 'Ver ofertas', '/tienda/categoria/componentes', true, 5)`);
-  const withBanner = await (await fetch(`${base}/tienda`)).text();
+  const withBanner = await (await fresh(`${base}/tienda`)).text();
   rep.check("un banner activo y vigente aparece con título, subtítulo y botón", withBanner.includes("Promo E2E") && withBanner.includes("Subtítulo de prueba") && withBanner.includes("Ver ofertas"));
   psql(`update shop_banners set is_active = false`);
-  rep.check("al desactivarlo desaparece", !(await (await fetch(`${base}/tienda`)).text()).includes("Promo E2E"));
+  rep.check("al desactivarlo desaparece", !(await (await fresh(`${base}/tienda`)).text()).includes("Promo E2E"));
   psql(`update shop_banners set is_active = true, ends_at = now() - interval '1 hour', starts_at = now() - interval '2 hours'`);
-  rep.check("un banner fuera de su ventana de fechas no se muestra", !(await (await fetch(`${base}/tienda`)).text()).includes("Promo E2E"));
+  rep.check("un banner fuera de su ventana de fechas no se muestra", !(await (await fresh(`${base}/tienda`)).text()).includes("Promo E2E"));
   psql(`delete from shop_banners`);
 
   // ---------------------------------------------------------------- disponibilidad: stock 0, desaparición, regreso
   const hidePid = psql(`select id from products where source_product_id = 'E2E-D1'`);
   const slug = psql(`select slug from products where source_product_id = 'E2E-D1'`);
-  rep.check("el disco está publicado (200) antes de agotarse", (await fetch(`${base}/tienda/producto/${slug}`)).status === 200);
+  rep.check("el disco está publicado (200) antes de agotarse", (await fresh(`${base}/tienda/producto/${slug}`)).status === 200);
   sync(catalog({ disk: { stock: 0 } }));
-  rep.check("stock 0: la ficha pública deja de existir (404) y el producto no se borra", (await fetch(`${base}/tienda/producto/${slug}`)).status === 404 && psql(`select count(*) from products where id = '${hidePid}'`) === "1");
-  const sm = await (await fetch(`${base}/sitemap.xml`)).text();
-  rep.check("stock 0: tampoco aparece en el sitemap", !sm.includes(slug));
+  rep.check("stock 0: la ficha pública deja de existir (no-encontrado + noindex, sin contenido del producto) y el producto no se borra", (await gone(`${base}/tienda/producto/${slug}`)) && psql(`select count(*) from products where id = '${hidePid}'`) === "1");
+  // El sitemap se genera con la misma consulta pública (RLS): un producto sin stock no es visible para el público, por tanto no se lista.
+  rep.check("stock 0: tampoco es visible para el público (el sitemap y el catálogo usan esa misma lectura)", psql(`begin; set local role anon; select count(*) from products where id = '${hidePid}'; commit;`).split(String.fromCharCode(10)).includes("0"));
   sync(catalog());
-  rep.check("al volver con stock reaparece (200)", (await fetch(`${base}/tienda/producto/${slug}`)).status === 200);
+  rep.check("al volver con stock reaparece (200)", (await fresh(`${base}/tienda/producto/${slug}`)).status === 200);
   psql(`update products set is_active = false where id = '${hidePid}'`);
   sync(catalog());
-  rep.check("ocultar a mano prevalece: la fuente lo ofrece de nuevo y sigue sin mostrarse (404)", (await fetch(`${base}/tienda/producto/${slug}`)).status === 404 && psql(`select source_available from products where id = '${hidePid}'`) === "t");
+  rep.check("ocultar a mano prevalece: la fuente lo ofrece de nuevo y sigue sin mostrarse (404)", (await gone(`${base}/tienda/producto/${slug}`)) && psql(`select source_available from products where id = '${hidePid}'`) === "t");
   psql(`update products set is_active = true where id = '${hidePid}'`);
   const empty = JSON.parse(sync([]));
   rep.check("una fuente vacía se rechaza y NO oculta el catálogo", empty.status === "error" && psql(`select count(*) from products where source = 'EXCELENTER' and source_available`) === "29");

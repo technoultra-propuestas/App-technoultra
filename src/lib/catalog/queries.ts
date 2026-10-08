@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import { PAGE_SIZE } from "./config";
 import { normKey } from "./normalize";
 import { createPublicClient } from "@/lib/supabase/public";
@@ -23,7 +24,7 @@ export type CatalogProduct = {
 
 const sanitize = (s: string) => s.replace(/[%_,()*\\]/g, " ").replace(/\s+/g, " ").trim().slice(0, 60);
 
-export async function loadFacets(): Promise<Facets & { brands: { cat: string | null; sub: string | null; brand: string }[] }> {
+async function loadFacetsRaw(): Promise<Facets & { brands: { cat: string | null; sub: string | null; brand: string }[] }> {
   const sb = createPublicClient();
   const [{ data: cats }, { data: subs }, { data: rows }] = await Promise.all([
     sb.from("product_categories").select("id, slug, name, sort_order, is_featured").order("sort_order").order("name"),
@@ -44,7 +45,7 @@ export async function loadFacets(): Promise<Facets & { brands: { cat: string | n
   return { categories, total: list.length, brands };
 }
 
-export async function listProducts(f: ListFilters, scope: { categoryId?: string; subcategoryId?: string }): Promise<{ products: CatalogProduct[]; total: number; page: number; pages: number }> {
+async function listProductsRaw(f: ListFilters, scope: { categoryId?: string; subcategoryId?: string }): Promise<{ products: CatalogProduct[]; total: number; page: number; pages: number }> {
   const sb = createPublicClient();
   const page = Math.max(1, Math.floor(f.pagina ?? 1));
   let q = sb.from("products").select("id, slug, name, brand, price, image_url, source_ref, category_id, subcategory_id", { count: "exact" }).not("source", "is", null);
@@ -70,7 +71,7 @@ export async function listProducts(f: ListFilters, scope: { categoryId?: string;
 }
 
 /** Productos destacados por el SUPERADMIN (visibles y disponibles), en el orden que definió. */
-export async function listFeatured(limit = 8): Promise<CatalogProduct[]> {
+async function listFeaturedRaw(limit = 8): Promise<CatalogProduct[]> {
   const { data } = await createPublicClient()
     .from("products")
     .select("id, slug, name, brand, price, image_url, source_ref, category_id, subcategory_id")
@@ -82,7 +83,7 @@ export async function listFeatured(limit = 8): Promise<CatalogProduct[]> {
   return (data ?? []).map((p) => ({ ...p, price: Number(p.price) }));
 }
 
-export async function getProductBySlug(slug: string) {
+async function getProductBySlugRaw(slug: string) {
   if (!/^[a-z0-9-]{2,80}$/.test(slug)) return null;
   const sb = createPublicClient();
   const { data: p } = await sb
@@ -97,3 +98,17 @@ export async function getProductBySlug(slug: string) {
 }
 
 export const brandKey = normKey;
+
+/**
+ * Lecturas PÚBLICAS cacheadas (60 s, etiqueta «catalog»): son datos del catálogo visibles para cualquiera (cliente anónimo + RLS), así que
+ * compartirlos entre visitantes es seguro y evita ir a la base en cada clic. La caché se invalida al instante cuando el SUPERADMIN edita
+ * productos/ajustes o corre la sincronización (`revalidateTag("catalog")`). También deduplica la consulta que antes se hacía dos veces por
+ * ficha (metadatos + página).
+ */
+// Configurable para pruebas (E2E la baja a 1 s porque cambia datos por SQL); en producción son 60 s.
+const TTL = Math.max(1, Number(process.env.CATALOG_CACHE_SECONDS) || 60);
+const opts = { revalidate: TTL, tags: ["catalog"] };
+export const loadFacets = unstable_cache(loadFacetsRaw, ["catalog:facets"], opts);
+export const listProducts = unstable_cache(listProductsRaw, ["catalog:list"], opts);
+export const listFeatured = unstable_cache(listFeaturedRaw, ["catalog:featured"], opts);
+export const getProductBySlug = unstable_cache(getProductBySlugRaw, ["catalog:product"], opts);

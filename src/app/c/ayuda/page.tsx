@@ -62,7 +62,7 @@ export default async function HelpPage() {
                 <details key={q.id} className="group py-1">
                   <summary className="flex min-h-12 cursor-pointer items-center justify-between gap-3 text-[15px] font-extrabold">
                     {q.question}
-                    <span aria-hidden className="flex-none text-brand transition-transform duration-200 group-open:rotate-45">+</span>
+                    <span aria-hidden className="flex-none text-brand-text transition-transform duration-200 group-open:rotate-45">+</span>
                   </summary>
                   <p className="m-0 whitespace-pre-line pb-3 text-[14.5px] leading-normal text-ink-2">{q.answer}</p>
                 </details>

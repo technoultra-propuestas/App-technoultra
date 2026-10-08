@@ -10,12 +10,12 @@ const ITEMS: NavItem[] = [
 ];
 const MORE_ALSO = ["/c/equipos", "/c/proyectos", "/c/documentos", "/c/direcciones", "/c/perfil", "/c/legal", "/c/ayuda", "/c/asistente"];
 
-export function ClientShell({ children, name, unread }: { children: React.ReactNode; name: string; unread: number }) {
+export function ClientShell({ children, name, unread, wide = false }: { children: React.ReactNode; name: string; unread: number; wide?: boolean }) {
   return (
     <div className="min-h-screen-dvh lg:pl-[84px]">
       <RailNav items={ITEMS} moreHref="/c/mas" home="/c" accountHref="/c/perfil" name={name} unread={unread} />
       <AppTopBar home="/c" unread={unread} />
-      <div id="contenido" tabIndex={-1} className="enter mx-auto max-w-[1040px] px-5 pb-28 pt-6 outline-none lg:px-9 lg:pb-12 lg:pt-8">
+      <div id="contenido" tabIndex={-1} className={`enter mx-auto ${wide ? "max-w-[1280px]" : "max-w-[1040px]"} px-5 pb-28 pt-6 outline-none lg:px-9 lg:pb-12 lg:pt-8`}>
         {children}
       </div>
       <BottomNav items={ITEMS} moreHref="/c/mas" moreAlso={MORE_ALSO} />

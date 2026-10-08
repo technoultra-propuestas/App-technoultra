@@ -110,9 +110,9 @@ export async function run({ b, rep, state, save }) {
     }
     const ev = q(`select count(*), bool_and(cloudinary_public_id like 'technoultra/%' or cloudinary_public_id like '%${flow.ticketId}%') from evidence where ticket_id = '${flow.ticketId}' and stage = 'reception'`);
     rep.check("las 4 evidencias quedaron en la base, ligadas al ticket y a su carpeta", Number(ev.split("|")[0]) >= 4 && ev.endsWith("|t"), ev);
-    await b.clickText("Pasar a «En diagnóstico»", "body");
-    await sleep(3000);
-    rep.check("el ticket pasa a «En diagnóstico»", q(`select status from tickets where id = '${flow.ticketId}'`) === "diagnosing");
+    // Con la recepción guardada y las 4 fotos obligatorias, el ticket pasa SOLO a diagnóstico (el técnico no cambia el estado a mano).
+    for (let i = 0; i < 20 && q(`select status from tickets where id = '${flow.ticketId}'`) !== "diagnosing"; i++) await sleep(500);
+    rep.check("al completar la recepción el ticket pasa solo a «En diagnóstico»", q(`select status from tickets where id = '${flow.ticketId}'`) === "diagnosing");
     rep.check("el acta de recepción se genera sola", Number(q(`select count(*) from documents where ticket_id = '${flow.ticketId}' and doc_type = 'reception'`)) === 1);
   });
 
@@ -124,10 +124,17 @@ export async function run({ b, rep, state, save }) {
     await b.fill("summary", "Fallo de memoria RAM: el módulo B presenta errores en la prueba. Se recomienda reemplazo.");
     await b.fill("testsPerformed", "Prueba de memoria completa y revisión de volcados.");
     await b.fill("recommendations", "Reemplazar módulo de RAM de 8 GB.");
-    await b.check("visible");
     await b.submit("summary");
     await sleep(2500);
-    rep.check("el diagnóstico técnico queda guardado y visible al cliente", q(`select visible_to_customer from diagnostics where ticket_id = '${flow.ticketId}'`) === "t");
+    rep.check("el diagnóstico técnico queda guardado y aún NO es visible al cliente", q(`select (not visible_to_customer) and finalized_at is null from diagnostics where ticket_id = '${flow.ticketId}'`) === "t");
+    await b.goto(ticketUrl());
+    await must(b, /Finalizar diagnóstico/, 15000);
+    await sleep(1500);
+    // (el enlace de «Próxima acción» tiene el mismo texto: se pulsa el botón del formulario)
+    await b.eval(`[...document.querySelectorAll('form button')].find((x) => x.innerText.trim() === 'Finalizar diagnóstico')?.click()`);
+    await sleep(4500);
+    rep.check("al finalizar el diagnóstico queda emitido, visible al cliente y con su PDF", q(`select visible_to_customer and finalized_at is not null from diagnostics where ticket_id = '${flow.ticketId}'`) === "t" && Number(q(`select count(*) from documents where ticket_id = '${flow.ticketId}' and doc_type = 'diagnosis'`)) >= 1);
+    await b.goto(ticketUrl());
     const aiBefore = q(`select validation_status from ai_diagnostics where ticket_id = '${flow.ticketId}'`);
     rep.check("la IA llegó ligada al ticket y pendiente de revisión humana", aiBefore === "pending", aiBefore);
     await b.clickText("Validar", "body");
@@ -138,9 +145,9 @@ export async function run({ b, rep, state, save }) {
   await phase("cotizacion", async () => {
     await staff("tech");
     await b.goto(ticketUrl());
-    await must(b, /Crear cotización|Agregar ítem/, 15000);
+    await must(b, /Crear cotización|Agregar un concepto|Usar propuesta/, 15000);
     if (await b.clickText("Crear cotización", "body")) await sleep(3000);
-    await must(b, /Agregar ítem/, 15000);
+    await must(b, /Agregar un concepto/, 15000);
     const svcId = q(`select id from services where slug = '${SERVICE}'`);
     await b.fillIn(ITEM_FORM, "refId", svcId);
     await b.submitIn(ITEM_FORM);
@@ -160,13 +167,22 @@ export async function run({ b, rep, state, save }) {
     const qt = q(`select status || '|' || total from quotes where id = '${flow.quoteId}'`);
     rep.check("el total lo calcula el servidor (69.900 + 120.000) y la cotización queda enviada", qt === "sent|189900.00", qt);
     rep.check("el ticket queda «Esperando aprobación»", q(`select status from tickets where id = '${flow.ticketId}'`) === "awaiting_approval");
+    rep.check("al enviar se genera sola la cotización en PDF", Number(q(`select count(*) from documents where ticket_id = '${flow.ticketId}' and doc_type = 'quote'`)) >= 1);
+    const cc = q(`select string_agg(concept, ',' order by position) from quote_items where quote_id = '${flow.quoteId}'`);
+    rep.check("la cotización separa mano de obra y repuestos", cc === "labor,part", cc);
   });
 
   // ------------------------------------------------------------------ 6. cliente: aprueba la cotización; el pago en línea sin credenciales falla de forma segura
   await phase("aprobacion", async () => {
     await clientLogin(b, state.client);
     await b.goto(`/c/tickets/${flow.ticketId}`);
+    await must(b, /Tenemos una propuesta para ti/, 15000);
+    rep.check("el cliente ve UNA acción principal: «Ver cotización» (no un bloque enorme)", /Ver cotización/.test(await b.text()));
+    await b.goto(`/c/tickets/${flow.ticketId}/cotizacion`);
     await must(b, /Aprobar cotización/, 15000);
+    const vt = await b.text();
+    rep.check("el visor muestra mano de obra, repuestos, total y las tres decisiones", /Mano de obra y servicios/i.test(vt) && /Repuestos/i.test(vt) && /Total a pagar/i.test(vt) && /Tengo una pregunta/.test(vt) && /Rechazar/.test(vt) && /Ver cotización en PDF/.test(vt));
+    await sleep(1200);
     await b.clickText("Aprobar cotización", "body");
     await sleep(3500);
     rep.check("el cliente aprueba y queda registrado (quién y cuándo)", q(`select status || '|' || (decided_by is not null) from quotes where id = '${flow.quoteId}'`) === "approved|true");
@@ -191,16 +207,16 @@ export async function run({ b, rep, state, save }) {
     await staff("owner");
     await b.goto(ticketUrl());
     if (q(`select count(*) from payments where ticket_id = '${flow.ticketId}'`) === "0") {
-      await must(b, /Registrar pago/, 15000);
+      await must(b, /Registrar pago manual · \$189\.900/, 15000);
       await sleep(1500);
-      await b.clickText("Registrar pago ·", "body");
+      await b.clickText("Registrar pago manual · $189.900", "body");
       await sleep(3500);
     }
     const pay = q(`select provider || '|' || method || '|' || status || '|' || amount || '|' || purpose from payments where ticket_id = '${flow.ticketId}'`);
     rep.check("el pago manual queda aprobado por el monto del servidor", pay === "manual|cash|approved|189900.00|quote", pay);
     rep.check("la cotización queda pagada", q(`select paid_at is not null from quotes where id = '${flow.quoteId}'`) === "t");
     await b.goto(ticketUrl());
-    rep.check("no se puede cobrar dos veces la misma cotización", !(await b.text()).includes("Registrar pago ·") && q(`select count(*) from payments where ticket_id = '${flow.ticketId}'`) === "1");
+    rep.check("no se puede cobrar dos veces la misma cotización", !(await b.text()).includes("Registrar pago manual · $189.900") && /Pago confirmado/.test(await b.text()) && q(`select count(*) from payments where ticket_id = '${flow.ticketId}'`) === "1");
     const audit = q(`select count(*) from audit_logs where action ilike '%payment%'`);
     rep.check("el pago deja rastro en la auditoría", Number(audit) >= 1, audit);
   });

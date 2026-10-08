@@ -54,7 +54,7 @@ export function AddItemForm({
       <Select label="Tipo de ítem" name="kind" value={kind} onChange={(e) => setKind(e.target.value as typeof kind)}>
         <option value="service">Servicio (precio de catálogo)</option>
         <option value="product">Producto (precio de catálogo)</option>
-        <option value="custom">Otro / repuesto (precio manual)</option>
+        <option value="custom">Repuesto u otro concepto (precio manual)</option>
       </Select>
       {kind !== "custom" ? (
         <Select label="Ítem" name="refId" error={state.fieldErrors?.refId}>
@@ -68,6 +68,11 @@ export function AddItemForm({
       {kind === "service" ? <Field label="Valor final (COP)" name="unitPrice" inputMode="numeric" hint='Opcional. En servicios "Desde" debe ser igual o mayor al mínimo; en "a cotizar" es obligatorio.' /> : null}
       {kind === "custom" ? (
         <>
+          <Select label="Concepto" name="concept" defaultValue="part">
+            <option value="part">Repuesto</option>
+            <option value="labor">Mano de obra</option>
+            <option value="other">Otro</option>
+          </Select>
           <Field label="Descripción" name="description" error={state.fieldErrors?.description} />
           <Field label="Precio unitario (COP)" name="unitPrice" inputMode="numeric" />
         </>

@@ -9,10 +9,10 @@ const VIDEO_MAX = 100 * 1024 * 1024;
 const OK_IMAGE = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"];
 const OK_VIDEO = ["video/mp4", "video/quicktime", "video/webm"];
 
-type Props = { ticketId: string; stage: string; slot?: string; label: string; done?: boolean; allowVideo?: boolean };
+type Props = { ticketId: string; stage: string; slot?: string; label: string; done?: boolean; allowVideo?: boolean; onRegistered?: (id: string) => void };
 
 /** Sube directo a Cloudinary con una firma de un solo uso emitida por el servidor; luego el servidor verifica y registra. */
-export function EvidenceUploader({ ticketId, stage, slot, label, done = false, allowVideo = false }: Props) {
+export function EvidenceUploader({ ticketId, stage, slot, label, done = false, allowVideo = false, onRegistered }: Props) {
   const router = useRouter();
   const input = useRef<HTMLInputElement>(null);
   const [state, setState] = useState<"idle" | "uploading" | "error">("idle");
@@ -44,6 +44,7 @@ export function EvidenceUploader({ ticketId, stage, slot, label, done = false, a
     if (!reg.ok) return fail(reg.error ?? "No pudimos registrar el archivo.");
     setState("idle");
     if (input.current) input.current.value = "";
+    if (reg.id) onRegistered?.(reg.id);
     router.refresh();
     navigator.vibrate?.(15);
   }

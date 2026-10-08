@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { setChecklistItemAction, startChecklistAction } from "../work-actions";
 import { EvidenceUploader } from "./evidence-uploader";
 import { EvidenceGallery } from "./reception-section";
-import { CompleteChecklistForm, DeliveryForm, DiagnosisForm } from "./work-forms";
+import { CompleteChecklistForm, DeliveryForm, DiagnosisForm, FinalizeDiagnosisForm } from "./work-forms";
 
 type Ev = { id: string; slot: string | null; media_kind: string; cloudinary_public_id: string; format: string | null };
 
@@ -17,7 +17,7 @@ export async function WorkSection({ ticketId, status }: { ticketId: string; stat
   const showDelivery = status === "ready";
 
   const [{ data: diag }, { data: run }] = await Promise.all([
-    showDiag ? supabase.from("diagnostics").select("id, summary, tests_performed, recommendations, suggested_parts, visible_to_customer").eq("ticket_id", ticketId).order("version", { ascending: false }).limit(1).maybeSingle() : Promise.resolve({ data: null }),
+    showDiag ? supabase.from("diagnostics").select("id, summary, tests_performed, recommendations, suggested_parts, visible_to_customer, finalized_at, updated_at").eq("ticket_id", ticketId).order("version", { ascending: false }).limit(1).maybeSingle() : Promise.resolve({ data: null }),
     showChecklist ? supabase.from("checklist_runs").select("id, completed_at").eq("ticket_id", ticketId).order("created_at", { ascending: false }).limit(1).maybeSingle() : Promise.resolve({ data: null }),
   ]);
   const { data: diagItems } = diag ? await supabase.from("diagnostic_items").select("component, state").eq("diagnostic_id", diag.id) : { data: [] as { component: string; state: string }[] };
@@ -31,14 +31,15 @@ export async function WorkSection({ ticketId, status }: { ticketId: string; stat
   return (
     <>
       {showDiag ? (
-        <Card className="flex flex-col gap-3">
+        <Card id="diagnostico" className="flex flex-col gap-3">
           <h2 className="m-0 text-[17px] font-extrabold">Diagnóstico técnico</h2>
           <DiagnosisForm ticketId={ticketId} defaults={{ summary: diag?.summary ?? "", tests: diag?.tests_performed ?? "", recommendations: diag?.recommendations ?? "", parts: diag?.suggested_parts ?? "", visible: diag?.visible_to_customer ?? false, items: itemMap }} />
+          {diag?.summary && ["diagnosing", "awaiting_approval"].includes(status) ? <FinalizeDiagnosisForm ticketId={ticketId} reissue={Boolean(diag.finalized_at)} /> : null}
         </Card>
       ) : null}
 
       {showChecklist ? (
-        <Card className="flex flex-col gap-3">
+        <Card id="pruebas" className="flex flex-col gap-3">
           <div className="flex items-center justify-between gap-2">
             <h2 className="m-0 text-[17px] font-extrabold">Checklist de pruebas</h2>
             {run ? <span className="text-[12px] font-extrabold text-muted">{run.completed_at ? "Completado" : `${pendingRequired} obligatorias por resolver`}</span> : null}
@@ -87,7 +88,7 @@ export async function WorkSection({ ticketId, status }: { ticketId: string; stat
       ) : null}
 
       {showDelivery ? (
-        <Card className="flex flex-col gap-4">
+        <Card id="entrega" className="flex flex-col gap-4">
           <h2 className="m-0 text-[17px] font-extrabold">Entrega</h2>
           <div>
             <div className="mb-2 text-[15px] font-bold">Fotografías de entrega (DESPUÉS)</div>

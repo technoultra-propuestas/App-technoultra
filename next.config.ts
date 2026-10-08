@@ -31,6 +31,9 @@ export default withSentryConfig(nextConfig, {
   org: "technoultra",
   project: "javascript-nextjs",
   authToken: process.env.SENTRY_AUTH_TOKEN,
+  // El release subido debe llamarse EXACTAMENTE igual que el que reporta el SDK en ejecución (`sentryCommon`: SHA del commit, 12 caracteres);
+  // si no coinciden, Sentry no asocia los source maps a los errores.
+  release: { name: process.env.VERCEL_GIT_COMMIT_SHA ? process.env.VERCEL_GIT_COMMIT_SHA.slice(0, 12) : undefined },
   silent: !process.env.CI,
   widenClientFileUpload: true,
   sourcemaps: { deleteSourcemapsAfterUpload: true },

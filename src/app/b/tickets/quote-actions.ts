@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { assertRole } from "@/lib/auth/session";
+import { generateTicketDocument } from "@/lib/documents/generate";
 import { zodToState, type ActionState } from "@/lib/auth/schemas";
 import { scheduleEmailFlush } from "@/lib/email/outbox";
 import { statusLabel } from "@/components/ui/layout";
@@ -62,6 +63,7 @@ const itemSchema = z
     discount: z.string().optional().transform((v) => (v ? Number(v.replace(/[^0-9.]/g, "")) : 0)),
     warrantyDays: z.string().optional().transform((v) => (v ? Number(v) : 0)).pipe(z.number().int().min(0).max(3650)),
     warrantyKind: z.enum(["product", "labor"]).default("labor"),
+    concept: z.enum(["labor", "part", "product", "other"]).optional(),
   })
   .refine((v) => v.kind === "custom" || uuid.safeParse(v.refId).success, { message: "Elige el ítem del catálogo.", path: ["refId"] })
   .refine((v) => v.kind !== "custom" || (v.description && v.description.length >= 2 && v.unitPrice !== null), {
@@ -99,6 +101,7 @@ export async function addItemAction(_p: ActionState, fd: FormData): Promise<Acti
     discount: v.discount,
     warranty_days: v.warrantyDays,
     warranty_kind: v.kind === "product" ? "product" : v.warrantyKind,
+    concept: v.kind === "service" ? "labor" : v.kind === "product" ? "product" : (v.concept ?? "part"),
   });
   if (error) return { ok: false, error: friendly(error.message) };
   refresh(v.ticketId);
@@ -117,7 +120,7 @@ export async function removeItemAction(fd: FormData): Promise<void> {
 
 const act = z.object({ ticketId: uuid, quoteId: uuid, message: z.string().trim().max(1000).optional() });
 async function run(fd: FormData, fn: "send_quote" | "record_in_person_approval" | "answer_quote_question" | "revise_quote"): Promise<ActionState> {
-  await assertRole(["technician", "superadmin"]);
+  const actor = await assertRole(["technician", "superadmin"]);
   const p = act.safeParse(Object.fromEntries(fd.entries()));
   if (!p.success) return { ok: false, error: "Datos no válidos." };
   const supabase = await createClient();
@@ -135,9 +138,14 @@ async function run(fd: FormData, fn: "send_quote" | "record_in_person_approval" 
     console.warn(JSON.stringify({ event: "quote_rule", op: `quote.${fn}`, code: error.code }));
     return { ok: false, error: known };
   }
+  // Al enviar, el PDF de la cotización se genera solo (versión nueva si es una revisión): el cliente la abre como documento.
+  if (fn === "send_quote") {
+    const doc = await generateTicketDocument("quote", p.data.ticketId, actor.id).catch(() => null);
+    if (!doc?.ok) console.error("quote.pdf", doc && !doc.ok ? doc.error : "error");
+  }
   refresh(p.data.ticketId);
   scheduleEmailFlush();
-  return { ok: true, message: "Listo." };
+  return { ok: true, message: fn === "send_quote" ? "Cotización enviada al cliente." : "Listo." };
 }
 export const sendQuoteAction = async (_p: ActionState, fd: FormData) => run(fd, "send_quote");
 export const inPersonApprovalAction = async (_p: ActionState, fd: FormData) => run(fd, "record_in_person_approval");

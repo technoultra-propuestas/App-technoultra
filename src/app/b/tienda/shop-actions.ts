@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 import { zodToState, type ActionState } from "@/lib/auth/schemas";
 import { assertRole } from "@/lib/auth/session";
@@ -19,6 +19,7 @@ const int = (min: number, max: number) =>
 const refresh = () => {
   revalidatePath("/b/tienda/shop");
   revalidatePath("/tienda");
+  revalidateTag("catalog", { expire: 0 });
   revalidatePath("/tienda/carrito");
 };
 

@@ -58,7 +58,7 @@ export function AssistantChat() {
                           <span className="truncate text-[14px] font-extrabold">{s.name}</span>
                           <span className="text-[12.5px] font-semibold text-muted">{s.priceLabel}</span>
                         </span>
-                        <span className="flex-none text-[13px] font-extrabold text-brand">Elegir</span>
+                        <span className="flex-none text-[13px] font-extrabold text-brand-text">Elegir</span>
                       </Link>
                     </li>
                   ))}

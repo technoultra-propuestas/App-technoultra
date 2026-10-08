@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { assertRole } from "@/lib/auth/session";
@@ -73,6 +73,7 @@ export async function updateSourceProductAction(_p: ActionState, fd: FormData): 
   if (error || !data?.length) return { ok: false, error: friendly(error?.code) };
   revalidatePath(`/b/tienda/${parsed.data.id}`);
   revalidatePath("/tienda");
+  revalidateTag("catalog", { expire: 0 });
   return { ok: true, message: "Cambios guardados." };
 }
 
