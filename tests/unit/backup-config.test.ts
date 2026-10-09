@@ -1,32 +1,18 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
-const read = (p: string) => readFileSync(path.resolve(__dirname, "../..", p), "utf8");
+const root = path.resolve(__dirname, "../..");
+const read = (p: string) => readFileSync(path.join(root, p), "utf8");
 
 describe("copias de seguridad", () => {
-  const wf = read(".github/workflows/backup.yml");
-  it("corre cada noche y a demanda, con permisos mínimos", () => {
-    expect(wf).toMatch(/cron: "0 8 \* \* \*"/);
-    expect(wf).toMatch(/workflow_dispatch/);
-    expect(wf).toMatch(/permissions:\s*\n\s*contents: read/);
-  });
-  it("cifra con AES-256 antes de subir y elimina el paquete sin cifrar; conserva 30 días", () => {
-    expect(wf).toMatch(/--symmetric --cipher-algo AES256/);
-    expect(wf).toMatch(/rm -rf backup/);
-    expect(wf).toMatch(/retention-days: 30/);
-    expect(wf.indexOf("symmetric")).toBeLessThan(wf.indexOf("upload-artifact"));
-  });
-  it("los secretos solo vienen de GitHub Secrets y se comprueba que existan", () => {
-    for (const s of ["SUPABASE_DB_URL", "SUPABASE_SERVICE_ROLE_KEY", "BACKUP_PASSPHRASE", "NEXT_PUBLIC_SUPABASE_URL"]) expect(wf).toContain(`secrets.${s}`);
-    expect(wf).not.toMatch(/echo .*\$\{?(SUPABASE_DB_URL|SUPABASE_SERVICE_ROLE_KEY|BACKUP_PASSPHRASE)/);
-  });
-  it("la segunda copia en R2 es opcional, sube solo el archivo cifrado y verifica el tamaño", () => {
-    expect(wf).toMatch(/if: \$\{\{ env\.R2_BUCKET != ''/);
-    for (const s of ["R2_ACCOUNT_ID", "R2_BUCKET", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY"]) expect(wf).toContain(`secrets.${s}`);
-    expect(wf).toMatch(/aws s3 cp "\$BACKUP_FILE"/);
-    expect(wf).toMatch(/head-object/);
-    expect(wf.indexOf("symmetric")).toBeLessThan(wf.indexOf("aws s3 cp"));
+  it("este repositorio es PÚBLICO: ningún flujo de GitHub Actions usa secretos de producción ni genera copias (viven en un repositorio privado aparte)", () => {
+    const dir = path.join(root, ".github/workflows");
+    expect(existsSync(path.join(dir, "backup.yml"))).toBe(false);
+    for (const f of readdirSync(dir)) {
+      const wf = readFileSync(path.join(dir, f), "utf8");
+      for (const s of ["SUPABASE_SERVICE_ROLE_KEY", "SUPABASE_DB_URL", "BACKUP_PASSPHRASE", "upload-artifact"]) expect(wf, `${f} menciona ${s}`).not.toContain(s);
+    }
   });
   it("el volcado incluye los esquemas de la aplicación y excluye datos efímeros de Auth", () => {
     const sh = read("scripts/backup/dump-db.sh");
@@ -37,5 +23,10 @@ describe("copias de seguridad", () => {
   it("el script de Storage no imprime la clave de servicio", () => {
     const js = read("scripts/backup/storage-backup.mjs");
     expect(js).not.toMatch(/console\.(log|error)\([^)]*\bkey\b/);
+  });
+  it("la guía describe el repositorio privado y no pide crear secretos en este repositorio", () => {
+    const doc = read("docs/BACKUPS.md");
+    expect(doc).toMatch(/repositorio PRIVADO/i);
+    expect(doc).toMatch(/technoultra-backups/);
   });
 });
