@@ -5,8 +5,9 @@ import { StatCard } from "@/components/ui/kit";
 import { Card, money, PageTitle } from "@/components/ui/layout";
 import { requireRole } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
-import { toggleAreaAction, updateFeesAction } from "./actions";
+import { toggleAreaAction } from "./actions";
 import { AreaForm } from "./area-form";
+import { FeesForm } from "./fees-form";
 
 export const metadata: Metadata = { title: "Cobertura", robots: { index: false } };
 
@@ -55,20 +56,7 @@ export default async function CoveragePage() {
                     </button>
                   </form>
                 </div>
-                <form action={updateFeesAction} className="flex flex-wrap items-end gap-2">
-                  <input type="hidden" name="id" value={a.id} />
-                  <label className="flex flex-col gap-1 text-[12px] font-bold">
-                    Recogida
-                    <input name="pickupFee" defaultValue={Number(a.pickup_fee)} inputMode="numeric" className="h-11 w-28 rounded-[12px] border-[1.5px] border-line-strong bg-white px-3 text-[15px] font-semibold" />
-                  </label>
-                  <label className="flex flex-col gap-1 text-[12px] font-bold">
-                    Domicilio
-                    <input name="homeFee" defaultValue={Number(a.home_fee)} inputMode="numeric" className="h-11 w-28 rounded-[12px] border-[1.5px] border-line-strong bg-white px-3 text-[15px] font-semibold" />
-                  </label>
-                  <button type="submit" className="min-h-11 rounded-[12px] border border-line-strong bg-white px-4 text-[14px] font-extrabold">
-                    Guardar tarifas
-                  </button>
-                </form>
+                <FeesForm id={a.id} pickupFee={Number(a.pickup_fee)} homeFee={Number(a.home_fee)} />
               </Card>
             </li>
           ))}

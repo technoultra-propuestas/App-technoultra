@@ -84,15 +84,20 @@ PRODUCTION STATUS:
 GO WITH MANUAL ACTIONS
 
 REQUIERE MI INTERVENCIÓN:
-- Rotar el secreto de prueba del webhook y el secreto OAuth de Google que quedaron expuestos (generar nuevos en Mercado Pago/Google y actualizarlos en Vercel).
-- Datos legales y comerciales definitivos: NIT, razón social y datos de contacto legal; confirmar el porcentaje de los niveles de urgencia (hoy 0 %, inactivos).
-- Enrolar la autenticación en dos pasos (MFA) del propietario si aún no está hecha.
+- Rotar el secreto de prueba del webhook y el secreto OAuth de Google que quedaron expuestos (generar nuevos en Mercado Pago/Google y actualizarlos en Vercel). **Decisión del propietario: se rotan después de probar el flujo completo; recordarlo cuando se pregunte qué falta para producción.**
+- Confirmar el porcentaje de los niveles de urgencia (hoy 0 %, inactivos).
 - Compartir la hoja de Excelenter «con el enlace» (o dar una URL privada) y definir `EXCELENTER_CATALOG_CSV_URL` en Vercel.
 - Definir qué se considera «zonas aledañas» (envío de $20.000) y, si se quiere validar direcciones automáticamente, el proveedor de geocodificación.
 - Decidir la región de Vercel (hoy `iad1`; la base está en `us-west-2`): medir desde Colombia una vista previa en `pdx1` antes de cambiar.
-- Confirmar el plan de Supabase para copias de seguridad y recuperación a un punto en el tiempo.
+- Copias de seguridad: el plan de Supabase será gratuito (sin copias automáticas ni recuperación a un punto en el tiempo); definir la alternativa (copia programada de la base de datos y de los documentos fuera de Supabase).
 - En Sentry (interfaz): crear alertas por correo para incidencias nuevas y confirmar que el primer error real llega con su release.
 - Una vez: probar con el dedo la firma electrónica en un celular y usar un lector de pantalla en el flujo del cliente.
 
 MERCADO PAGO:
 PENDIENTE — NO ACTIVAR
+
+## Actualización 2026-10-09
+- Datos legales: ya cargados por el propietario en el CRM (NIT, domicilio y contacto aparecen en Términos y Tratamiento de datos; 9 documentos publicados sin campos pendientes). Se completó el ajuste público de correo de contacto (`business.email` = studio@technoultra.com) con registro en auditoría.
+- MFA del propietario: confirmado funcionando por el propietario.
+- Cobertura: «Guardar tarifas» ya guardaba (verificado en producción con una prueba sin cambios: 1 fila, permiso correcto), pero no daba respuesta visible; ahora muestra «Tarifas guardadas» o el error, rechaza valores no numéricos y tiene prueba E2E (escenario 12). Las tarifas existentes no se modificaron (Cali 15.000; Jamundí, Palmira y Yumbo 25.000).
+- Firma con el dedo en el celular: pendiente de prueba manual del propietario.

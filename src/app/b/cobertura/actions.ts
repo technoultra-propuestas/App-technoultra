@@ -50,12 +50,26 @@ export async function toggleAreaAction(fd: FormData): Promise<void> {
   revalidatePath("/b/cobertura");
 }
 
-const feesSchema = z.object({ id: z.string().uuid(), pickupFee: money, homeFee: money });
-export async function updateFeesAction(fd: FormData): Promise<void> {
+// Importes de las tarifas: solo cifras (con puntos o comas de miles). Un texto como «-5x» se rechaza con un mensaje en vez de «corregirse» en silencio.
+const feeInput = z
+  .string()
+  .trim()
+  .regex(/^[0-9][0-9.,\s$]*$|^$/, "Escribe solo números, por ejemplo 15000.")
+  .transform((v) => (v ? Number(v.replace(/[^0-9]/g, "")) : 0))
+  .pipe(z.number().min(0, "No puede ser negativa.").max(10_000_000, "El valor es demasiado alto."));
+const feesSchema = z.object({ id: z.string().uuid(), pickupFee: feeInput, homeFee: feeInput });
+
+/**
+ * Guarda las tarifas de recogida y domicilio de UN municipio y responde con un aviso claro (guardado / error). Solo SUPERADMIN;
+ * RLS + `catalog.manage` lo exigen de nuevo y el cambio queda en la auditoría.
+ */
+export async function updateFeesAction(_p: ActionState, fd: FormData): Promise<ActionState> {
   await assertRole(["superadmin"]);
   const p = feesSchema.safeParse(Object.fromEntries(fd.entries()));
-  if (!p.success) return;
+  if (!p.success) return zodToState(p.error);
   const supabase = await createClient();
-  await supabase.from("coverage_areas").update({ pickup_fee: p.data.pickupFee, home_fee: p.data.homeFee }).eq("id", p.data.id);
+  const { data, error } = await supabase.from("coverage_areas").update({ pickup_fee: p.data.pickupFee, home_fee: p.data.homeFee }).eq("id", p.data.id).select("id");
+  if (error || !data?.length) return { ok: false, error: "No pudimos guardar las tarifas. Inténtalo de nuevo." };
   revalidatePath("/b/cobertura");
+  return { ok: true, message: "Tarifas guardadas." };
 }
