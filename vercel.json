@@ -1,5 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
-  "crons": [{ "path": "/api/cron/housekeeping", "schedule": "0 11 * * *" }, { "path": "/api/cron/catalog-sync", "schedule": "0 9 * * *" }]
+  "crons": [
+    { "path": "/api/cron/catalog-sync?housekeeping=1&slot=manana", "schedule": "0 16 * * *" },
+    { "path": "/api/cron/catalog-sync?housekeeping=1&slot=tarde", "schedule": "0 21 * * *" }
+  ]
 }

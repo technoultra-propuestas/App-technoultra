@@ -4,6 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { excelenterCsvUrlProvider } from "@/lib/catalog/provider";
 import { runCatalogSync, type RpcClient } from "@/lib/catalog/sync";
+import { runHousekeeping } from "@/lib/cron/housekeeping";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const reply = (status: number, body: Record<string, unknown> = {}) => NextResponse.json(body, { status, headers: { "Cache-Control": "no-store" } });
@@ -24,6 +25,9 @@ export async function GET(request: NextRequest) {
   if (!header.startsWith("Bearer ") || !safeEqual(header.slice(7), secret.data)) return reply(401, { error: "unauthorized" });
   const outcome = await runCatalogSync(createAdminClient() as unknown as RpcClient, excelenterCsvUrlProvider(), "automatic");
   if (outcome.ok) revalidateTag("catalog", { expire: 0 });
-  if (!outcome.ok && outcome.reason === "not_configured") return reply(200, { ok: true, skipped: "source_not_configured" });
-  return reply(outcome.ok ? 200 : 502, { ok: outcome.ok, status: outcome.status, ...(outcome.ok ? { summary: outcome.summary } : { reason: outcome.reason }) });
+  // Plan Hobby de Vercel: máximo 2 tareas programadas y una vez al día cada una. Para sincronizar dos veces al día se programan las dos
+  // sincronizaciones y cada una, con `?housekeeping=1`, ejecuta también las tareas periódicas (idempotentes) en vez de una tercera tarea.
+  const housekeeping = request.nextUrl.searchParams.get("housekeeping") === "1" ? await runHousekeeping().catch(() => ({ ok: false as const })) : undefined;
+  if (!outcome.ok && outcome.reason === "not_configured") return reply(200, { ok: true, skipped: "source_not_configured", ...(housekeeping ? { housekeeping: housekeeping.ok } : {}) });
+  return reply(outcome.ok ? 200 : 502, { ok: outcome.ok, status: outcome.status, ...(outcome.ok ? { summary: outcome.summary } : { reason: outcome.reason }), ...(housekeeping ? { housekeeping: housekeeping.ok } : {}) });
 }
