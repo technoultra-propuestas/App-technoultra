@@ -29,9 +29,11 @@ const STATUS = { success: ["Exitoso", "bg-ok-soft text-ok"], partial: ["Parcial"
 
 const daysAgo = (d: number) => new Date(Date.now() - d * 86400_000).toISOString();
 
-export default async function CatalogSyncPage({ searchParams }: { searchParams: Promise<{ r?: string }> }) {
+export default async function CatalogSyncPage({ searchParams }: { searchParams: Promise<{ r?: string; d?: string }> }) {
   await requireRole(["superadmin"]);
-  const r = RESULT[(await searchParams).r ?? ""];
+  const sp = await searchParams;
+  const r = RESULT[sp.r ?? ""];
+  const detail = (sp.d ?? "").slice(0, 220);
   const supabase = await createClient();
   const [{ data: runs }, { data: inquiries }] = await Promise.all([
     supabase.from("catalog_sync_runs").select("*").order("started_at", { ascending: false }).limit(20),
@@ -49,7 +51,10 @@ export default async function CatalogSyncPage({ searchParams }: { searchParams: 
       <h1 className="m-0 text-[30px] font-extrabold tracking-[-0.025em]">Catálogo · Sincronización</h1>
       <SegmentTabs label="Secciones de la tienda" items={TABS} active="sync" />
       {r ? (
-        <p role="status" className={`m-0 rounded-[14px] px-4 py-3 text-[14px] font-bold ${r.ok ? "bg-ok-soft text-ok" : "bg-danger-soft text-danger"}`}>{r.text}</p>
+        <p role="status" className={`m-0 rounded-[14px] px-4 py-3 text-[14px] font-bold ${r.ok ? "bg-ok-soft text-ok" : "bg-danger-soft text-danger"}`}>
+          {r.text}
+          {!r.ok && detail ? <span className="mt-1 block font-semibold">Motivo: {detail}</span> : null}
+        </p>
       ) : null}
       {last?.status === "error" ? (
         <p role="alert" className="m-0 rounded-[14px] bg-danger-soft px-4 py-3 text-[14px] font-bold text-danger">

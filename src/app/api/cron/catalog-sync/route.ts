@@ -29,5 +29,5 @@ export async function GET(request: NextRequest) {
   // sincronizaciones y cada una, con `?housekeeping=1`, ejecuta también las tareas periódicas (idempotentes) en vez de una tercera tarea.
   const housekeeping = request.nextUrl.searchParams.get("housekeeping") === "1" ? await runHousekeeping().catch(() => ({ ok: false as const })) : undefined;
   if (!outcome.ok && outcome.reason === "not_configured") return reply(200, { ok: true, skipped: "source_not_configured", ...(housekeeping ? { housekeeping: housekeeping.ok } : {}) });
-  return reply(outcome.ok ? 200 : 502, { ok: outcome.ok, status: outcome.status, ...(outcome.ok ? { summary: outcome.summary } : { reason: outcome.reason }), ...(housekeeping ? { housekeeping: housekeeping.ok } : {}) });
+  return reply(outcome.ok ? 200 : 502, { ok: outcome.ok, status: outcome.status, ...(outcome.ok ? { summary: outcome.summary } : { reason: outcome.reason, detail: outcome.detail }), ...(housekeeping ? { housekeeping: housekeeping.ok } : {}) });
 }

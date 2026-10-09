@@ -5,7 +5,7 @@ export type RpcClient = { rpc: (fn: string, args: Record<string, unknown>) => Pr
 
 export type SyncOutcome =
   | { ok: true; status: "success" | "partial"; summary: Record<string, unknown> }
-  | { ok: false; status: "error"; reason: string; summary?: Record<string, unknown> };
+  | { ok: false; status: "error"; reason: string; detail?: string; summary?: Record<string, unknown> };
 
 /**
  * Ejecuta una sincronización completa. Reglas: si la fuente falla NO se toca el catálogo (se conserva el último estado válido) y se registra el error;
@@ -20,7 +20,8 @@ export async function runCatalogSync(client: RpcClient, provider: CatalogProvide
     // Fuente aún no conectada y ejecución automática: no hay nada que registrar (evita una alerta diaria sin sentido).
     if (reason === "not_configured" && runType === "automatic") return { ok: false, status: "error", reason };
     await client.rpc("record_catalog_sync_failure", { p_source: provider.source, p_run_type: runType, p_reason: reason, p_actor: actor ?? null });
-    return { ok: false, status: "error", reason };
+    // `detail` = mensaje fijo de la fuente (sin contenido recibido ni URL); lo ve solo quien ejecuta la sincronización autorizada.
+    return { ok: false, status: "error", reason, detail: e instanceof CatalogSourceError ? e.message : undefined };
   }
   const { data, error } = await client.rpc("sync_catalog", { p_source: provider.source, p_items: items, p_run_type: runType, p_actor: actor ?? null });
   if (error) {

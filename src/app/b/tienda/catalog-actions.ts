@@ -13,7 +13,9 @@ const back = (o: SyncOutcome) => {
   revalidatePath("/b/tienda/sincronizacion");
   revalidatePath("/tienda");
   revalidateTag("catalog", { expire: 0 });
-  redirect(`/b/tienda/sincronizacion?r=${o.ok ? o.status : `error-${encodeURIComponent(o.reason)}`}`);
+  // `d` = motivo concreto de la fuente (mensaje fijo, sin contenido recibido ni URL) para que el propietario sepa qué corregir.
+  const detail = !o.ok && o.detail ? `&d=${encodeURIComponent(o.detail.slice(0, 220))}` : "";
+  redirect(`/b/tienda/sincronizacion?r=${o.ok ? o.status : `error-${encodeURIComponent(o.reason)}`}${detail}`);
 };
 
 /** «Sincronizar ahora»: solo SUPERADMIN (con MFA, validado en servidor). Usa la fuente configurada; si falla, el catálogo queda como estaba. */

@@ -202,6 +202,22 @@ describe("sincronización: la fuente falla → no se toca el catálogo", () => {
     expect((f.mock.calls[0] as unknown as [string, RequestInit])[1].headers).toMatchObject({ Authorization: "Bearer abc" });
     await expect(excelenterCsvUrlProvider({ EXCELENTER_CATALOG_CSV_URL: "http://inseguro/c.csv" }).fetchCatalog()).rejects.toThrow(CatalogSourceError);
   });
+  it("diagnostica los errores de conexión comunes con mensajes fijos (sin devolver lo recibido)", async () => {
+    const url = { EXCELENTER_CATALOG_CSV_URL: "https://script.google.com/macros/s/X/exec?t=clave-secreta" };
+    const respond = (body: string) => (async () => new Response(body, { status: 200 })) as unknown as typeof fetch;
+    // clave incorrecta: el script responde «unauthorized»
+    const bad = await runCatalogSync(client({ data: null, error: null }), excelenterCsvUrlProvider(url, respond("unauthorized")), "manual");
+    expect(bad).toMatchObject({ ok: false, reason: "invalid" });
+    expect((bad as { detail?: string }).detail).toMatch(/rechaz[óo] la clave/);
+    // despliegue sin acceso público: Google devuelve una página de inicio de sesión
+    const html = await runCatalogSync(client({ data: null, error: null }), excelenterCsvUrlProvider(url, respond("<!DOCTYPE html><html><body>Inicia sesión</body></html>")), "manual");
+    expect((html as { detail?: string }).detail).toMatch(/página web en lugar de un CSV/);
+    // CSV con otras columnas
+    const cols = await runCatalogSync(client({ data: null, error: null }), excelenterCsvUrlProvider(url, respond("a,b\n1,2")), "manual");
+    expect((cols as { detail?: string }).detail).toMatch(/Columnas faltantes/);
+    // ninguno de los mensajes contiene la URL, la clave ni el cuerpo recibido
+    for (const o of [bad, html, cols]) expect(JSON.stringify(o)).not.toMatch(/clave-secreta|script\.google\.com|Inicia sesión/);
+  });
   it("fuente correcta → envía los productos normalizados a sync_catalog y devuelve el resumen", async () => {
     rpcCalls.length = 0;
     const r = await runCatalogSync(client({ data: { status: "success", created: 1 }, error: null }), csvTextProvider(csv("A1,Mouse,ACME,Periféricos,Mouse,90000,1,d,https://x/a.webp,TRUE")), "manual", "u-1");

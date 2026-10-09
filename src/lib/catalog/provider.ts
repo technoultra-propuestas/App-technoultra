@@ -48,6 +48,9 @@ export function excelenterCsvUrlProvider(env: Record<string, string | undefined>
       if (!res.ok) throw new CatalogSourceError("unavailable", `La fuente respondió ${res.status}.`);
       const text = await res.text();
       if (text.length > MAX_BYTES) throw new CatalogSourceError("invalid", "La fuente supera el tamaño permitido.");
+      // Diagnóstico claro de los errores de conexión más comunes (mensajes fijos: nunca se devuelve el contenido recibido).
+      if (text.trim().toLowerCase() === "unauthorized") throw new CatalogSourceError("invalid", "La fuente rechazó la clave del enlace (revisa el parámetro t= y la propiedad TOKEN del script).");
+      if (/^\s*<(!doctype|html)/i.test(text)) throw new CatalogSourceError("invalid", "La fuente devolvió una página web en lugar de un CSV (el script debe estar implementado como aplicación web con acceso «Cualquier persona»).");
       try {
         return buildCatalog(parseCsv(text)).items;
       } catch (e) {
