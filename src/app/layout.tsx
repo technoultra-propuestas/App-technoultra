@@ -1,14 +1,21 @@
 import type { Metadata, Viewport } from "next";
-import { Manrope } from "next/font/google";
+import localFont from "next/font/local";
 import { connection } from "next/server";
 import { PwaRegister } from "@/components/pwa/PwaRegister";
 import "./globals.css";
 
-const manrope = Manrope({
+// Manrope AUTOALOJADA (licencia OFL, archivos en src/fonts, subconjunto latino = todo el español). Antes se descargaba de Google Fonts en cada
+// build y Vercel falló dos veces por esa descarga; así el build no depende de ningún servicio externo. La tipografía es la misma.
+const manrope = localFont({
   variable: "--font-manrope",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
   display: "swap",
+  src: [
+    { path: "../fonts/manrope-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../fonts/manrope-latin-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../fonts/manrope-latin-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../fonts/manrope-latin-700-normal.woff2", weight: "700", style: "normal" },
+    { path: "../fonts/manrope-latin-800-normal.woff2", weight: "800", style: "normal" },
+  ],
 });
 
 const siteDescription = "Servicio técnico de computadores e impresoras en Cali, Palmira, Jamundí y Yumbo, y soporte remoto en toda Colombia. Tienda, garantías y proyectos digitales.";

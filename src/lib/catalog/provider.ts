@@ -40,7 +40,7 @@ export function describeUrl(raw: string): string {
     return "La URL guardada no es válida.";
   }
   const t = u.searchParams.get("t");
-  return `Pistas: la ruta ${u.pathname.endsWith("/exec") ? "termina" : "NO termina"} en /exec; ${t === null ? "NO trae el parámetro t=" : `trae t= de ${t.length} caracteres${t !== t.trim() ? " (con espacios)" : ""}`}.${stray}`;
+  return `Pistas: la ruta ${u.pathname.endsWith("/exec") ? "termina" : "NO termina"} en /exec; ${t === null ? "NO trae el parámetro t=" : `trae t= de ${t.length} caracteres${t.length >= 12 ? `, empieza por «${t.slice(0, 2)}» y termina en «${t.slice(-2)}»` : ""}${t !== t.trim() ? " (con espacios)" : ""}`}.${stray}`;
 }
 
 /**
