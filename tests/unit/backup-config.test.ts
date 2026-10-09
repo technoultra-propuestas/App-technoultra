@@ -21,6 +21,13 @@ describe("copias de seguridad", () => {
     for (const s of ["SUPABASE_DB_URL", "SUPABASE_SERVICE_ROLE_KEY", "BACKUP_PASSPHRASE", "NEXT_PUBLIC_SUPABASE_URL"]) expect(wf).toContain(`secrets.${s}`);
     expect(wf).not.toMatch(/echo .*\$\{?(SUPABASE_DB_URL|SUPABASE_SERVICE_ROLE_KEY|BACKUP_PASSPHRASE)/);
   });
+  it("la segunda copia en R2 es opcional, sube solo el archivo cifrado y verifica el tamaño", () => {
+    expect(wf).toMatch(/if: \$\{\{ env\.R2_BUCKET != ''/);
+    for (const s of ["R2_ACCOUNT_ID", "R2_BUCKET", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY"]) expect(wf).toContain(`secrets.${s}`);
+    expect(wf).toMatch(/aws s3 cp "\$BACKUP_FILE"/);
+    expect(wf).toMatch(/head-object/);
+    expect(wf.indexOf("symmetric")).toBeLessThan(wf.indexOf("aws s3 cp"));
+  });
   it("el volcado incluye los esquemas de la aplicación y excluye datos efímeros de Auth", () => {
     const sh = read("scripts/backup/dump-db.sh");
     for (const s of ["public", "private", "auth", "storage", "supabase_migrations"]) expect(sh).toContain(`--schema=${s}`);

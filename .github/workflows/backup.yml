@@ -24,6 +24,11 @@ jobs:
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+      # Opcionales (segunda copia en Cloudflare R2). Sin ellos el flujo funciona igual con el artefacto de GitHub.
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
     steps:
       - uses: actions/checkout@v4
 
@@ -53,6 +58,22 @@ jobs:
           rm -rf backup "technoultra-$DATE.tar.gz"
           ls -l technoultra-*.gpg
           echo "BACKUP_FILE=technoultra-$DATE.tar.gz.gpg" >> "$GITHUB_ENV"
+
+      # Segunda copia, independiente de GitHub (opcional): se activa sola cuando existen los 4 secretos de Cloudflare R2 (ver docs/BACKUPS.md).
+      # Sube SOLO el archivo ya cifrado y comprueba que el tamaño remoto coincide con el local.
+      - name: Subir la copia cifrada a Cloudflare R2 (si está configurado)
+        if: ${{ env.R2_BUCKET != '' && env.R2_ACCOUNT_ID != '' && env.R2_ACCESS_KEY_ID != '' && env.R2_SECRET_ACCESS_KEY != '' }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+        run: |
+          ENDPOINT="https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
+          aws s3 cp "$BACKUP_FILE" "s3://${R2_BUCKET}/diarias/${BACKUP_FILE}" --endpoint-url "$ENDPOINT" --only-show-errors
+          LOCAL=$(wc -c < "$BACKUP_FILE")
+          REMOTE=$(aws s3api head-object --bucket "$R2_BUCKET" --key "diarias/${BACKUP_FILE}" --endpoint-url "$ENDPOINT" --query ContentLength --output text)
+          echo "local=${LOCAL} remoto=${REMOTE}"
+          if [ "$LOCAL" != "$REMOTE" ]; then echo "::error::El tamaño en R2 no coincide con el de la copia local"; exit 1; fi
 
       - name: Guardar la copia cifrada (30 días)
         uses: actions/upload-artifact@v4

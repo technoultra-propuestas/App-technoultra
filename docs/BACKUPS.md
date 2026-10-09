@@ -26,6 +26,18 @@ En GitHub: repositorio → **Settings → Secrets and variables → Actions → 
 
 Luego: pestaña **Actions → Copia de seguridad → Run workflow** para la primera copia y comprueba que termine en verde. Cada noche corre sola; si falla, GitHub avisa por correo.
 
+## Segunda copia opcional en Cloudflare R2 (recomendada)
+Evaluación: R2 es almacenamiento compatible con S3, independiente de GitHub y de Supabase, con nivel gratuito (10 GB-mes de almacenamiento y sin cobro por transferencia de salida; consultar la tarifa vigente en la web de Cloudflare). Nuestra copia pesa ~1,5 MB cifrada: 90 días ≈ 135 MB, una fracción mínima de la cuota. Es **un complemento, no un reemplazo**: GitHub guarda 30 días y R2 guarda más tiempo en otra empresa, de modo que perder una cuenta no pierde las copias. Riesgos: una cuenta y unas credenciales más (por eso el token se limita a un solo bucket y a leer/escribir objetos) y que R2 puede pedir un medio de pago para activarse aunque no se cobre dentro de la cuota.
+
+Puesta en marcha (el flujo ya está preparado; se activa solo cuando existen los 4 secretos):
+1. Cloudflare → **R2 Object Storage** → crear el bucket `technoultra-backups` (privado; no activar acceso público ni dominio público).
+2. En el bucket → **Settings → Object lifecycle rules**: «borrar objetos con más de 90 días» para el prefijo `diarias/`.
+3. R2 → **Manage API Tokens → Create API token**: permiso **Object Read & Write**, limitado **solo a ese bucket**. Cloudflare muestra una sola vez el Access Key ID y el Secret Access Key. El **Account ID** aparece en la URL del panel / en la página de R2.
+4. En GitHub (Settings → Secrets and variables → Actions) crea: `R2_ACCOUNT_ID`, `R2_BUCKET` (= `technoultra-backups`), `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`.
+5. Ejecuta el flujo a mano (Actions → Copia de seguridad → Run workflow): el paso «Subir la copia cifrada a Cloudflare R2» debe salir en verde y confirmar que el tamaño remoto coincide.
+
+El archivo que se sube ya está cifrado con `BACKUP_PASSPHRASE` (R2 nunca ve datos en claro).
+
 ## Probar una restauración (hazlo al menos una vez al mes)
 1. Descarga el artefacto `copia-technoultra-AAAA-MM-DD.tar.gz.gpg` (Actions → ejecución → Artifacts).
 2. Con Docker encendido: `bash scripts/backup/restore-check.sh technoultra-AAAA-MM-DD.tar.gz.gpg` (pide la frase). Crea un PostgreSQL desechable, restaura y muestra conteos (tablas, clientes, tickets, productos, documentos, usuarios, migraciones). No toca Supabase.
