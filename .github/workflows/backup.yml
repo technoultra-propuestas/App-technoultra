@@ -1,0 +1,63 @@
+name: Copia de seguridad
+
+# Copia nocturna de la base de datos y de los archivos de Supabase (plan gratuito: sin copias automáticas).
+# Resultado: un artefacto CIFRADO (AES-256, gpg) que se conserva 30 días en GitHub Actions. Ver docs/BACKUPS.md (restauración y pruebas).
+# Si la ejecución falla, GitHub avisa por correo a quien administra el repositorio.
+on:
+  schedule:
+    - cron: "0 8 * * *" # 08:00 UTC = 03:00 en Colombia
+  workflow_dispatch:
+
+concurrency:
+  group: backup
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Comprobar secretos
+        run: |
+          for v in SUPABASE_DB_URL NEXT_PUBLIC_SUPABASE_URL SUPABASE_SERVICE_ROLE_KEY BACKUP_PASSPHRASE; do
+            if [ -z "${!v}" ]; then echo "::error::Falta el secreto $v en GitHub (Settings > Secrets and variables > Actions)"; exit 1; fi
+          done
+
+      - name: Volcar la base de datos (pg_dump 17)
+        run: |
+          mkdir -p backup
+          docker run --rm -e SUPABASE_DB_URL -v "$PWD:/work" -w /work postgres:17 bash scripts/backup/dump-db.sh backup
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Copiar los archivos de Storage
+        run: node scripts/backup/storage-backup.mjs backup
+
+      - name: Empaquetar y cifrar
+        run: |
+          DATE=$(date -u +%Y-%m-%d)
+          tar czf "technoultra-$DATE.tar.gz" -C backup db.dump db.toc storage
+          gpg --batch --yes --pinentry-mode loopback --passphrase "$BACKUP_PASSPHRASE" --symmetric --cipher-algo AES256 -o "technoultra-$DATE.tar.gz.gpg" "technoultra-$DATE.tar.gz"
+          rm -rf backup "technoultra-$DATE.tar.gz"
+          ls -l technoultra-*.gpg
+          echo "BACKUP_FILE=technoultra-$DATE.tar.gz.gpg" >> "$GITHUB_ENV"
+
+      - name: Guardar la copia cifrada (30 días)
+        uses: actions/upload-artifact@v4
+        with:
+          name: copia-${{ env.BACKUP_FILE }}
+          path: ${{ env.BACKUP_FILE }}
+          retention-days: 30
+          if-no-files-found: error
