@@ -36,7 +36,10 @@ export function haversineKm(a: LatLng, b: LatLng): number {
 /** Distancia al vértice más cercano del perímetro (los vértices están a pocos metros entre sí). */
 export const distanceToPerimeterKm = (p: LatLng, poly: readonly [number, number][] = ring) => Math.min(...poly.map(([lng, lat]) => haversineKm(p, { lat, lng })));
 
-/** Más allá de esta distancia del perímetro urbano, la entrega se cotiza aparte. Decisión comercial por confirmar (ver docs/PRODUCT-SHIPPING.md). */
+/**
+ * Más allá de esta distancia del perímetro urbano, la entrega se cotiza aparte. Referencia técnica por distancia (no se usa en la tienda actual).
+ * La definición comercial de «zonas aledañas» es por MUNICIPIO (Jamundí, Palmira, Yumbo y Candelaria; ver `PRODUCT_SHIPPING_OUTSIDE_ZONES` y docs/PRODUCT-SHIPPING.md).
+ */
 export const MAX_OUTSIDE_KM = 30;
 
 export function quoteProductShipping(point: LatLng | null | undefined, opts: { maxOutsideKm?: number; polygon?: readonly [number, number][] } = {}): ShippingQuote {

@@ -3,7 +3,7 @@
 | Zona | Valor informativo |
 | --- | --- |
 | Dentro del perímetro urbano de Cali | **$10.000** |
-| Fuera del perímetro urbano de Cali y zonas aledañas | **$20.000** |
+| Fuera del perímetro urbano de Cali y zonas aledañas (**Jamundí, Palmira, Yumbo y Candelaria**) | **$20.000** |
 | Fuera de las zonas configuradas / dirección no determinada | «Consultar disponibilidad y costo de entrega» |
 
 - **No se cobra en la app.** El valor es informativo; el cierre y la dirección se acuerdan por WhatsApp («¿En qué dirección deseas recibirlo?»). Siempre se muestra «La tarifa final se confirma según la dirección. Valor sujeto a verificación».
@@ -16,4 +16,4 @@ La tarifa **nunca** se deduce del texto «Cali» que escriba el cliente. La refe
 
 ## Pendiente de decisión (no improvisado)
 1. **Geocodificación:** convertir una dirección en coordenadas requiere un proveedor (Google Geocoding, Mapbox, etc.) con credenciales y condiciones de uso. Mientras no se elija, la tienda solo muestra las tarifas informativas y la dirección se valida a mano por WhatsApp.
-2. **«Zonas aledañas»:** el límite de 30 km (`MAX_OUTSIDE_KM`) es una suposición técnica; el negocio debe confirmar qué municipios/zonas cubre el valor de $20.000.
+2. **«Zonas aledañas»: resuelto (2026-10-10, propietario).** Son los municipios de **Jamundí, Palmira, Yumbo y Candelaria** (constantes `PRODUCT_SHIPPING_OUTSIDE_ZONES` y `OUTSIDE_ZONES_TEXT` en `src/lib/catalog/config.ts`, mostradas en el Shop y en el carrito). El límite de 30 km (`MAX_OUTSIDE_KM`) queda solo como referencia técnica y no se usa en la tienda. Nota: Candelaria no está en la cobertura de **servicios** presenciales (`coverage_areas`: Cali, Jamundí, Palmira y Yumbo); esa lista es independiente.

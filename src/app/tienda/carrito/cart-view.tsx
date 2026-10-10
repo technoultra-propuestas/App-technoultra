@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { ProductImage } from "@/components/store/ProductImage";
+import { OUTSIDE_ZONES_TEXT } from "@/lib/catalog/config";
 import { copFormat } from "@/lib/catalog/normalize";
 import { cartWhatsappUrl, type WhatsappCopy } from "@/lib/catalog/whatsapp";
 import { haptic } from "@/lib/haptics";
@@ -106,7 +107,7 @@ export function CartView({ copy, shipping }: Props) {
           {shipping.enabled ? (
             <>
               <span>Cali urbano: {copFormat(shipping.urban)}</span>
-              <span>Fuera del perímetro urbano / zonas aledañas: {copFormat(shipping.outside)}</span>
+              <span>Fuera del perímetro urbano / zonas aledañas ({OUTSIDE_ZONES_TEXT}): {copFormat(shipping.outside)}</span>
               {shipping.note ? <span className="text-muted">{shipping.note}</span> : null}
             </>
           ) : null}

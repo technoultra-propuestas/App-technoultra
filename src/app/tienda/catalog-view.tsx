@@ -5,6 +5,7 @@ import { FilterSheet } from "@/components/shop/FilterSheet";
 import { ProductImage } from "@/components/store/ProductImage";
 import { ChipRow, FilterChip, SearchField } from "@/components/ui/kit";
 import { EmptyState } from "@/components/ui/layout";
+import { OUTSIDE_ZONES_TEXT } from "@/lib/catalog/config";
 import { copFormat } from "@/lib/catalog/normalize";
 import { listFeatured, listProducts, loadFacets, type CatalogProduct, type ListFilters } from "@/lib/catalog/queries";
 import { loadActiveBanner, loadShopSettings, type ShopBanner, type ShopSettings } from "@/lib/shop/settings";
@@ -65,7 +66,7 @@ function ShippingStrip({ s }: { s: ShopSettings }) {
       <div className="flex min-w-0 flex-wrap gap-x-3 gap-y-0 sm:gap-x-5">
         <span className="font-extrabold text-ink">{s.shipping_title}</span>
         <span>Cali urbano <strong>{copFormat(s.shipping_urban_fee)}</strong></span>
-        <span>Fuera del perímetro / zonas aledañas <strong>{copFormat(s.shipping_outside_fee)}</strong></span>
+        <span>Fuera del perímetro / zonas aledañas ({OUTSIDE_ZONES_TEXT}) <strong>{copFormat(s.shipping_outside_fee)}</strong></span>
         {s.shipping_note ? <span className="text-muted">{s.shipping_note}</span> : null}
       </div>
     </section>
