@@ -6,6 +6,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync } from "node:fs";
 import { startApp } from "./lib/app.mjs";
+import { startMpMock } from "./lib/mp-mock.mjs";
 import { Browser } from "./lib/browser.mjs";
 import { adminClient, assertLocal, psql, publishLegalFixtures, seedStaff } from "./lib/fixtures.mjs";
 import { deleteTestAssets } from "./lib/cloudinary.mjs";
@@ -52,7 +53,8 @@ if (!state.owner || psql("select count(*) from public.profiles where role = 'sup
 }
 const save = () => writeFileSync(STATE, JSON.stringify(state));
 
-const app = await startApp({ mode: flags.has("--dev") ? "dev" : "start" });
+const mock = flags.has("--mp-mock") ? await startMpMock() : null;
+const app = await startApp({ mode: flags.has("--dev") ? "dev" : "start", mpMockBase: mock?.base ?? null });
 const mail = inbucket(env.E2E_INBUCKET_URL ?? "http://127.0.0.1:56324");
 const browser = await Browser.launch({ baseUrl: app.base, profileDir: join(tmpdir(), `tu-e2e-chrome-${stamp()}`) });
 
@@ -67,7 +69,7 @@ try {
     const rep = createReporter(mod.title ?? f);
     console.log(`\n=== ${mod.title ?? f} ===`);
     try {
-      await mod.run({ b: browser, mail, rep, env, sb, state, save, out: OUT, base: app.base });
+      await mod.run({ b: browser, mail, rep, env, sb, state, save, out: OUT, base: app.base, mock });
     } catch (e) {
       rep.check(`${f}: sin excepción`, false, String(e?.stack ?? e).split("\n").slice(0, 3).join(" | "));
       await browser.screenshot(`${OUT}/fallo-${f}.png`).catch(() => {});
@@ -77,6 +79,7 @@ try {
 } finally {
   await browser.close();
   app.stop();
+  mock?.stop();
   if (!flags.has("--keep-assets")) {
     const ids = psql("select id from public.tickets").split(/\s+/).filter(Boolean);
     const r = await deleteTestAssets(env, [...ids.map((id) => `technoultra/tickets/${id}`), "technoultra/e2e-probe"]).catch(() => ({ deleted: 0 }));

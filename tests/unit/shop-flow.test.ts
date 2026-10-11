@@ -152,7 +152,7 @@ describe("estados del pago (sin nombrar al proveedor)", () => {
   });
   it("rechazado o cancelado permite reintento; vencido permite uno nuevo", () => {
     expect(derivePaymentUi([row("rejected")], false)).toEqual({ state: "rejected", canPay: true, canResume: false });
-    expect(derivePaymentUi([row("cancelled")], false).canPay).toBe(true);
+    expect(derivePaymentUi([row("cancelled")], false)).toEqual({ state: "cancelled", canPay: true, canResume: false });
     expect(derivePaymentUi([row("expired")], false)).toEqual({ state: "expired", canPay: true, canResume: false });
   });
   it("reembolsado no permite pagar de nuevo", () => expect(derivePaymentUi([row("refunded")], false)).toEqual({ state: "refunded", canPay: false, canResume: false }));
@@ -165,9 +165,13 @@ describe("estados del pago (sin nombrar al proveedor)", () => {
     expect(all).not.toMatch(/mercado/i);
     expect(PAYMENT_LABEL.validating).toBe("Pago en validación");
     expect(PAYMENT_LABEL.confirmed).toBe("Pago confirmado");
-    expect(PAYMENT_MESSAGE.validating).toBe("Estamos validando tu pago. Te avisaremos cuando quede confirmado.");
+    expect(PAYMENT_MESSAGE.validating).toBe("Estamos confirmando tu pago. No necesitas volver a pagar; te avisaremos cuando quede confirmado.");
     expect(returnMessage("exito")).toEqual({ tone: "ok", text: PAYMENT_MESSAGE.validating });
-    expect(returnMessage("fallo")?.tone).toBe("error");
+    expect(returnMessage("fallo")?.text).toMatch(/No pudimos verificar/);
+    // la URL no manda: con el estado real en la base de datos, «fallo» no duplica ni contradice la tarjeta
+    expect(returnMessage("fallo", "validating")).toBeNull();
+    expect(returnMessage("fallo", "confirmed")).toBeNull();
+    expect(returnMessage("exito", "confirmed")).toBeNull();
     expect(returnMessage("otra")).toBeNull();
   });
 });

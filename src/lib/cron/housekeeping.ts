@@ -1,9 +1,10 @@
 import "server-only";
 import { flushEmailOutbox } from "@/lib/email/outbox";
+import { flushPushOutbox } from "@/lib/push/send";
 import { reconcilePendingPayments } from "@/lib/payments/reconcile";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-export type HousekeepingResult = { ok: true; result: unknown; expiredPayments: number; payments: unknown; emails: unknown } | { ok: false };
+export type HousekeepingResult = { ok: true; result: unknown; expiredPayments: number; payments: unknown; emails: unknown; push: unknown } | { ok: false };
 
 /**
  * Tareas periódicas (idempotentes, se pueden ejecutar varias veces al día sin efectos duplicados): mantenimiento de la base, vencimiento
@@ -20,6 +21,10 @@ export async function runHousekeeping(): Promise<HousekeepingResult> {
   await admin.rpc("skip_non_email_notifications");
   const { data: expired } = await admin.rpc("expire_pending_service_payments");
   const payments = await reconcilePendingPayments(20);
+  // Avisos de tickets sin atender (una vez por día y ticket) antes de vaciar las colas de envío.
+  await admin.rpc("notify_stale_tickets");
+  await admin.rpc("notify_stale_payments");
   const emails = await flushEmailOutbox(50);
-  return { ok: true, result: data, expiredPayments: Number(expired ?? 0), payments, emails };
+  const push = await flushPushOutbox(50);
+  return { ok: true, result: data, expiredPayments: Number(expired ?? 0), payments, emails, push };
 }

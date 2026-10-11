@@ -13,6 +13,7 @@ const mercadopago = z.object({
   MERCADOPAGO_WEBHOOK_SECRET: z.string().min(10),
 });
 const email = z.object({ RESEND_API_KEY: z.string().min(10), EMAIL_FROM: z.string().min(3) });
+const push = z.object({ VAPID_PUBLIC_KEY: z.string().min(40), VAPID_PRIVATE_KEY: z.string().min(20), VAPID_SUBJECT: z.string().min(8) });
 const cloudinary = z.object({
   CLOUDINARY_CLOUD_NAME: z.string().min(1),
   CLOUDINARY_API_KEY: z.string().min(1),
@@ -33,4 +34,9 @@ export const serverEnv = {
   mercadopago: () => mercadopago.parse(process.env),
   email: () => email.parse(process.env),
   cloudinary: () => cloudinary.parse(process.env),
+  /** Claves VAPID del Web Push. Opcional: sin ellas el push queda desactivado y los avisos siguen en la app y por correo. */
+  push: () => {
+    const r = push.safeParse(process.env);
+    return r.success ? r.data : null;
+  },
 };

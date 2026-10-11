@@ -5,7 +5,7 @@
  *  - Las navegaciones van siempre a la red; si falla, se muestra /offline.html.
  * La actualización es controlada: el SW nuevo espera hasta que la persona acepta "Actualizar" (mensaje SKIP_WAITING).
  */
-const VERSION = "tu-sw-v1";
+const VERSION = "tu-sw-v2";
 const STATIC_CACHE = `${VERSION}-static`;
 const OFFLINE_URL = "/offline.html";
 const PRECACHE = [OFFLINE_URL, "/offline.css", "/icons/icon-192.png"];
@@ -55,4 +55,41 @@ self.addEventListener("fetch", (event) => {
     );
   }
   // Todo lo demás (API, Server Actions, documentos, datos) va directo a la red y no se almacena.
+});
+
+// ---- Notificaciones push (Web Push) ----
+// El servidor envía solo título, un cuerpo genérico y una ruta INTERNA: nunca montos, direcciones ni datos del servicio.
+self.addEventListener("push", (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch {
+    data = {};
+  }
+  const title = typeof data.title === "string" && data.title ? data.title.slice(0, 120) : "TechnoUltra";
+  const url = typeof data.url === "string" && data.url.startsWith("/") ? data.url : "/";
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body: typeof data.body === "string" ? data.body.slice(0, 160) : "Abre TechnoUltra para ver los detalles.",
+      icon: "/icons/icon-192.png",
+      badge: "/icons/icon-192.png",
+      tag: typeof data.tag === "string" ? data.tag : undefined,
+      requireInteraction: data.urgent === true,
+      data: { url },
+    }),
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const raw = event.notification.data && event.notification.data.url;
+  const target = new URL(typeof raw === "string" && raw.startsWith("/") ? raw : "/", self.location.origin).href;
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((list) => {
+      for (const c of list) {
+        if (c.url.startsWith(self.location.origin) && "focus" in c) return c.focus().then((w) => (w && "navigate" in w ? w.navigate(target) : undefined));
+      }
+      return self.clients.openWindow(target);
+    }),
+  );
 });

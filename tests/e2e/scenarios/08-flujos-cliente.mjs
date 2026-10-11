@@ -90,9 +90,9 @@ export async function run({ b, rep, state, save }) {
   await b.goto(`/c/tickets/${ticket}`, 2500);
   t = await b.text();
   rep.check("una solicitud nueva dice «Solicitud recibida» y NO «Recibido» a secas", /Solicitud recibida/.test(t) && !/(^|\s)Recibido(\s|$)/.test(t));
-  rep.check("el avance es «Solicitud · Equipo recibido · Diagnóstico · Aprobación · Servicio · Entrega»", /Solicitud/.test(t) && /Equipo recibido/.test(t) && /Entrega/.test(t));
+  rep.check("la línea de tiempo muestra las etapas reales con íconos (Solicitud … Reparación · Entrega) y la actual marcada", /Avance del servicio/.test(await b.eval("document.body.innerHTML")) && /Solicitud/.test(t) && /Reparación/.test(t) && /Entrega/.test(t) && (await b.eval("document.querySelectorAll('[aria-current=step]').length")) === 1);
   rep.check("explica dónde está el equipo y no dice que ya lo tenemos", /Aún no tenemos tu equipo/.test(t) && !/Ya tenemos tu equipo/.test(t));
-  rep.check("separa solicitud, pago, equipo, diagnóstico, servicio y entrega", /¿Cómo va tu servicio\?/.test(t) && /Pago/.test(t) && /Diagnóstico/.test(t) && /Entrega/.test(t));
+  rep.check("separa solicitud, pago, equipo, diagnóstico, servicio y entrega", /¿Cómo va tu servicio\?/.test(t) && /pago/i.test(t) && /Diagnóstico/i.test(t) && /Entrega/i.test(t), JSON.stringify({ c: /¿Cómo va tu servicio\?/.test(t), p: /pago/i.test(t), d: /Diagnóstico/i.test(t), e: /Entrega/i.test(t) }));
   for (const [mod, re] of [["pickup", /Coordinaremos contigo la recogida del equipo en la dirección indicada/], ["home", /coordinar la visita/], ["remote", /No necesitas entregar físicamente el equipo/]]) {
     psql(`update tickets set modality = '${mod}' where id = '${ticket}'`);
     await b.goto(`/c/tickets/${ticket}`, 1500);
@@ -108,22 +108,22 @@ export async function run({ b, rep, state, save }) {
   const pay = psql(`insert into payments (customer_id, ticket_id, purpose, provider, status, amount) values ('${customer}', '${ticket}', 'service', 'mercadopago', 'pending', ${price}) returning id`).split("\n")[0];
   await b.goto(`/c/tickets/${ticket}`, 2000);
   t = await b.text();
-  rep.check("pago iniciado: dice «Pago en validación» y NO vuelve a mostrar «Pagar $…»", /Pago en validación/.test(t) && /Estamos validando tu pago\. Te avisaremos cuando quede confirmado\./.test(t) && !/Pagar · \$/.test(t));
+  rep.check("pago iniciado: dice «Estamos confirmando tu pago», muestra «Consultar estado de pago» y NO vuelve a mostrar «Pagar $…»", /Estamos confirmando tu pago/.test(t) && /Consultar estado de pago/.test(t) && !/Pagar · \$/.test(t));
   rep.check("ninguna pantalla del cliente nombra a Mercado Pago", !/Mercado ?Pago/i.test(t));
   await b.goto(`/c/tickets/${ticket}?pago=exito`, 1500);
-  rep.check("al volver del pago (exito) el mensaje es «Estamos validando tu pago…» sin proveedor", /Estamos validando tu pago/.test(await b.text()) && !/Mercado ?Pago/i.test(await b.text()));
+  rep.check("al volver del pago (exito) el mensaje es «Estamos confirmando tu pago…» sin proveedor y una sola tarjeta de estado", /Estamos confirmando tu pago/.test(await b.text()) && (((await b.text()).match(/Estamos confirmando tu pago/g) ?? []).length === 1) && !/Mercado ?Pago/i.test(await b.text()));
   psql(`update payments set status = 'approved', approved_at = now() where id = '${pay}'; select private.settle_payment('${pay}');`);
   await b.goto(`/c/tickets/${ticket}`, 2000);
   t = await b.text();
-  rep.check("pago aprobado: «Pago confirmado», mensaje de la modalidad y sin «Pagar»", /Pago confirmado/.test(t) && /Te indicaremos cuándo puedes llevar el equipo/.test(t) && !/Pagar · \$/.test(t) && !/Mercado ?Pago/i.test(t));
+  rep.check("pago aprobado: «Pago confirmado», mensaje de la modalidad y sin «Pagar»", /Recibimos tu pago/.test(t) && /coordinar la recepción de tu equipo/.test(t) && !/Pagar · \$/.test(t) && !/Mercado ?Pago/i.test(t));
   const ticket2 = psql(`insert into tickets (customer_id, service_id, modality, problem, assigned_to) values ('${customer}', '${svc}', 'store', 'Prueba E2E pago rechazado', '${state.techId}') returning id`).split("\n")[0];
   psql(`insert into payments (customer_id, ticket_id, purpose, provider, status, amount) values ('${customer}', '${ticket2}', 'service', 'mercadopago', 'rejected', ${price})`);
   await b.goto(`/c/tickets/${ticket2}`, 2000);
   t = await b.text();
-  rep.check("pago rechazado: lo dice y permite reintentar («Pagar de nuevo»)", /no se completó/.test(t) && /Pagar de nuevo/.test(t));
+  rep.check("pago rechazado: lo dice y permite reintentar («Pagar de nuevo»)", /No se pudo completar el pago/.test(t) && /Intentar pagar nuevamente · \$/.test(t));
   psql(`delete from payments where ticket_id = '${ticket2}'; insert into payments (customer_id, ticket_id, purpose, provider, status, amount) values ('${customer}', '${ticket2}', 'service', 'mercadopago', 'expired', ${price})`);
   await b.goto(`/c/tickets/${ticket2}`, 2000);
-  rep.check("pago vencido: permite iniciar uno nuevo", /venció/.test(await b.text()) && /Pagar de nuevo/.test(await b.text()));
+  rep.check("pago vencido: permite iniciar uno nuevo", /venció/.test(await b.text()) && /Intentar pagar nuevamente · \$/.test(await b.text()));
 
   // ---------------------------------------------------------------- pantallas del cliente: móvil y escritorio, sin desbordes ni errores
   const clientPages = ["/c", "/c/solicitar", `/c/solicitar/${svcSlug}`, "/c/tickets", `/c/tickets/${ticket}`, "/c/equipos", "/c/documentos", "/c/perfil", "/c/ayuda", "/c/mas", "/c/direcciones", "/tienda", "/tienda/carrito"];

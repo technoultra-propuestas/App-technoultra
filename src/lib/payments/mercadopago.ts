@@ -87,7 +87,11 @@ export function verifyWebhookSignature(p: Parameters<typeof checkWebhookSignatur
   return checkWebhookSignature(p).ok;
 }
 
-const API = "https://api.mercadopago.com";
+/**
+ * Base de la API. SOLO para pruebas automáticas: `MERCADOPAGO_API_BASE` se acepta únicamente si apunta a esta misma máquina
+ * (127.0.0.1 / localhost). Cualquier otro valor se ignora y se usa el dominio real: el token nunca viaja a otro servidor.
+ */
+const API = /^http:\/\/(127\.0\.0\.1|localhost):\d{2,5}$/.test(process.env.MERCADOPAGO_API_BASE ?? "") ? (process.env.MERCADOPAGO_API_BASE as string) : "https://api.mercadopago.com";
 export const ORDER_ID = /^ORD[0-9A-Z]{10,48}$/;
 
 /** El id de aplicación va dentro del access token (`APP_USR-<appId>-…`): permite comprobar que una Order es de NUESTRA aplicación. */

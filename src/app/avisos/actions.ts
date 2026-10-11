@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getProfile } from "@/lib/auth/session";
 import { notificationHref } from "@/lib/notifications";
+import { setPreference } from "@/lib/notification-prefs";
 import { createClient } from "@/lib/supabase/server";
 
 /** Marca como leído y abre el destino. RLS garantiza que solo se pueda tocar un aviso propio. */
@@ -25,4 +26,15 @@ export async function markAllReadAction(): Promise<void> {
   if (!profile) redirect("/login");
   await (await createClient()).from("notifications").update({ read_at: new Date().toISOString() }).is("read_at", null);
   revalidatePath("/avisos");
+}
+
+/** Preferencias del propio usuario (correo). RLS limita la fila al dueño; el id sale de la sesión, no del formulario. */
+export async function savePreferencesAction(_prev: { ok: boolean; message: string } | null, fd: FormData): Promise<{ ok: boolean; message: string }> {
+  const profile = await getProfile();
+  if (!profile) redirect("/login");
+  const email = fd.get("email") === "on";
+  const ok = await setPreference(await createClient(), profile.id, { email_enabled: email });
+  if (!ok) return { ok: false, message: "No pudimos guardar tus preferencias. Inténtalo de nuevo." };
+  revalidatePath("/avisos");
+  return { ok: true, message: "Preferencias guardadas." };
 }

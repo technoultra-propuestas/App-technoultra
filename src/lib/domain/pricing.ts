@@ -39,6 +39,10 @@ export function quoteBreakdown(q: QuotePricing): BreakdownLine[] {
   return lines;
 }
 
+/** Qué cubre el diagnóstico (se muestra antes de pagarlo). No promete plazos. */
+export const DIAGNOSIS_SCOPE =
+  "Revisión técnica del equipo para identificar la falla y entregarte una propuesta clara antes de cualquier reparación.";
+
 /** Texto de la condición del diagnóstico, para mostrar ANTES de pagarlo. */
 export const DIAGNOSIS_CONDITION =
   "Si apruebas la reparación, el valor del diagnóstico se abona al total de la reparación. Si no la apruebas, el diagnóstico se cobra y no se abona.";

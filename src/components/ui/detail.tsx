@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { IconLaptop } from "@/components/ui/icons";
 import { fmtDateTime, StatusBadge } from "@/components/ui/layout";
 
 /**
@@ -6,13 +7,16 @@ import { fmtDateTime, StatusBadge } from "@/components/ui/layout";
  */
 
 /** Cabecera de detalle: tarjeta oscura con código, estado y mensaje principal (jerarquía: qué es → cómo va → qué sigue). */
-export function StatusHero({ code, subtitle, status, message, meta }: { code: string; subtitle?: string; status: string; message?: string; meta?: ReactNode }) {
+export function StatusHero({ code, subtitle, status, message, meta, device }: { code: string; subtitle?: string; status: string; message?: string; meta?: ReactNode; /** Muestra el ícono del equipo junto al código. */ device?: boolean }) {
   return (
     <section aria-label={`Resumen de ${code}`} className="flex flex-col gap-4 rounded-card bg-ink p-5 text-white shadow-card sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="flex min-w-0 flex-col gap-1">
-          <h1 className="m-0 text-[28px] font-extrabold leading-none tracking-[-0.025em] text-brand">{code}</h1>
-          {subtitle ? <p className="m-0 text-[14px] font-semibold text-[#D6D6D2]">{subtitle}</p> : null}
+        <div className="flex min-w-0 items-center gap-3">
+          {device ? <span aria-hidden className="flex h-12 w-12 flex-none items-center justify-center rounded-2xl bg-white/10 text-brand"><IconLaptop width={26} height={26} /></span> : null}
+          <div className="flex min-w-0 flex-col gap-1">
+            <h1 className="m-0 text-[28px] font-extrabold leading-none tracking-[-0.025em] text-brand">{code}</h1>
+            {subtitle ? <p className="m-0 text-[14px] font-semibold text-[#D6D6D2]">{subtitle}</p> : null}
+          </div>
         </div>
         <StatusBadge status={status} />
       </div>

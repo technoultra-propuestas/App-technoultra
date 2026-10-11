@@ -17,7 +17,7 @@ const num = (v: unknown) => (v === undefined || v === null || v === "" ? NaN : N
  * - Aprobado exige `processed` + `accredited` y que lo PAGADO sea exactamente el total esperado.
  * - La Order debe pertenecer a nuestra aplicación (id dentro del access token) y estar en COP.
  */
-export async function applyOrder(order: MpOrder, token: string, source: "webhook" | "reconciliation"): Promise<ApplyOutcome> {
+export async function applyOrder(order: MpOrder, token: string, source: "webhook" | "reconciliation" | "return"): Promise<ApplyOutcome> {
   if (!order.external_reference) return { kind: "ignored", reason: "no_reference" };
   const app = applicationIdFromToken(token);
   if (app && order.integration_data?.application_id && order.integration_data.application_id !== app) return { kind: "ignored", reason: "foreign_application" };

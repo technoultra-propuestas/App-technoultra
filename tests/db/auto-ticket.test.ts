@@ -148,8 +148,9 @@ describe("pago inmediato de un servicio de precio fijo", () => {
     const row = (await q<{ prepaid_at: string; prepaid_amount: string }>(`select prepaid_at, prepaid_amount from tickets where id = $1`, [t]))[0];
     expect(row.prepaid_at).not.toBeNull();
     expect(num(row.prepaid_amount)).toBe(50000);
-    expect((await q(`select 1 from notifications where entity_id = $1 and type = 'payment.approved'`, [p.payment_id])).length).toBe(1);
-    expect((await q(`select 1 from notifications where entity_id = $1 and type = 'payment.received'`, [p.payment_id])).length).toBe(1);
+    expect((await q(`select 1 from notifications where entity_id = $1 and type = 'payment.approved'`, [t])).length).toBe(1);
+    // pago en línea ya verificado por el proveedor: no exige acción del SUPERADMIN (v2)
+    expect((await q(`select 1 from notifications where entity_id = $1 and type = 'payment.received'`, [t])).length).toBe(0);
     await expect(begin(cliA, t)).rejects.toThrow(/service_already_paid/);
   });
   it("un webhook tardío «pendiente» no reabre un pago aprobado", async () => {

@@ -1,7 +1,9 @@
 import { TextLink } from "@/components/ui/kit";
-import { Panel, ProgressSteps, StatusHero, StatusRow, Timeline } from "@/components/ui/detail";
+import { Panel, StatusHero, StatusRow, Timeline } from "@/components/ui/detail";
 import { clientNextAction } from "@/lib/domain/next-action";
-import { effectiveStatus, equipmentWhere, progressSteps, ticketMessage } from "@/lib/domain/ticket-flow";
+import { serviceStages } from "@/lib/domain/service-stages";
+import { effectiveStatus, equipmentWhere, ticketMessage } from "@/lib/domain/ticket-flow";
+import { ServiceTimeline } from "@/components/ui/service-flow";
 import { PAYMENT_LABEL } from "@/lib/payments/state";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -36,22 +38,23 @@ export default async function TicketDetail({ params, searchParams }: { params: P
   if (!t) notFound();
   const [{ count: receptions }, { data: pays }, { data: credit }, facts] = await Promise.all([
     supabase.from("receptions").select("id", { count: "exact", head: true }).eq("ticket_id", t.id),
-    supabase.from("payments").select("status").eq("ticket_id", t.id),
+    supabase.from("payments").select("status, approved_at").eq("ticket_id", t.id),
     supabase.from("diagnosis_credits").select("id").eq("ticket_id", t.id).maybeSingle(),
     loadFlowFacts(t.id),
   ]);
   // «Equipo recibido» solo existe cuando TechnoUltra ya levantó el acta de recepción (tiene físicamente el equipo).
   const equipmentReceived = (receptions ?? 0) > 0;
   const view = effectiveStatus(t.status, equipmentReceived, t.modality);
-  const flow = progressSteps(t.status, equipmentReceived, t.modality);
   const payConfirmed = Boolean(t.prepaid_at || credit || (pays ?? []).some((p) => p.status === "approved"));
   const payValidating = !payConfirmed && (pays ?? []).some((p) => p.status === "pending");
-  const [{ data: history }, { data: notes }, { data: diag }, { data: svc }] = await Promise.all([
+  const [{ data: warranties }, { data: history }, { data: notes }, { data: diag }, { data: svc }] = await Promise.all([
+    supabase.from("warranties").select("id, end_date, status").eq("ticket_id", t.id).eq("status", "active"),
     supabase.from("ticket_status_history").select("id, to_status, reason, created_at").eq("ticket_id", t.id).order("created_at"),
     supabase.from("ticket_notes").select("id, body, created_at").eq("ticket_id", t.id).eq("visibility", "customer").order("created_at"),
     supabase.from("diagnostics").select("id, summary, recommendations, finalized_at").eq("ticket_id", t.id).order("version", { ascending: false }).limit(1),
-    t.service_id ? supabase.from("services").select("is_diagnostic_fee").eq("id", t.service_id).maybeSingle() : Promise.resolve({ data: null }),
+    t.service_id ? supabase.from("services").select("is_diagnostic_fee, allow_online_payment").eq("id", t.service_id).maybeSingle() : Promise.resolve({ data: null }),
   ]);
+  const { data: flowKind } = t.service_id ? await supabase.rpc("service_flow", { p_service: t.service_id, p_modality: t.modality }) : { data: null };
   const { data: quote } = await supabase
     .from("quotes")
     .select("id, code, status, valid_until, total, paid_at")
@@ -69,7 +72,27 @@ export default async function TicketDetail({ params, searchParams }: { params: P
   const eq = t.equipment as unknown as { brand: string; model: string } | null;
   const diag0 = diag?.[0] ?? null;
   const diagnosisPayable = Boolean(svc?.is_diagnostic_fee) && !payConfirmed;
-  const now = facts
+  const firstAt = (st: string) => (history ?? []).find((h) => h.to_status === st)?.created_at ?? null;
+  const immediate = !svc?.is_diagnostic_fee && flowKind === "immediate";
+  // Etapas del servicio: SOLO hechos verificados (estado del ticket, pagos aprobados, diagnóstico finalizado, cotización aprobada).
+  const stages = t.status === "cancelled" ? null : serviceStages({
+    status: t.status,
+    paymentApplies: Boolean(svc?.is_diagnostic_fee) || (immediate && Boolean(svc?.allow_online_payment)) || payConfirmed,
+    paymentConfirmed: payConfirmed,
+    immediate,
+    diagnosisFinalized: Boolean(diag0?.finalized_at),
+    quoteStatus: quote?.status ?? null,
+    dates: {
+      request: t.received_at,
+      payment: (pays ?? []).filter((p) => p.status === "approved").map((p) => p.approved_at).filter(Boolean).sort()[0] ?? null,
+      diagnosis: diag0?.finalized_at ?? null,
+      quote: firstAt("awaiting_approval"),
+      repairDone: firstAt("ready"),
+      delivered: t.delivered_at,
+    },
+  });
+  const paymentIsPrimary = !payConfirmed && (payValidating || diagnosisPayable);
+  const now = facts && !paymentIsPrimary
     ? clientNextAction({
         ...facts,
         // El estado de pago se recalcula aquí con lo que ve el cliente (RLS): el servidor ya lo confirmó o no.
@@ -86,23 +109,27 @@ export default async function TicketDetail({ params, searchParams }: { params: P
   const related = diag0?.finalized_at ? await findRelatedProducts([t.problem, diag0.summary, diag0.recommendations].filter(Boolean).join("\n"), []).catch(() => []) : [];
 
   return (
-    <section className="mx-auto flex w-full max-w-[640px] flex-col gap-6">
+    <section className="mx-auto flex w-full max-w-[1040px] flex-col gap-6">
       <TextLink href="/c/tickets" className="w-fit">← Mis tickets</TextLink>
       <StatusHero
         code={t.code}
+        device
         subtitle={eq ? `${eq.brand} ${eq.model} · ${MODALITY_LABEL[t.modality]}` : MODALITY_LABEL[t.modality]}
         status={view}
         message={t.cancelled_reason ? `${ticketMessage(view, t.modality)} ${t.cancelled_reason}` : ticketMessage(view, t.modality)}
         meta={`Solicitud creada el ${fmtDateTime(t.received_at)}`}
       />
-      {flow ? (
+      {stages ? (
         <Card>
-          <ProgressSteps steps={flow.steps} current={flow.current} />
+          <ServiceTimeline stages={stages} />
         </Card>
       ) : null}
+      <div className="grid items-start gap-6 lg:grid-cols-2">
+        <div className="flex min-w-0 flex-col gap-6">
       {now ? (
         <section aria-label="Ahora estamos aquí" className={`flex flex-col gap-2 rounded-card border p-5 ${now.tone === "action" ? "border-brand bg-[#FFF6E8]" : "border-line bg-white"}`}>
           <span className="text-[12px] font-extrabold uppercase tracking-[0.06em] text-muted">Ahora estamos aquí</span>
+          {now.tone === "wait" ? <span className="w-fit rounded-full bg-ok-soft px-3 py-1 text-[13px] font-extrabold text-ok">Por ahora no tienes que hacer nada</span> : null}
           <h2 className="m-0 text-[20px] font-extrabold leading-tight">{now.title}</h2>
           <p className="m-0 text-[15px] leading-snug text-ink-2">{now.body}</p>
           {now.primary ? (
@@ -118,6 +145,8 @@ export default async function TicketDetail({ params, searchParams }: { params: P
         </section>
       ) : null}
       <PaymentCard ticketId={t.id} result={(await searchParams).pago} />
+        </div>
+        <div className="flex min-w-0 flex-col gap-6">
       {quote && ["sent", "clarification", "approved", "rejected"].includes(quote.status) ? (
         <Card className="flex flex-col gap-2">
           <div className="flex items-baseline justify-between gap-3">
@@ -167,6 +196,22 @@ export default async function TicketDetail({ params, searchParams }: { params: P
           <StatusRow label="Entrega" value={t.status === "delivered" ? "Entregado" : t.status === "ready" ? "Listo para entregar" : "Pendiente"} tone={t.status === "delivered" ? "ok" : t.status === "ready" ? "wait" : "neutral"} />
         </ul>
       </Panel>
+      <Panel title="Resumen del servicio">
+        <ul className="m-0 flex list-none flex-col divide-y divide-line p-0">
+          <StatusRow label="Servicio n.º" value={t.code} tone="neutral" />
+          <StatusRow label="Solicitud creada" value={fmtDateTime(t.received_at)} tone="neutral" />
+          {t.delivered_at ? <StatusRow label="Entregado" value={fmtDateTime(t.delivered_at)} tone="ok" /> : null}
+          {quote && quote.status === "approved" && !quote.paid_at && Number(quote.total) > 0 ? <StatusRow label="Saldo por pagar" value={money(quote.total)} tone="wait" /> : null}
+          {(warranties ?? []).length > 0 ? <StatusRow label="Garantía" value={`Activa hasta el ${new Date(`${[...(warranties ?? [])].sort((a, b) => b.end_date.localeCompare(a.end_date))[0].end_date}T12:00:00`).toLocaleDateString("es-CO", { day: "numeric", month: "long", year: "numeric" })}`} tone="ok" /> : null}
+        </ul>
+        {diagnosisDocId || quoteDocId ? (
+          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[14px] font-extrabold">
+            {diagnosisDocId ? <Link href={`/c/documentos/${diagnosisDocId}`} className="flex min-h-11 items-center underline decoration-brand underline-offset-[3px]">Informe de diagnóstico</Link> : null}
+            {quoteDocId ? <Link href={`/c/documentos/${quoteDocId}`} className="flex min-h-11 items-center underline decoration-brand underline-offset-[3px]">Cotización (PDF)</Link> : null}
+            <Link href="/c/documentos" className="flex min-h-11 items-center underline decoration-brand underline-offset-[3px]">Todos mis documentos</Link>
+          </div>
+        ) : null}
+      </Panel>
       <Panel title="Lo que nos contaste">
         <p className="m-0 text-[15px] leading-normal text-ink-2">{t.problem}</p>
       </Panel>
@@ -181,6 +226,8 @@ export default async function TicketDetail({ params, searchParams }: { params: P
           ))}
         </Card>
       ) : null}
+        </div>
+      </div>
       <Panel title="Historial">
         <Timeline items={[...(history ?? [])].reverse().map((h) => ({ id: h.id, title: statusLabel(h.to_status), at: h.created_at, detail: h.reason }))} />
       </Panel>

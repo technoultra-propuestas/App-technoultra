@@ -1732,6 +1732,50 @@ export type Database = {
           },
         ]
       }
+      notification_deliveries: {
+        Row: {
+          attempts: number
+          channel: string
+          created_at: string
+          id: string
+          last_error: string | null
+          notification_id: string
+          sent_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          channel: string
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          notification_id: string
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          channel?: string
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          notification_id?: string
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_deliveries_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "notifications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_preferences: {
         Row: {
           email_enabled: boolean
@@ -1775,8 +1819,10 @@ export type Database = {
           emailed_at: string | null
           entity_id: string | null
           entity_type: string | null
+          event_key: string | null
           id: string
           read_at: string | null
+          priority: string
           recipient_id: string
           sent_at: string | null
           status: Database["public"]["Enums"]["notification_status"]
@@ -1790,7 +1836,9 @@ export type Database = {
           emailed_at?: string | null
           entity_id?: string | null
           entity_type?: string | null
+          event_key?: string | null
           id?: string
+          priority?: string
           read_at?: string | null
           recipient_id: string
           sent_at?: string | null
@@ -1805,7 +1853,9 @@ export type Database = {
           emailed_at?: string | null
           entity_id?: string | null
           entity_type?: string | null
+          event_key?: string | null
           id?: string
+          priority?: string
           read_at?: string | null
           recipient_id?: string
           sent_at?: string | null
@@ -2598,7 +2648,9 @@ export type Database = {
           auth_key: string
           created_at: string
           endpoint: string
+          failed_count: number
           id: string
+          last_success_at: string | null
           p256dh: string
           profile_id: string
           user_agent: string | null
@@ -2607,7 +2659,9 @@ export type Database = {
           auth_key: string
           created_at?: string
           endpoint: string
+          failed_count?: number
           id?: string
+          last_success_at?: string | null
           p256dh: string
           profile_id: string
           user_agent?: string | null
@@ -2616,7 +2670,9 @@ export type Database = {
           auth_key?: string
           created_at?: string
           endpoint?: string
+          failed_count?: number
           id?: string
+          last_success_at?: string | null
           p256dh?: string
           profile_id?: string
           user_agent?: string | null
@@ -3982,11 +4038,28 @@ export type Database = {
           entity_type: string
           full_name: string
           id: string
+          recipient_role: string
           title: string
           to_email: string
           type: string
         }[]
       }
+      claim_push_notifications: {
+        Args: { p_limit?: number }
+        Returns: {
+          attempt: number
+          body: string
+          entity_id: string
+          entity_type: string
+          notification_id: string
+          priority: string
+          recipient_id: string
+          title: string
+        }[]
+      }
+      record_delivery: { Args: { p_channel: string; p_error?: string; p_notification: string; p_status: string }; Returns: undefined }
+      notify_stale_tickets: { Args: never; Returns: number }
+      notify_stale_payments: { Args: never; Returns: number }
       complete_checklist: { Args: { p_run: string }; Returns: undefined }
       complete_onboarding: { Args: never; Returns: undefined }
       create_order: {
