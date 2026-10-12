@@ -160,6 +160,25 @@ export const IconPlus = (p: SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
+export const IconCamera = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base(p)}>
+    <path d="M14.5 4h-5L7.5 6.5H5a2 2 0 0 0-2 2V18a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8.5a2 2 0 0 0-2-2h-2.5L14.5 4z" />
+    <circle cx="12" cy="13" r="3.5" />
+  </svg>
+);
+export const IconImage = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base(p)}>
+    <rect x="3" y="3" width="18" height="18" rx="2.5" />
+    <circle cx="9" cy="9" r="1.8" />
+    <path d="m21 15-4.5-4.5L6 21" />
+  </svg>
+);
+export const IconRefresh = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base(p)}>
+    <path d="M20 11a8 8 0 0 0-14.9-3M4 5v4h4M4 13a8 8 0 0 0 14.9 3M20 19v-4h-4" />
+  </svg>
+);
+
 export const GoogleG = (p: SVGProps<SVGSVGElement>) => (
   <svg aria-hidden viewBox="0 0 48 48" width={22} height={22} {...p}>
     <path

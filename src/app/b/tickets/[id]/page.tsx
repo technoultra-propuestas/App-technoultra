@@ -98,7 +98,7 @@ export default async function StaffTicketPage({ params }: { params: Promise<{ id
             ) : null}
           </AiDiagnosisCard>
         ) : null}
-        <div id="recepcion" className="scroll-mt-24"><ReceptionSection ticketId={t.id} problem={t.problem} open={!["delivered", "cancelled"].includes(t.status) && ["received", "diagnosing"].includes(t.status)} /></div>
+        <div id="recepcion" className="scroll-mt-24"><ReceptionSection ticketId={t.id} role={me.role === "superadmin" ? "superadmin" : "technician"} customer={customer?.full_name ?? "el cliente"} problem={t.problem} open={!["delivered", "cancelled"].includes(t.status) && ["received", "diagnosing"].includes(t.status)} /></div>
         <WorkSection ticketId={t.id} status={t.status} />
         <ProposalPanel ticketId={t.id} status={t.status} />
         <QuoteSection ticketId={t.id} canQuote ticketOpen={!(["delivered", "cancelled"] as string[]).includes(t.status)} />

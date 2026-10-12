@@ -115,7 +115,7 @@ export async function run({ b, rep, state, save }) {
   psql(`update payments set status = 'approved', approved_at = now() where id = '${pay}'; select private.settle_payment('${pay}');`);
   await b.goto(`/c/tickets/${ticket}`, 2000);
   t = await b.text();
-  rep.check("pago aprobado: «Pago confirmado», mensaje de la modalidad y sin «Pagar»", /Recibimos tu pago/.test(t) && /coordinar la recepción de tu equipo/.test(t) && !/Pagar · \$/.test(t) && !/Mercado ?Pago/i.test(t));
+  rep.check("pago aprobado: «Pago confirmado», mensaje de la modalidad y sin «Pagar»", /¡Pago confirmado!/.test(t) && /coordinar la recepción de tu equipo/.test(t) && !/Pagar · \$/.test(t) && !/Mercado ?Pago/i.test(t));
   const ticket2 = psql(`insert into tickets (customer_id, service_id, modality, problem, assigned_to) values ('${customer}', '${svc}', 'store', 'Prueba E2E pago rechazado', '${state.techId}') returning id`).split("\n")[0];
   psql(`insert into payments (customer_id, ticket_id, purpose, provider, status, amount) values ('${customer}', '${ticket2}', 'service', 'mercadopago', 'rejected', ${price})`);
   await b.goto(`/c/tickets/${ticket2}`, 2000);

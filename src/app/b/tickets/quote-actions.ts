@@ -239,5 +239,5 @@ export async function addShopProductToQuoteAction(_p: ShopAddResult | null, fd: 
   });
   if (error) return { ok: false, message: friendly(error.message), productId };
   refresh(ticketId);
-  return { ok: true, message: "Agregado a la cotización.", productId };
+  return { ok: true, message: "Producto agregado a la cotización.", productId };
 }

@@ -126,7 +126,7 @@ describe("«Agregar a cotización» desde las recomendaciones del Shop", () => {
   });
   it("agrega el producto como concepto «producto», SIN enviar precio (lo fija el catálogo) y con su garantía", async () => {
     const r = await addShopProductToQuoteAction(null, form());
-    expect(r).toMatchObject({ ok: true, message: "Agregado a la cotización." });
+    expect(r).toMatchObject({ ok: true, message: "Producto agregado a la cotización." });
     expect(db.inserts[0]).toMatchObject({ kind: "product", concept: "product", product_id: "6c1c7f0e-8f3a-4f0e-9d6b-2a4b9d7e1c12", qty: 1, warranty_days: 365, warranty_kind: "product" });
     expect(db.inserts[0].unit_price).toBeNull();
   });

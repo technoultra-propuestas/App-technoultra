@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { BottomNav, RailNav, type NavItem } from "@/components/ui/AppNav";
 import { AppTopBar } from "@/components/ui/AppTopBar";
+import { InstallBanner } from "@/components/pwa/InstallBanner";
+import { NotificationSound } from "@/components/pwa/NotificationSound";
 import { NavIcon } from "@/components/ui/icons";
 
 /** Destinos del riel (escritorio). Los marcados `admin` solo se muestran al SUPERADMIN; cada ruta valida el rol en el servidor. */
@@ -43,6 +45,8 @@ export function StaffShell({ children, name, isAdmin, unread }: { children: Reac
           Administración
         </Link>
       ) : null}
+      <InstallBanner />
+      <NotificationSound />
       <BottomNav items={BOTTOM} moreHref="/b/mas" />
     </div>
   );

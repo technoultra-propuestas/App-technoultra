@@ -1,5 +1,5 @@
 import "server-only";
-import { PHOTO_SLOTS } from "@/lib/domain/reception";
+import { receptionPhotoStatus } from "@/lib/domain/reception";
 import { generateTicketDocument, type DocKind } from "@/lib/documents/generate";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -20,7 +20,7 @@ export async function autoDocuments(ticketId: string, to: string, actorId: strin
 }
 
 /**
- * Cuando la recepción está guardada y las fotos obligatorias están completas, el ticket pasa solo a «En diagnóstico»: el técnico no
+ * Cuando la recepción está confirmada, las fotos obligatorias completas y el acta firmada (o con excepción autorizada), el ticket pasa solo a «En diagnóstico»: el técnico no
  * tiene que cambiar el estado a mano. Solo actúa sobre tickets en `received` y usa la misma función de base de datos que el cambio
  * manual (`transition_ticket`), que valida rol, asignación y precondiciones: aquí no se decide nada nuevo.
  * Devuelve true si el ticket avanzó.
@@ -34,8 +34,13 @@ export async function advanceAfterReception(ticketId: string, actorId: string): 
     supabase.from("evidence").select("slot").eq("ticket_id", ticketId).eq("stage", "reception").is("deleted_at", null),
   ]);
   if (!count) return false;
-  const have = new Set((ev ?? []).map((e) => e.slot));
-  if (!PHOTO_SLOTS.filter((s) => s.required).every((s) => have.has(s.slot))) return false;
+  if (!receptionPhotoStatus((ev ?? []).map((e) => e.slot)).complete) return false;
+  // Desde la migración 44 el diagnóstico exige el acta FIRMADA (o una excepción autorizada); la base de datos lo impone, aquí solo se evita el error.
+  const [{ data: doc }, { count: exc }] = await Promise.all([
+    supabase.from("documents").select("status").eq("ticket_id", ticketId).eq("doc_type", "reception").order("version", { ascending: false }).limit(1).maybeSingle(),
+    supabase.from("ticket_exceptions").select("id", { count: "exact", head: true }).eq("ticket_id", ticketId).eq("kind", "reception_signature"),
+  ]);
+  if (doc?.status !== "signed" && !exc) return false;
   const { error } = await supabase.rpc("transition_ticket", { p_ticket: ticketId, p_to: "diagnosing", p_reason: "Recepción completa: equipo recibido con fotos obligatorias" });
   if (error) return false;
   await autoDocuments(ticketId, "diagnosing", actorId);

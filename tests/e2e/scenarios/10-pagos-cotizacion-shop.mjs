@@ -50,7 +50,7 @@ export async function run({ b, rep, state, save }) {
   await clientLogin(b, state.client);
   await b.goto(`/c/tickets/${t1}`, 2000);
   txt = await b.text();
-  rep.check("cliente: «Ahora estamos aquí» → pendiente de recibir el equipo, pago confirmado y sin «Pagar»", /Ahora estamos aquí/i.test(txt) && /Pendiente de recibir tu equipo/.test(txt) && /Recibimos tu pago/.test(txt) && !/Pagar ·/.test(txt) && !/Mercado ?Pago/i.test(txt));
+  rep.check("cliente: «Ahora estamos aquí» → pendiente de recibir el equipo, pago confirmado y sin «Pagar»", /Ahora estamos aquí/i.test(txt) && /Pendiente de recibir tu equipo/.test(txt) && /¡Pago confirmado!/.test(txt) && !/Pagar ·/.test(txt) && !/Mercado ?Pago/i.test(txt));
   rep.check("«Recibido» no aparece para una solicitud sin equipo", !/\bRecibido\b/.test(txt.replace(/Solicitud recibida/gi, "")));
 
   // ---------------------------------------------------------------- C · datáfono: comprobante obligatorio → pago confirmado
@@ -64,9 +64,10 @@ export async function run({ b, rep, state, save }) {
   const disabled = await b.eval(`document.querySelector(${JSON.stringify(PAY_FORM)})?.querySelector('button[type=submit]')?.disabled`);
   rep.check("datáfono: sin foto del comprobante el botón de registrar está deshabilitado y lo explica", disabled === true && /comprobante/i.test(await b.text()));
   for (let attempt = 0; attempt < 3 && q(`select count(*) from evidence where ticket_id = '${t2}' and stage = 'payment'`) === "0"; attempt++) {
-    await b.waitHydrated("input[type=file]");
-    await b.eval("document.querySelectorAll('input[type=file]').forEach((x) => { x.value = ''; })");
-    await b.setFiles("input[type=file]", [PHOTO], 0);
+    const VOUCHER = `${PAY_FORM} input[type=file]`; // las fotos de recepción también tienen inputs: se apunta al del comprobante
+    await b.waitHydrated(VOUCHER);
+    await b.eval(`document.querySelectorAll(${JSON.stringify(VOUCHER)}).forEach((x) => { x.value = ''; })`);
+    await b.setFiles(VOUCHER, [PHOTO], 0);
     for (let i = 0; i < 40 && q(`select count(*) from evidence where ticket_id = '${t2}' and stage = 'payment'`) === "0"; i++) await sleep(500);
   }
   rep.check("el comprobante se sube a Cloudinary (privado) y queda registrado como evidencia de pago", q(`select count(*) from evidence where ticket_id = '${t2}' and stage = 'payment' and slot = 'voucher'`) === "1");

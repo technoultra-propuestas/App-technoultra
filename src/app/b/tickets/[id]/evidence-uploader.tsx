@@ -11,7 +11,36 @@ const OK_VIDEO = ["video/mp4", "video/quicktime", "video/webm"];
 
 type Props = { ticketId: string; stage: string; slot?: string; label: string; done?: boolean; allowVideo?: boolean; onRegistered?: (id: string) => void };
 
-/** Sube directo a Cloudinary con una firma de un solo uso emitida por el servidor; luego el servidor verifica y registra. */
+export type UploadResult = { ok: true; id?: string } | { ok: false; error: string };
+
+/**
+ * Sube UN archivo directo a Cloudinary con una firma de un solo uso emitida por el servidor; luego el servidor verifica y registra la
+ * evidencia (ligada al ticket). Reutilizable: el comprobante, la entrega y las fotos de recepción usan esta misma función.
+ */
+export async function uploadEvidenceFile(file: File, o: { ticketId: string; stage: string; slot?: string | null; allowVideo?: boolean }): Promise<UploadResult> {
+  const isVideo = OK_VIDEO.includes(file.type);
+  const isImage = OK_IMAGE.includes(file.type);
+  if (!isImage && !(o.allowVideo && isVideo)) return { ok: false, error: "Formato no permitido. Usa JPG, PNG, WEBP o HEIC" + (o.allowVideo ? " (o MP4/MOV/WEBM)." : ".") };
+  if (file.size > (isVideo ? VIDEO_MAX : IMAGE_MAX)) return { ok: false, error: "El archivo es demasiado grande." };
+  const sig = await signUploadAction({ ticketId: o.ticketId, stage: o.stage, slot: o.slot ?? null });
+  if (!sig.ok) return { ok: false, error: sig.error };
+  const resourceType = isVideo ? "video" : "image";
+  const body = new FormData();
+  body.set("file", file);
+  body.set("api_key", sig.apiKey);
+  body.set("signature", sig.signature);
+  for (const [k, v] of Object.entries(sig.params)) body.set(k, String(v));
+  try {
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${sig.cloudName}/${resourceType}/upload`, { method: "POST", body });
+    if (!res.ok) return { ok: false, error: "No se pudo subir el archivo. Inténtalo de nuevo." };
+  } catch {
+    return { ok: false, error: "Sin conexión. Inténtalo de nuevo." };
+  }
+  const reg = await registerEvidenceAction({ ticketId: o.ticketId, stage: o.stage, slot: o.slot ?? null, publicId: sig.publicId, resourceType });
+  if (!reg.ok) return { ok: false, error: reg.error ?? "No pudimos registrar el archivo." };
+  return { ok: true, id: reg.id };
+}
+
 export function EvidenceUploader({ ticketId, stage, slot, label, done = false, allowVideo = false, onRegistered }: Props) {
   const router = useRouter();
   const input = useRef<HTMLInputElement>(null);
@@ -20,31 +49,13 @@ export function EvidenceUploader({ ticketId, stage, slot, label, done = false, a
 
   async function onFile(file: File | undefined) {
     if (!file) return;
-    const isVideo = OK_VIDEO.includes(file.type);
-    const isImage = OK_IMAGE.includes(file.type);
-    if (!isImage && !(allowVideo && isVideo)) return fail("Formato no permitido. Usa JPG, PNG, WEBP o HEIC" + (allowVideo ? " (o MP4/MOV/WEBM)." : "."));
-    if (file.size > (isVideo ? VIDEO_MAX : IMAGE_MAX)) return fail("El archivo es demasiado grande.");
     setState("uploading");
     setMsg("");
-    const sig = await signUploadAction({ ticketId, stage, slot: slot ?? null });
-    if (!sig.ok) return fail(sig.error);
-    const resourceType = isVideo ? "video" : "image";
-    const body = new FormData();
-    body.set("file", file);
-    body.set("api_key", sig.apiKey);
-    body.set("signature", sig.signature);
-    for (const [k, v] of Object.entries(sig.params)) body.set(k, String(v));
-    try {
-      const res = await fetch(`https://api.cloudinary.com/v1_1/${sig.cloudName}/${resourceType}/upload`, { method: "POST", body });
-      if (!res.ok) return fail("No se pudo subir el archivo. Inténtalo de nuevo.");
-    } catch {
-      return fail("Sin conexión. Inténtalo de nuevo.");
-    }
-    const reg = await registerEvidenceAction({ ticketId, stage, slot: slot ?? null, publicId: sig.publicId, resourceType });
-    if (!reg.ok) return fail(reg.error ?? "No pudimos registrar el archivo.");
+    const r = await uploadEvidenceFile(file, { ticketId, stage, slot, allowVideo });
+    if (!r.ok) return fail(r.error);
     setState("idle");
     if (input.current) input.current.value = "";
-    if (reg.id) onRegistered?.(reg.id);
+    if (r.id) onRegistered?.(r.id);
     router.refresh();
     navigator.vibrate?.(15);
   }

@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from "vitest";
-import { as, createDb, createUser, makeAdmin, makeTechnician, type Db } from "./harness";
+import { as, createDb, createUser, makeAdmin, makeTechnician, type Db, allowDiagnosis } from "./harness";
 
 let db: Db;
 let owner: string, tech: string, tech2: string, cliA: string, cliB: string, custA: string, diag: string, svc: string;
@@ -146,6 +146,7 @@ describe("cotización por conceptos y diagnóstico finalizado", () => {
     const t = await ticket(svc);
     await q(`insert into receptions (ticket_id, reason) values ($1,'Falla')`, [t]);
     for (let i = 0; i < 4; i++) await q(`insert into evidence (ticket_id, stage, cloudinary_public_id) values ($1,'reception',$2)`, [t, `e/${t}/${i}`]);
+    await allowDiagnosis(db, t);
     await as(db, tech, () => q(`select public.transition_ticket($1,'diagnosing')`, [t]));
     return t;
   }

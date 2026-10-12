@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from "vitest";
-import { as, createDb, createUser, makeAdmin, makeTechnician, type Db } from "./harness";
+import { as, createDb, createUser, makeAdmin, makeTechnician, type Db, allowDiagnosis } from "./harness";
 
 let db: Db;
 let owner: string, tech: string, tech2: string, cliA: string, cliB: string, custA: string, diag: string;
@@ -24,6 +24,7 @@ async function sentQuote(subtotal = 559600): Promise<{ t: string; quote: string 
   await q(`select public.record_manual_service_payment_v2($1,'diagnosis',$2,'cash',null,null,null)`, [tech, t]);
   await q(`insert into receptions (ticket_id, reason, received_by) values ($1,'Pantalla',$2)`, [t, tech]);
   for (let i = 0; i < 4; i++) await q(`insert into evidence (ticket_id, stage, cloudinary_public_id) values ($1,'reception',$2)`, [t, `e/${t}/${i}`]);
+  if ((await status(t)) === "received") await allowDiagnosis(db, t);
   if ((await status(t)) === "received") await as(db, tech, () => q(`select public.transition_ticket($1,'diagnosing')`, [t]));
   const [{ id: quote }] = await as(db, tech, () => q<{ id: string }>(`insert into quotes (ticket_id, customer_id) values ($1,$2) returning id`, [t, custA]));
   await as(db, tech, () => q(`insert into quote_items (quote_id, kind, concept, description, qty, unit_price) values ($1,'custom','labor','Cambio de pantalla y mano de obra',1,$2)`, [quote, subtotal]));

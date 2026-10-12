@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from "vitest";
-import { as, createDb, createUser, makeAdmin, makeTechnician, type Db } from "./harness";
+import { as, createDb, createUser, makeAdmin, makeTechnician, type Db, allowDiagnosis } from "./harness";
 
 let db: Db;
 let owner: string, tech: string, cliA: string, cliB: string, custA: string, svc: string, diag: string, ssd: string, instSvc: string, addr: string;
@@ -16,6 +16,7 @@ async function ticket(service: string): Promise<string> {
   const [{ id }] = await q<{ id: string }>(`insert into tickets (customer_id, service_id, modality, problem, assigned_to) values ($1,$2,'store','Falla de prueba',$3) returning id`, [custA, service, tech]);
   await q(`insert into receptions (ticket_id, reason) values ($1,'Falla')`, [id]);
   for (let i = 0; i < 4; i++) await q(`insert into evidence (ticket_id, stage, cloudinary_public_id) values ($1,'reception',$2)`, [id, `e/${id}/${i}`]);
+  await allowDiagnosis(db, id);
   await as(db, tech, () => q(`select public.transition_ticket($1,'diagnosing')`, [id]));
   return id;
 }

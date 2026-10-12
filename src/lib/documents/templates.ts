@@ -26,6 +26,8 @@ export type ReceptionData = {
   ticketCode: string; receivedAt: string; modality: string; customer: Party; equipment: EquipmentInfo;
   accessories: string[]; damage: string[]; physicalCondition?: string | null; reason: string; observations?: string | null;
   photoSlots: string[]; receivedBy?: string | null;
+  /** Fotografías de recepción incrustadas (con su rótulo). `bytes` null = no se pudo obtener esa foto. */
+  photos?: { label: string; bytes: Uint8Array | null }[];
 };
 export async function buildReceptionPdf(d: ReceptionData, meta: PdfMeta) {
   const b = await PdfBuilder.create(meta);
@@ -36,12 +38,16 @@ export async function buildReceptionPdf(d: ReceptionData, meta: PdfMeta) {
     ["Modalidad", MODALITY[d.modality] ?? d.modality],
     ["Motivo de ingreso", d.reason],
     ["Accesorios recibidos", d.accessories.join(", ") || "Ninguno"],
-    ["Daños visibles", d.damage.join(", ") || "Ninguno reportado"],
-    ["Estado físico", d.physicalCondition],
-    ["Observaciones", d.observations],
-    ["Fotografías registradas", d.photoSlots.length ? `${d.photoSlots.length} (${d.photoSlots.join(", ")})` : "Ninguna"],
+    ["Estado del equipo al recibirlo", d.damage.join(", ") || "Sin daños visibles reportados"],
+    ["Estado físico (registro anterior)", d.physicalCondition],
+    ["Otros daños, detalles o condiciones", d.observations],
+    ["Fotografías registradas", d.photoSlots.length ? String(d.photoSlots.length) : "Ninguna"],
     ["Recibido por", d.receivedBy],
   ]);
+  if (d.photos?.length) {
+    b.section("Fotografías de la recepción");
+    await b.photoGrid(d.photos);
+  }
   b.note("Este documento deja constancia del estado en que se recibió el equipo. Al firmarlo, el cliente confirma que la información es correcta. El diagnóstico y cualquier trabajo se informan por separado y requieren su aprobación.");
   return b.finish();
 }

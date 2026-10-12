@@ -28,6 +28,8 @@ export async function run({ b, rep, state, save }) {
   q(`select public.record_manual_service_payment_v2('${state.techId}', 'diagnosis', '${t}', 'cash', null, null, null)`);
   q(`insert into receptions (ticket_id, reason, received_by) values ('${t}', 'Teclado', '${state.techId}')`);
   for (const [i, slot] of ["front", "back", "screen", "serial"].entries()) q(`insert into evidence (ticket_id, stage, slot, cloudinary_public_id) values ('${t}', 'reception', '${slot}', 'e2e/${t}/${i}')`);
+  // El diagnóstico exige el acta firmada o una excepción autorizada por el SUPERADMIN: el montaje de datos deja la excepción auditada.
+  q(`insert into ticket_exceptions (ticket_id, kind, reason, authorized_by) values ('${t}', 'reception_signature', 'Datos de prueba E2E', '${state.ownerId ?? state.techId}')`);
   if (q(`select status from tickets where id = '${t}'`) === "received") q(`select private.apply_transition('${t}', 'diagnosing', '${state.techId}', 'technician', null, true)`);
   q(`insert into diagnostics (ticket_id, summary, technician_id) values ('${t}', 'El teclado tiene varias teclas dañadas; se recomienda reemplazar el teclado.', '${state.techId}')`);
   const staff = async (who) => {
@@ -50,7 +52,7 @@ export async function run({ b, rep, state, save }) {
     const quote1 = q(`select id from quotes where ticket_id = '${t}' and status = 'draft'`);
     const item = q(`select kind || '|' || concept || '|' || qty::int || '|' || (unit_price = (select price from products where id = quote_items.product_id)) from quote_items where quote_id = '${quote1}' and product_id is not null`);
     rep.check("sin cotización previa: crea el borrador y agrega el producto como «producto» con el precio vigente del catálogo", PRODUCT_ITEM.test(item), item);
-    rep.check("muestra una confirmación breve junto al botón", /Agregado a la cotización/.test(await b.text()));
+    rep.check("muestra una confirmación breve junto al botón", /Producto agregado a la cotización/.test(await b.text()));
     await b.goto(`/b/tickets/${t}`, 2000);
     await sleep(1200);
     await b.clickText("Agregar a cotización", "body");

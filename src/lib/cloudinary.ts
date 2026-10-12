@@ -78,3 +78,15 @@ export function privateUrl(publicId: string, format: string, resourceType: "imag
   const qs = new URLSearchParams({ ...Object.fromEntries(Object.entries(params).map(([k, v]) => [k, String(v)])), signature, api_key: CLOUDINARY_API_KEY });
   return `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${resourceType}/download?${qs}`;
 }
+
+/**
+ * Miniatura firmada para incrustar en PDFs (≤ 900 px, JPG). Los activos son PRIVADOS (`authenticated`): la URL lleva la firma de Cloudinary
+ * (`s--…--`) del transformation + id público, así que solo la genera el servidor y no se puede alterar para pedir otro tamaño o archivo.
+ */
+export function signedThumbUrl(publicId: string): string {
+  const { CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_SECRET } = serverEnv.cloudinary();
+  const tx = "c_limit,f_jpg,q_auto:good,w_900";
+  const path = `${publicId}.jpg`;
+  const sig = createHash("sha1").update(`${tx}/${path}${CLOUDINARY_API_SECRET}`).digest("base64url").slice(0, 8);
+  return `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/authenticated/s--${sig}--/${tx}/${path}`;
+}

@@ -70,9 +70,9 @@ export async function run({ b, rep, state, mock, out }) {
   let seen = false;
   for (let i = 0; i < 30 && !seen; i++) {
     await sleep(1500);
-    seen = /¡Recibimos tu pago!/.test(await b.text());
+    seen = /¡Pago confirmado!/.test(await b.text());
   }
-  rep.check("3 · el pago pasa a «¡Recibimos tu pago!» SIN recargar la página (sondeo automático)", seen, `${Math.round((Date.now() - t0) / 1000)} s`);
+  rep.check("3 · el pago pasa a «¡Pago confirmado!» SIN recargar la página (sondeo automático)", seen, `${Math.round((Date.now() - t0) / 1000)} s`);
   txt = await b.text();
   rep.check("3 · tarjeta verde con la modalidad y las tres etapas del pago completas", /coordinar la recepción de tu equipo/.test(txt) && !/Consultar estado de pago/.test(txt) && !/Estamos confirmando tu pago/.test(txt));
   rep.check("3 · Supabase coincide: pago aprobado, monto y moneda del servidor, crédito del diagnóstico aplicado una sola vez", q(`select status || '|' || amount::int || '|' || currency from payments where id = '${A.p}'`) === `approved|${price}|COP` && q(`select count(*) from diagnosis_credits where ticket_id = '${A.t}'`) === "1");
@@ -90,7 +90,7 @@ export async function run({ b, rep, state, mock, out }) {
   await b.viewport(390, 844, true);
   // ------------------------------------------------------------------ 4) reingreso, recarga y doble consulta: sin duplicados
   txt = await open(A);
-  rep.check("4 · al reingresar se recupera el estado persistido (confirmado)", /¡Recibimos tu pago!/.test(txt));
+  rep.check("4 · al reingresar se recupera el estado persistido (confirmado)", /¡Pago confirmado!/.test(txt));
   const twice = await b.eval(`Promise.all([1,2,3].map(() => fetch('/api/pagos/estado', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ticketId: '${A.t}' }) }).then((r) => r.json()))).then((x) => JSON.stringify(x.map((y) => y.state)))`);
   rep.check("4 · consultas repetidas/simultáneas devuelven el estado confirmado sin duplicar nada", twice === '["confirmed","confirmed","confirmed"]' && q(`select count(*) from notifications where recipient_id = '${profile}' and type = 'payment.approved' and entity_id = '${A.t}'`) === "1" && q(`select count(*) from diagnosis_credits where ticket_id = '${A.t}'`) === "1", twice);
 

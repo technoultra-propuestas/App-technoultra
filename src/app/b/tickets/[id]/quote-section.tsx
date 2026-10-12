@@ -42,10 +42,20 @@ export async function QuoteSection({ ticketId, canQuote, ticketOpen }: { ticketI
   ]);
   const homeLike = tk?.modality === "home" || tk?.modality === "pickup";
   const [{ data: items }, { data: events }] = await Promise.all([
-    supabase.from("quote_items").select("id, position, kind, concept, priority, description, qty, unit_price, discount, line_subtotal, warranty_days").eq("quote_id", quote.id).order("position"),
+    supabase.from("quote_items").select("id, position, kind, concept, priority, description, qty, unit_price, discount, line_subtotal, warranty_days, product_id").eq("quote_id", quote.id).order("position"),
     supabase.from("quote_events").select("id, event_type, actor_role, message, created_at").eq("quote_id", quote.id).order("created_at"),
   ]);
   const draft = quote.status === "draft";
+  // Productos del Shop de la cotización en edición: si el precio del catálogo cambió o ya no están disponibles, se avisa al técnico.
+  const productIds = (items ?? []).map((i) => i.product_id).filter((x): x is string => Boolean(x));
+  const { data: live } = draft && productIds.length ? await supabase.from("products").select("id, name, price, is_active, source_available").in("id", productIds) : { data: [] };
+  const stale = (items ?? []).flatMap((i) => {
+    const p = (live ?? []).find((x) => x.id === i.product_id);
+    if (!i.product_id) return [];
+    if (!p || !p.is_active || p.source_available === false) return [{ id: i.id, text: `«${i.description}» ya no está disponible en el catálogo. Quítalo o consulta con el proveedor.` }];
+    if (Math.round(Number(p.price)) !== Math.round(Number(i.unit_price))) return [{ id: i.id, text: `El precio de «${i.description}» cambió en el catálogo (cotizado ${money(i.unit_price)}, ahora ${money(p.price)}). Quita la línea y vuelve a agregarla para actualizarlo.` }];
+    return [];
+  });
   const lastQuestion = [...(events ?? [])].reverse().find((e) => e.event_type === "question");
   const rejection = [...(events ?? [])].reverse().find((e) => e.event_type === "rejected");
   // Los productos NO se descargan aquí: el selector los busca en el servidor mientras el técnico escribe (ver product-search.tsx).
@@ -67,6 +77,14 @@ export async function QuoteSection({ ticketId, canQuote, ticketOpen }: { ticketI
         </div>
       ) : null}
 
+      {stale.length ? (
+        <div role="alert" className="flex flex-col gap-1 rounded-[14px] bg-[#FFF0DD] p-3 text-[13.5px] font-bold text-warn">
+          <span className="font-extrabold">Revisa la cotización antes de enviarla</span>
+          {stale.map((x) => (
+            <span key={x.id}>⚠ {x.text}</span>
+          ))}
+        </div>
+      ) : null}
       {groupQuoteItems(items ?? []).map((g) => (
         <section key={g.concept} aria-label={g.label} className="flex flex-col gap-2">
           <div className="flex items-baseline justify-between border-b border-line pb-1 text-[13px] font-extrabold uppercase tracking-[0.04em] text-muted">

@@ -25,6 +25,10 @@ Canales: **App** = centro de avisos (siempre). **Correo** = según preferencia d
 | Pago en línea rechazado / vencido | «No se pudo completar tu pago» / «Tu pago venció» | — | «Incidencia de pago» (1 por concepto y día) | alta |
 | Pago cancelado por el cliente | «Tu pago se canceló» | — | — | alta |
 | Pedido de tienda pagado | «Recibimos tu pago» | — | «Nuevo pedido pagado» | alta |
+| Acta de recepción generada (`on_document_created`) | «Firma el acta de recepción» (enlace directo al documento) | — (ve el acta pendiente en el ticket) | copia de supervisión | alta |
+| Acta firmada (`on_document_signed`) | «Documento firmado» (confirmación) | «Firmada: acta de recepción»: ya puede diagnosticar | copia de supervisión | normal/alta |
+| Excepción autorizada (sin firma del acta) | — | «Excepción autorizada» | «Excepción autorizada» + motivo (auditada) | alta |
+| Documento disponible (`notify_document_available`: diagnóstico, cotización, entrega, garantías) | «Nuevo documento: …» | — | copia de supervisión | normal |
 | Equipo recibido (acta de recepción) | «Recibimos tu equipo» | «Equipo recibido» (si no lo registró él) | — | normal |
 | Inicio de diagnóstico | «Tu equipo está en diagnóstico» | Tarea «Diagnóstico por completar» | — | normal |
 | Diagnóstico finalizado | «Tu diagnóstico está listo» | — | — | alta |
@@ -36,7 +40,7 @@ Canales: **App** = centro de avisos (siempre). **Correo** = según preferencia d
 | Saldo restante confirmado | «Saldo pagado» | «Saldo liquidado» | «Pago de cotización» | alta/normal |
 | Cotización rechazada | «Registramos tu decisión» | «Cotización rechazada» | «Cotización rechazada» (cierre) | alta/normal |
 | Espera de repuesto | «Estamos esperando un repuesto» | — | «Ticket en espera de repuesto» | normal/alta |
-| Servicio habilitado (en servicio) | «Tu servicio quedó habilitado» (no afirma que el técnico ya empezó) | — | — | normal |
+| Servicio habilitado (en servicio; **no** significa que el técnico ya empezó: no existe un evento «reparación iniciada» y no se inventa) | «Tu servicio quedó habilitado» (no afirma que el técnico ya empezó) | — | — | normal |
 | Equipo listo | «Tu equipo está listo» (con saldo: «paga el saldo restante de $X») | — | — | alta |
 | Entrega confirmada | «Entrega confirmada» (documentos y garantía disponibles) | — | — | normal |
 | Ticket cancelado | «Tu servicio fue cancelado» | «Ticket cancelado» | «Ticket cancelado» | normal |
@@ -57,6 +61,16 @@ La notificación del sistema lleva **título + cuerpo genérico («Abre TechnoUl
 - `claim_push_notifications`, `claim_email_notifications`, `record_delivery`, `notify_stale_tickets`: solo `service_role`.
 - Funciones internas (`private.notify*`, `private.on_*`): no ejecutables desde la API.
 - `/api/push/subscribe`: sesión verificada en el servidor (`getUser()`), mismo origen (`Origin`), el dueño del dispositivo sale **siempre de la sesión** (nunca del cuerpo), endpoint `https` validado.
+
+## El SUPERADMIN no queda «ciego» (copia de supervisión)
+
+`private.notify` deja, para cada aviso a un cliente o técnico **de un ticket/documento/pago**, una copia de tipo `supervision` para el SUPERADMIN (prioridad *baja*: **sin correo ni push**, para no inundarlo). El texto lleva el contexto: «Para cliente · Servicio TU-… · <nombre del cliente>. …». Reglas: si el SUPERADMIN ya tiene su aviso propio del mismo evento no se duplica; si llega después, lo reemplaza (conserva «leído»). En Avisos aparece con la etiqueta **Supervisión** y el filtro «Supervisión» (solo SUPERADMIN). El técnico y el cliente nunca ven estas copias (RLS por destinatario). Cobertura: `tests/db/reception-signature.test.ts` y E2E 18.
+
+## Sonido y push: qué se puede y qué no
+
+- **Push real (Web Push, VAPID):** el servidor envía título, cuerpo genérico y ruta interna (sin montos, direcciones ni datos del servicio: nada sensible en la pantalla de bloqueo). Estados registrados por envío: creado → intentado → aceptado/fallido (`notification_deliveries`); suscripciones caducadas (404/410) se eliminan; el `tag` = id del aviso evita duplicados visibles.
+- **Sonido de marca:** la API de notificaciones web **no permite elegir el sonido** de una notificación del sistema. Con la app cerrada o en segundo plano suena el tono que el dispositivo tenga para notificaciones, y **no se intenta saltar** el modo silencio ni No molestar. Lo que sí existe: un **timbre suave dentro de la app abierta** (Web Audio, sin archivos) que el usuario activa en Avisos → «Sonido con la app abierta» (apagado por defecto; el service worker avisa a la ventana visible con solo el `tag`; no suena dos veces por el mismo aviso). iOS solo entrega push con la app instalada en la pantalla de inicio.
+- **Pendiente de validar con personas y dispositivos reales:** llegada del push en Android/iOS/escritorio, sonido del sistema y timbre in-app. Las pruebas automatizadas **no** lo demuestran.
 
 ## Preferencias
 

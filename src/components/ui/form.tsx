@@ -43,10 +43,13 @@ export function SubmitButton({
   children,
   variant = "primary",
   pendingText = "Un momento…",
+  size = "lg",
 }: {
   children: ReactNode;
   variant?: "primary" | "dark";
   pendingText?: string;
+  /** `md`: botón compacto (alto táctil de 48 px) para tarjetas con varias opciones; `lg` es el estándar de la app. */
+  size?: "lg" | "md";
 }) {
   const { pending } = useFormStatus();
   const styles = variant === "primary" ? "bg-brand text-ink" : "bg-ink text-white";
@@ -54,7 +57,7 @@ export function SubmitButton({
     <button
       type="submit"
       disabled={pending}
-      className={`press min-h-[58px] rounded-2xl border-none text-[17px] font-extrabold disabled:opacity-60 ${styles}`}
+      className={`press rounded-2xl border-none font-extrabold disabled:opacity-60 ${size === "md" ? "min-h-12 px-4 text-[15px]" : "min-h-[58px] text-[17px]"} ${styles}`}
     >
       {pending ? pendingText : children}
     </button>

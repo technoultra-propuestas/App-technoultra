@@ -11,6 +11,7 @@ export const SETTINGS: SettingDef[] = [
   { key: "maintenance.default_months", label: "Meses al próximo mantenimiento", kind: "int", min: 1, max: 36, isPublic: false, section: "Operación" },
   { key: "reception.min_photos", label: "Fotos mínimas de recepción", kind: "int", min: 0, max: 9, isPublic: false, section: "Operación" },
   { key: "quote.default_validity_days", label: "Vigencia de cotizaciones (días)", kind: "int", min: 1, max: 90, isPublic: false, section: "Operación" },
+  { key: "service.contact_window_hours", label: "Plazo de primer contacto tras el pago (horas)", kind: "int", min: 0, max: 168, isPublic: false, section: "Operación", hint: "Solo se promete al cliente si lo defines. Usa 0 (o no lo configures) si TechnoUltra no puede garantizar un plazo." },
   { key: "orders.pending_hours", label: "Horas de reserva de un pedido sin pagar", kind: "int", min: 1, max: 168, isPublic: false, section: "Operación" },
 ];
 

@@ -48,7 +48,9 @@ export function FormDraft({ id, ttlMs, restoreFirst = true, skip = [] }: { id: s
         const type = (el as HTMLInputElement).type ?? "";
         if (!shouldPersist(name, type)) continue;
         if (type === "checkbox") {
-          out[name] = (el as HTMLInputElement).checked ? "on" : "";
+          // Casillas de un grupo (mismo nombre, distinto valor: daños, accesorios): cada una se guarda con SU clave `nombre[valor]`.
+          const v = (el as HTMLInputElement).value;
+          out[v && v !== "on" ? `${name}[${v}]` : name] = (el as HTMLInputElement).checked ? "on" : "";
           continue;
         }
         if (type === "radio") {
@@ -71,9 +73,13 @@ export function FormDraft({ id, ttlMs, restoreFirst = true, skip = [] }: { id: s
     // Campos que NO se restauran (p. ej. el equipo recién creado que llega por la URL debe ganar sobre un borrador viejo).
     const skipped = new Set(skipKey ? skipKey.split(",") : []);
     const apply = (values: Record<string, string>) => {
-      for (const [name, value] of Object.entries(values)) {
-        if (skipped.has(name)) continue;
-        const els = Array.from(form.elements).filter((e) => (e as El).getAttribute("name") === name) as El[];
+      for (const [key, value] of Object.entries(values)) {
+        if (skipped.has(key)) continue;
+        // Clave de casilla de grupo `nombre[valor]`: solo afecta a la casilla con ese valor.
+        const grp = /^(.+)\[(.+)\]$/.exec(key);
+        const asGroup = grp && Array.from(form.elements).some((e) => (e as El).getAttribute("name") === grp[1] && (e as HTMLInputElement).type === "checkbox" && (e as HTMLInputElement).value === grp[2]);
+        const name = asGroup && grp ? grp[1] : key;
+        const els = Array.from(form.elements).filter((e) => (e as El).getAttribute("name") === name && (!asGroup || (e as HTMLInputElement).value === grp![2])) as El[];
         for (const el of els) {
           const type = (el as HTMLInputElement).type ?? "";
           if (!shouldPersist(name, type)) continue;

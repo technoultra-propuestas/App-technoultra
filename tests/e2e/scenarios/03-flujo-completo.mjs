@@ -81,39 +81,62 @@ export async function run({ b, rep, state, save }) {
     await staff("tech");
     await b.goto(ticketUrl());
     await must(b, /Recepción del equipo/i, 15000);
-    // Primero se guarda la recepción (la interfaz solo habilita las fotos después), luego se suben las 4 fotos obligatorias.
-    await b.waitHydrated("form [name=reason]");
-    await b.fill("reason", "Pantalla azul recurrente; el cliente trae el equipo al local (E2E).");
-    await b.check("accessories");
-    await b.fill("physicalCondition", "Carcasa sin golpes; teclado con desgaste normal.");
-    await b.submit("reason");
-    await sleep(2500);
-    rep.check("la recepción queda guardada", q(`select count(*) from receptions where ticket_id = '${flow.ticketId}'`) === "1");
-    await must(b, /Frontal/, 20000);
-    await b.goto(ticketUrl());
-    await must(b, /Recepción del equipo/i, 15000);
-    // 4 fotos obligatorias (frontal, posterior, pantalla, serial): subida directa y real a Cloudinary con firma del servidor.
-    const have = Number(q(`select count(distinct slot) from evidence where ticket_id = '${flow.ticketId}' and stage = 'reception' and slot in ('front','back','screen','serial')`));
-    for (let i = have; i < 4; i++) {
-      // Si la página aún no hidrató, el `change` se pierde: se reintenta (como lo haría la persona al ver que no pasó nada).
+    // FOTOS PRIMERO: se suben directo al ticket, sin guardar nada antes. Cuatro vistas obligatorias (frontal, posterior, laterales, daños).
+    const SLOTS = ["front", "back", "left", "damage"];
+    await must(b, /0 de 4 fotos/, 15000);
+    for (const [i, slot] of SLOTS.entries()) {
+      const sel = `li[data-slot=${slot}] input[type=file]:not([capture])`; // «Galería»: sin forzar la cámara
       let ok = false;
-      for (let attempt = 0; attempt < 3 && !(await countMarks(b, "✓") >= i + 1); attempt++) {
-        await b.waitHydrated("input[type=file]");
-        await b.eval("document.querySelectorAll('input[type=file]').forEach((x) => { x.value = ''; })");
-        ok = await b.setFiles("input[type=file]", [PHOTO], i);
-        await waitCount(b, "✓", i + 1, 25000);
+      for (let attempt = 0; attempt < 3 && q(`select count(*) from evidence where ticket_id = '${flow.ticketId}' and stage = 'reception' and slot = '${slot}'`) === "0"; attempt++) {
+        await b.waitHydrated(sel);
+        ok = await b.setFiles(sel, [PHOTO], 0);
+        for (let k = 0; k < 50 && q(`select count(*) from evidence where ticket_id = '${flow.ticketId}' and stage = 'reception' and slot = '${slot}'`) === "0"; k++) await sleep(500);
       }
       const alerts = await b.eval(`[...document.querySelectorAll('[role=alert]')].map((x) => x.innerText).join(' / ')`);
       if (alerts) console.log("   aviso en pantalla:", alerts);
-      const marks = await countMarks(b, "✓");
-      rep.check(`foto obligatoria ${i + 1}/4 subida a Cloudinary y registrada`, ok && marks >= i + 1, `ok=${ok} marcas=${marks} ruta=${await b.path()} rec=${q(`select count(*) from evidence where ticket_id = '${flow.ticketId}'`)}`);
+      rep.check(`foto obligatoria ${i + 1}/4 (${slot}) subida a Cloudinary y registrada SIN guardar la recepción antes`, ok && q(`select count(*) from evidence where ticket_id = '${flow.ticketId}' and stage = 'reception' and slot = '${slot}'`) === "1", `ok=${ok}`);
     }
+    rep.check("con las 4 fotos y sin acta, el ticket sigue en «Recibido» (no avanza solo)", q(`select status from tickets where id = '${flow.ticketId}'`) === "received" && q(`select count(*) from receptions where ticket_id = '${flow.ticketId}'`) === "0");
+    await b.goto(ticketUrl());
+    await must(b, /4 de 4 fotos/, 15000);
+    rep.check("las fotos sobreviven a recargar la página", (await b.text()).includes("4 de 4 fotos"));
+    // ACTA: motivo, accesorios, estado del equipo; después «Confirmar recepción».
+    await b.waitHydrated("form [name=reason]");
+    await b.fill("reason", "Pantalla azul recurrente; el cliente trae el equipo al local (E2E).");
+    await b.check("accessories");
+    await b.check("damage");
+    await b.fill("observations", "Carcasa sin golpes; teclado con desgaste normal.");
+    await sleep(600);
+    rep.check("«Estado del equipo al recibirlo» unifica daños y detalles, con resumen y «Confirmar recepción»", /Estado del equipo al recibirlo/.test(await b.text()) && /Confirmar recepción/.test(await b.text()) && !/Estado físico/.test(await b.text()));
+    await b.submit("reason");
+    await sleep(3000);
+    rep.check("la recepción queda confirmada", q(`select count(*) from receptions where ticket_id = '${flow.ticketId}'`) === "1");
     const ev = q(`select count(*), bool_and(cloudinary_public_id like 'technoultra/%' or cloudinary_public_id like '%${flow.ticketId}%') from evidence where ticket_id = '${flow.ticketId}' and stage = 'reception'`);
     rep.check("las 4 evidencias quedaron en la base, ligadas al ticket y a su carpeta", Number(ev.split("|")[0]) >= 4 && ev.endsWith("|t"), ev);
-    // Con la recepción guardada y las 4 fotos obligatorias, el ticket pasa SOLO a diagnóstico (el técnico no cambia el estado a mano).
+    // Al confirmar se genera el acta (pendiente de firma). SIN firma el ticket NO avanza: el diagnóstico exige el acta firmada.
+    for (let i = 0; i < 20 && Number(q(`select count(*) from documents where ticket_id = '${flow.ticketId}' and doc_type = 'reception'`)) === 0; i++) await sleep(500);
+    rep.check("al confirmar la recepción se genera el acta, pendiente de firma", q(`select status from documents where ticket_id = '${flow.ticketId}' and doc_type = 'reception'`) === "generated");
+    rep.check("sin la firma del cliente el ticket sigue en «Recibido»", q(`select status from tickets where id = '${flow.ticketId}'`) === "received");
+    await b.goto(ticketUrl());
+    await must(b, /Pendiente de firma/, 15000);
+    rep.check("el personal ve el acta «Pendiente de firma» y el aviso «Falta la firma del cliente»", /Pendiente de firma/.test(await b.text()) && /Falta la firma del cliente/.test(await b.text()));
+    flow.actaId = q(`select id from documents where ticket_id = '${flow.ticketId}' and doc_type = 'reception'`);
+    // FIRMA del cliente desde SU sesión (el personal no firma por él).
+    await clientLogin(b, state.client);
+    await b.goto("/c/tickets/" + flow.ticketId);
+    rep.check("el cliente ve «Firma el acta de recepción» como acción principal", await b.waitText(/Firma el acta de recepción/, 15000));
+    await b.goto(`/c/documentos/${flow.actaId}`);
+    await b.waitHydrated("canvas");
+    rep.check("el cliente dibuja su firma con el puntero", await b.draw("canvas"));
+    await b.check("accept");
+    await sleep(500);
+    await b.submit("accept");
+    rep.check("la firma se registra y la pantalla pasa a «Firmado por…»", await b.waitText(/Firmado por/, 20000));
+    const sig = q(`select capture_channel || '|' || (document_sha256 = (select sha256 from documents where id = '${flow.actaId}')) from document_signatures where document_id = '${flow.actaId}'`);
+    rep.check("la firma queda ligada a la huella de la versión exacta, por la sesión del cliente", sig === "client_session|true", sig);
     for (let i = 0; i < 20 && q(`select status from tickets where id = '${flow.ticketId}'`) !== "diagnosing"; i++) await sleep(500);
-    rep.check("al completar la recepción el ticket pasa solo a «En diagnóstico»", q(`select status from tickets where id = '${flow.ticketId}'`) === "diagnosing");
-    rep.check("el acta de recepción se genera sola", Number(q(`select count(*) from documents where ticket_id = '${flow.ticketId}' and doc_type = 'reception'`)) === 1);
+    rep.check("con el acta firmada el ticket pasa solo a «En diagnóstico»", q(`select status from tickets where id = '${flow.ticketId}'`) === "diagnosing");
+    rep.check("el acta firmada queda en estado «signed»", q(`select status from documents where id = '${flow.actaId}'`) === "signed");
   });
 
   // ------------------------------------------------------------------ 4. técnico: diagnóstico técnico y revisión de la IA

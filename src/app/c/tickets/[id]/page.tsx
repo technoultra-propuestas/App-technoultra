@@ -66,8 +66,15 @@ export default async function TicketDetail({ params, searchParams }: { params: P
     .limit(1)
     .maybeSingle();
   // PDFs vigentes para abrir en el visor (la versión anterior sin firmar queda «reemplazada»).
-  const { data: docs } = await supabase.from("documents").select("id, doc_type, quote_id").eq("ticket_id", t.id).in("doc_type", ["diagnosis", "quote"]).neq("status", "superseded").order("version", { ascending: false });
+  const { data: docs } = await supabase.from("documents").select("id, doc_type, quote_id, status").eq("ticket_id", t.id).in("doc_type", ["diagnosis", "quote", "reception", "delivery"]).neq("status", "superseded").order("version", { ascending: false });
   const diagnosisDocId = (docs ?? []).find((d) => d.doc_type === "diagnosis")?.id ?? null;
+  const recDoc = (docs ?? []).find((d) => d.doc_type === "reception") ?? null;
+  const delDoc = (docs ?? []).find((d) => d.doc_type === "delivery") ?? null;
+  const signState = (d: { status: string } | null) => (d ? (d.status === "signed" ? "Firmada" : "Pendiente de firma") : "");
+  const extraDocs = [
+    ...(recDoc ? [{ id: recDoc.id, label: "Acta de recepción", state: signState(recDoc) }] : []),
+    ...(delDoc ? [{ id: delDoc.id, label: "Acta de entrega", state: signState(delDoc) }] : []),
+  ];
   const quoteDocId = (docs ?? []).find((d) => d.doc_type === "quote" && (!quote || d.quote_id === quote.id))?.id ?? null;
   const { data: ai } = await supabase.from("ai_diagnostics").select("id, output, urgency, disclaimer, validation_status, model").eq("ticket_id", t.id).order("created_at", { ascending: false }).limit(1).maybeSingle();
 
@@ -105,6 +112,8 @@ export default async function TicketDetail({ params, searchParams }: { params: P
         ticketId: t.id,
         diagnosisDocId,
         quoteDocId,
+        receptionDocId: recDoc?.id ?? null,
+        receptionSigned: recDoc?.status === "signed",
         diagnosisPayable,
         deliveryHref: `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(`Hola TechnoUltra 👋 Quiero coordinar la entrega de mi equipo. Servicio ${t.code}.`)}`,
       })
@@ -223,7 +232,7 @@ export default async function TicketDetail({ params, searchParams }: { params: P
           ticketId: t.id,
         }}
       />
-      <ServiceSummary code={t.code} requestAt={t.received_at} modality={t.modality} statusText={statusLabel(t.status)} deliveredAt={t.delivered_at} balanceDue={balanceDue} warrantyUntil={warrantyUntil} diagnosisDocId={diagnosisDocId} quoteDocId={quoteDocId} />
+      <ServiceSummary code={t.code} requestAt={t.received_at} modality={t.modality} statusText={statusLabel(t.status)} deliveredAt={t.delivered_at} balanceDue={balanceDue} warrantyUntil={warrantyUntil} diagnosisDocId={diagnosisDocId} quoteDocId={quoteDocId} extraDocs={extraDocs} />
       <Panel title="Lo que nos contaste">
         <p className="m-0 text-[15px] leading-normal text-ink-2">{t.problem}</p>
       </Panel>

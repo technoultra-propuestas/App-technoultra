@@ -1,5 +1,5 @@
 import "server-only";
-import { PHOTO_SLOTS } from "@/lib/domain/reception";
+import { receptionPhotoStatus } from "@/lib/domain/reception";
 import type { FlowFacts } from "@/lib/domain/next-action";
 import { staffPaymentView, type StaffPaymentRow } from "@/lib/payments/staff";
 import { createClient } from "@/lib/supabase/server";
@@ -20,7 +20,10 @@ export async function loadFlowFacts(ticketId: string): Promise<FlowFacts | null>
     t.service_id ? supabase.from("services").select("is_diagnostic_fee").eq("id", t.service_id).maybeSingle() : Promise.resolve({ data: null }),
   ]);
   const { count: qitems } = quote ? await supabase.from("quote_items").select("id", { count: "exact", head: true }).eq("quote_id", quote.id) : { count: 0 };
-  const have = new Set((ev ?? []).map((e) => e.slot));
+  const [{ data: actaDoc }, { count: exceptions }] = await Promise.all([
+    supabase.from("documents").select("status").eq("ticket_id", ticketId).eq("doc_type", "reception").order("version", { ascending: false }).limit(1).maybeSingle(),
+    supabase.from("ticket_exceptions").select("id", { count: "exact", head: true }).eq("ticket_id", ticketId).eq("kind", "reception_signature"),
+  ]);
   const { data: pays } = await supabase.from("payments").select("id, status, provider, method, amount, reference, note, approved_at, created_at, voucher_evidence_id, purpose").eq("ticket_id", ticketId);
   const isDiag = Boolean(svc?.is_diagnostic_fee);
   const diagRows = ((pays ?? []) as unknown as (StaffPaymentRow & { purpose: string })[]).filter((p) => p.purpose === (isDiag ? "diagnosis" : "service")).map((p) => ({ ...p, amount: Number(p.amount) }));
@@ -29,7 +32,8 @@ export async function loadFlowFacts(ticketId: string): Promise<FlowFacts | null>
     status: t.status,
     modality: t.modality,
     hasReception: (receptions ?? 0) > 0,
-    photosComplete: PHOTO_SLOTS.filter((s) => s.required).every((s) => have.has(s.slot)),
+    photosComplete: receptionPhotoStatus((ev ?? []).map((e) => e.slot)).complete,
+    receptionSigned: actaDoc?.status === "signed" || (exceptions ?? 0) > 0,
     hasDiagnosis: Boolean(diag),
     diagnosisFinalized: Boolean(diag?.finalized_at),
     quoteStatus: quote?.status ?? null,

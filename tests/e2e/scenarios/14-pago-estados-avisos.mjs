@@ -65,7 +65,7 @@ export async function run({ b, rep, state, save }) {
   ev(`e2e-pay-${run}-1`); // reenvío exacto
   ev(`e2e-pay-${run}-2`); // otro evento del mismo pago
   txt = await open();
-  rep.check("D · aprobado: «Pago confirmado» con lo que sigue según la modalidad y sin botón de pago", /Recibimos tu pago/.test(txt) && /coordinar la recepción de tu equipo/.test(txt) && !/Intentar pagar nuevamente/.test(txt) && !txt.includes(`Pagar · ${money}`));
+  rep.check("D · aprobado: «Pago confirmado» con lo que sigue según la modalidad y sin botón de pago", /¡Pago confirmado!/.test(txt) && /coordinar la recepción de tu equipo/.test(txt) && !/Intentar pagar nuevamente/.test(txt) && !txt.includes(`Pagar · ${money}`));
   rep.check("D · el pago aprobado genera un solo aviso al cliente aunque el evento se repita", q(`select count(*) from notifications where recipient_id = '${profile}' and type = 'payment.approved' and entity_id = '${t}'`) === "1");
   rep.check("D · el crédito del diagnóstico se aplica una sola vez", q(`select count(*) from diagnosis_credits where ticket_id = '${t}'`) === "1");
 

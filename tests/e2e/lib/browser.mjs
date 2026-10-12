@@ -155,6 +155,17 @@ export class Browser {
     const res = await this.send("DOM.setFileInputFiles", { files, objectId });
     return !res?.message;
   }
+  /** Dibuja un trazo con eventos de ratón REALES del navegador (CDP) sobre un canvas: signature_pad los recibe como punteros. */
+  async draw(selector) {
+    const r = await this.eval(`(() => { const c = document.querySelector(${JSON.stringify(selector)}); if (!c) return null; c.scrollIntoView({ block: 'center' }); const b = c.getBoundingClientRect(); return { x: b.x, y: b.y, w: b.width, h: b.height }; })()`);
+    if (!r) return false;
+    const pt = (t) => ({ x: r.x + r.w * (0.1 + 0.8 * t), y: r.y + r.h * (0.5 + 0.3 * Math.sin(t * 9)) });
+    const ev = (type, p) => this.send("Input.dispatchMouseEvent", { type, x: p.x, y: p.y, button: "left", buttons: type === "mouseReleased" ? 0 : 1, clickCount: 1 });
+    await ev("mousePressed", pt(0));
+    for (let i = 1; i <= 24; i++) await ev("mouseMoved", pt(i / 24));
+    await ev("mouseReleased", pt(1));
+    return true;
+  }
   clearCookies() {
     return this.send("Network.clearBrowserCookies");
   }

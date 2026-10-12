@@ -92,3 +92,16 @@ export async function makeTechnician(db: Db, adminId: string, id: string) {
     id,
   ]);
 }
+
+/**
+ * Desde la migración 44 el diagnóstico exige el acta de recepción FIRMADA o una excepción autorizada. Las pruebas que solo necesitan
+ * un ticket en diagnóstico registran la excepción (inmutable y auditable) como lo haría el SUPERADMIN.
+ */
+export async function allowDiagnosis(db: Db, ticketId: string) {
+  await db.query(
+    `insert into public.ticket_exceptions (ticket_id, kind, reason, authorized_by)
+     select $1, 'reception_signature', 'Prueba automática: excepción autorizada', id from public.profiles where role = 'superadmin' limit 1
+     on conflict do nothing`,
+    [ticketId],
+  );
+}

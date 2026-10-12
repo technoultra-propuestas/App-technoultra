@@ -4,6 +4,8 @@ import { IconChevronDown, IconClock } from "@/components/ui/icons";
 import { Card, money } from "@/components/ui/layout";
 import { PaymentTimeline } from "@/components/ui/service-flow";
 import { DIAGNOSIS_CONDITION, DIAGNOSIS_SCOPE } from "@/lib/domain/pricing";
+import { paymentConfirmedText } from "@/lib/domain/ticket-flow";
+import { getContactWindowText } from "@/lib/settings/contact-window";
 import { paymentSteps, whatsNext } from "@/lib/domain/service-stages";
 import { derivePaymentUi, PAYMENT_UNKNOWN_MESSAGE, returnMessage, type DbPaymentStatus, type PaymentRow, type PaymentUi } from "@/lib/payments/state";
 import { createClient } from "@/lib/supabase/server";
@@ -26,28 +28,8 @@ const RESULT: Record<string, { tone: "ok" | "error"; text: string }> = {
 
 type Kind = "diagnosis" | "service" | "quote";
 
-const APPROVED_TEXT: Record<Kind, string> = {
-  diagnosis: "Tu pago del diagnóstico está confirmado. Te mantendremos informado sobre los siguientes pasos de tu servicio.",
-  service: "Tu pago del servicio está confirmado. Te mantendremos informado sobre los siguientes pasos.",
-  quote: "Tu pago de la cotización está confirmado. Seguimos con tu servicio.",
-};
-
-/** Qué pasa ahora con el equipo, según la modalidad elegida (solo mientras el servicio apenas comienza). */
-function modalityLine(modality: string): string {
-  switch (modality) {
-    case "home":
-      return "Nuestro equipo te contactará para coordinar la visita y continuar con el servicio.";
-    case "pickup":
-      return "Nuestro equipo te contactará para coordinar la recogida de tu equipo.";
-    case "remote":
-      return "Un técnico te contactará para iniciar el soporte remoto; no necesitas entregar tu equipo.";
-    default:
-      return "Nuestro equipo te indicará cómo coordinar la recepción de tu equipo para iniciar el diagnóstico.";
-  }
-}
-
 /** Un cobro con SU estado: UNA sola tarjeta principal (nunca dos mensajes de estado a la vez). El botón «Pagar» solo aparece si el servidor dice que se puede. */
-function PayBlock({ kind, title, amount, refId, ticketId, rows, settled, modality, ticketStatus, note, unknownNotice }: { kind: Kind; title: string; amount: number; refId: string; ticketId: string; rows: PaymentRow[]; settled: boolean; modality: string; ticketStatus: string; note?: string; unknownNotice: boolean }) {
+function PayBlock({ kind, title, amount, refId, ticketId, rows, settled, modality, ticketStatus, note, unknownNotice, windowText }: { windowText: string | null; kind: Kind; title: string; amount: number; refId: string; ticketId: string; rows: PaymentRow[]; settled: boolean; modality: string; ticketStatus: string; note?: string; unknownNotice: boolean }) {
   const ui = derivePaymentUi(rows, settled);
   const latest = [...rows].sort((a, b) => b.created_at.localeCompare(a.created_at))[0];
   const payForm = (txt: string, variant: "primary" | "dark" = "primary") => (
@@ -75,7 +57,7 @@ function PayBlock({ kind, title, amount, refId, ticketId, rows, settled, modalit
 
   switch (ui.state) {
     case "confirmed":
-      return card("approved", "¡Recibimos tu pago!", `${APPROVED_TEXT[kind]}${kind !== "quote" && ticketStatus === "received" ? ` ${modalityLine(modality)}` : ""}`, "confirmed");
+      return card("approved", "¡Pago confirmado!", paymentConfirmedText({ kind, modality, ticketStatus, windowText }), "confirmed");
     case "validating":
       return (
         <PendingCard ticketId={ticketId} startedAt={latest?.created_at ?? new Date().toISOString()} concept={title} amount={amountTxt}>
@@ -125,14 +107,16 @@ function PayBlock({ kind, title, amount, refId, ticketId, rows, settled, modalit
  */
 export async function PaymentCard({ ticketId, result }: { ticketId: string; result?: string }) {
   const supabase = await createClient();
-  const [{ data: t }, { data: credit }, { data: quote }, { data: pays }, { count: receptions }, { data: diag }] = await Promise.all([
+  const [{ data: t }, { data: credit }, { data: quote }, { data: pays }, { count: receptions }, { data: diag }, win] = await Promise.all([
     supabase.from("tickets").select("service_id, service_snapshot, status, modality, prepaid_at").eq("id", ticketId).maybeSingle(),
     supabase.from("diagnosis_credits").select("amount, status").eq("ticket_id", ticketId).maybeSingle(),
     supabase.from("quotes").select("id, code, status, total, paid_at").eq("ticket_id", ticketId).eq("status", "approved").order("version", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("payments").select("purpose, quote_id, status, provider, created_at").eq("ticket_id", ticketId),
     supabase.from("receptions").select("id", { count: "exact", head: true }).eq("ticket_id", ticketId),
     supabase.from("diagnostics").select("finalized_at").eq("ticket_id", ticketId).order("version", { ascending: false }).limit(1).maybeSingle(),
+    getContactWindowText(),
   ]);
+  const windowText = win;
   if (!t) return null;
   const { data: svc } = t.service_id ? await supabase.from("services").select("is_diagnostic_fee, base_price, allow_online_payment").eq("id", t.service_id).maybeSingle() : { data: null };
   const { data: flow } = t.service_id ? await supabase.rpc("service_flow", { p_service: t.service_id, p_modality: t.modality }) : { data: null };
@@ -155,7 +139,12 @@ export async function PaymentCard({ ticketId, result }: { ticketId: string; resu
   const mainState: PaymentUi = derivePaymentUi(mainRows, mainSettled).state;
   // «Regresaste del pago sin ningún pago verificable»: único caso en que la URL influye (y solo para decir que no se pudo verificar).
   const unknownNotice = result === "fallo" && returnMessage(result, mainState) !== null;
-  const next = whatsNext({ pay: mainState, ticketStatus: t.status, modality: t.modality, hasReception: (receptions ?? 0) > 0, diagnosisReady: Boolean(diag?.finalized_at) });
+  // «En servicio» significa servicio HABILITADO (p. ej. por el pago), no que el técnico ya empezó: el texto no afirma trabajo en curso.
+  const next = mainState === "confirmed" && t.status === "in_service"
+    ? "Tu servicio está habilitado. Te avisaremos de los avances."
+    : mainState === "confirmed" && t.status === "testing"
+      ? "Estamos probando tu equipo."
+      : whatsNext({ pay: mainState, ticketStatus: t.status, modality: t.modality, hasReception: (receptions ?? 0) > 0, diagnosisReady: Boolean(diag?.finalized_at) });
   // La frase de modalidad ya está dentro de la tarjeta de pago confirmado: no se repite mientras el servicio apenas comienza.
   const showNext = next && !(mainState === "confirmed" && t.status === "received");
 
@@ -165,7 +154,7 @@ export async function PaymentCard({ ticketId, result }: { ticketId: string; resu
       {msg ? <Alert tone={msg.tone}>{msg.text}</Alert> : null}
       {showDiag ? (
         <>
-          <PayBlock kind="diagnosis" title="Diagnóstico técnico" amount={Number(price)} refId={ticketId} ticketId={ticketId} rows={rowsOf("diagnosis")} settled={Boolean(credit)} modality={t.modality} ticketStatus={t.status} unknownNotice={unknownNotice} note="También puedes pagar en el local; el equipo lo registrará." />
+          <PayBlock kind="diagnosis" title="Diagnóstico técnico" amount={Number(price)} refId={ticketId} ticketId={ticketId} rows={rowsOf("diagnosis")} settled={Boolean(credit)} modality={t.modality} ticketStatus={t.status} unknownNotice={unknownNotice} windowText={windowText} note="También puedes pagar en el local; el equipo lo registrará." />
           <details className="group rounded-[14px] border border-line bg-paper px-3.5 py-1 text-[13.5px] leading-snug text-ink-2">
             <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 text-[14px] font-extrabold text-ink [&::-webkit-details-marker]:hidden">
               ¿Qué incluye el diagnóstico?
@@ -176,8 +165,8 @@ export async function PaymentCard({ ticketId, result }: { ticketId: string; resu
           </details>
         </>
       ) : null}
-      {showService ? <PayBlock kind="service" title="Servicio" amount={Number(price)} refId={ticketId} ticketId={ticketId} rows={rowsOf("service")} settled={Boolean(t.prepaid_at)} modality={t.modality} ticketStatus={t.status} unknownNotice={unknownNotice} note="También puedes pagar en el local; el equipo lo registrará." /> : null}
-      {showQuote && quote ? <QuotePayPanel ticketId={ticketId} quoteId={quote.id} /> : null}
+      {showService ? <PayBlock kind="service" title="Servicio" amount={Number(price)} refId={ticketId} ticketId={ticketId} rows={rowsOf("service")} settled={Boolean(t.prepaid_at)} modality={t.modality} ticketStatus={t.status} unknownNotice={unknownNotice} windowText={windowText} note="También puedes pagar en el local; el equipo lo registrará." /> : null}
+      {showQuote && quote ? <QuotePayPanel ticketId={ticketId} quoteId={quote.id} windowText={windowText} /> : null}
       {showNext ? (
         <div className="flex items-start gap-3 rounded-[14px] bg-paper p-3.5">
           <span aria-hidden className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-white text-ink">

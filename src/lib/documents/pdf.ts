@@ -176,6 +176,43 @@ export class PdfBuilder {
     this.y -= 4;
   }
 
+  /**
+   * Cuadrícula de fotografías (3 por fila) con su rótulo. Cada foto conserva su proporción; las que no se pueden incrustar (formato no
+   * admitido, archivo dañado) se listan como «no disponible» en lugar de fallar o inventar contenido.
+   */
+  async photoGrid(items: { label: string; bytes: Uint8Array | null }[]) {
+    const cols = 3;
+    const gap = 10;
+    const cw = (PAGE.w - PAGE.margin * 2 - gap * (cols - 1)) / cols;
+    const ch = 124;
+    for (let i = 0; i < items.length; i += cols) {
+      this.ensure(ch + 30);
+      const row = items.slice(i, i + cols);
+      for (const [j, it] of row.entries()) {
+        const x = PAGE.margin + j * (cw + gap);
+        const top = this.y;
+        this.page().drawRectangle({ x, y: top - ch, width: cw, height: ch, borderColor: LINE, borderWidth: 0.8, color: rgb(0.965, 0.965, 0.961) });
+        let drawn = false;
+        if (it.bytes) {
+          try {
+            const isPng = it.bytes[0] === 0x89 && it.bytes[1] === 0x50;
+            const img = isPng ? await this.doc.embedPng(it.bytes) : await this.doc.embedJpg(it.bytes);
+            const s = Math.min((cw - 8) / img.width, (ch - 8) / img.height);
+            const w = img.width * s;
+            const h = img.height * s;
+            this.page().drawImage(img, { x: x + (cw - w) / 2, y: top - ch + (ch - h) / 2, width: w, height: h });
+            drawn = true;
+          } catch {
+            drawn = false;
+          }
+        }
+        if (!drawn) this.page().drawText("Foto no disponible", { x: x + 8, y: top - ch / 2, size: 9, font: this.font, color: MUTED });
+        this.page().drawText(winAnsi(it.label).slice(0, 38), { x, y: top - ch - 11, size: 8.5, font: this.bold, color: INK });
+      }
+      this.y -= ch + 22;
+    }
+  }
+
   note(text: string) {
     this.y -= 6;
     this.line(text, 8.5, MUTED);

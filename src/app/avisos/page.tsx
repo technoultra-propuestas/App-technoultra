@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/server";
 import { markAllReadAction, openNotificationAction } from "./actions";
 import { PrefsForm } from "./prefs-form";
 import { PushCard } from "./push-card";
+import { SoundToggle } from "./sound-toggle";
 import Link from "next/link";
 
 export const metadata: Metadata = { title: "Avisos", robots: { index: false } };
@@ -19,14 +20,17 @@ export default async function NotificationsPage({ searchParams }: { searchParams
   const staff = profile.role !== "client";
   const home = staff ? "/b" : "/c";
   const supabase = await createClient();
-  const onlyUnread = (await searchParams).f === "sin-leer";
+  const filter = (await searchParams).f;
+  const onlyUnread = filter === "sin-leer";
+  const onlySupervision = filter === "supervision" && profile.role === "superadmin";
   const [{ data }, { data: prefs }] = await Promise.all([
-    supabase.from("notifications").select("id, title, body, created_at, read_at, priority").eq("channel", "in_app").order("created_at", { ascending: false }).limit(100),
+    supabase.from("notifications").select("id, title, body, created_at, read_at, priority, type").eq("channel", "in_app").order("created_at", { ascending: false }).limit(100),
     supabase.from("notification_preferences").select("email_enabled").eq("profile_id", profile.id).maybeSingle(),
   ]);
   const all = data ?? [];
   const unread = all.filter((n) => !n.read_at).length;
-  const list = onlyUnread ? all.filter((n) => !n.read_at) : all;
+  const supervision = all.filter((n) => n.type === "supervision");
+  const list = onlySupervision ? supervision : onlyUnread ? all.filter((n) => !n.read_at) : all;
   const publicKey = serverEnv.push()?.VAPID_PUBLIC_KEY ?? null;
 
   const content = (
@@ -42,8 +46,9 @@ export default async function NotificationsPage({ searchParams }: { searchParams
         ) : null}
       </div>
       <nav aria-label="Filtrar avisos" className="flex gap-2 text-[14px] font-extrabold">
-        <Link href="/avisos" aria-current={!onlyUnread ? "page" : undefined} className={`flex min-h-11 items-center rounded-full px-4 no-underline ${!onlyUnread ? "bg-ink text-white" : "border border-line-strong text-ink"}`}>Todos</Link>
+        <Link href="/avisos" aria-current={!onlyUnread && !onlySupervision ? "page" : undefined} className={`flex min-h-11 items-center rounded-full px-4 no-underline ${!onlyUnread && !onlySupervision ? "bg-ink text-white" : "border border-line-strong text-ink"}`}>Todos</Link>
         <Link href="/avisos?f=sin-leer" aria-current={onlyUnread ? "page" : undefined} className={`flex min-h-11 items-center rounded-full px-4 no-underline ${onlyUnread ? "bg-ink text-white" : "border border-line-strong text-ink"}`}>Sin leer{unread > 0 ? ` (${unread})` : ""}</Link>
+        {profile.role === "superadmin" ? <Link href="/avisos?f=supervision" aria-current={onlySupervision ? "page" : undefined} className={`flex min-h-11 items-center rounded-full px-4 no-underline ${onlySupervision ? "bg-ink text-white" : "border border-line-strong text-ink"}`}>Supervisión{supervision.length > 0 ? ` (${supervision.length})` : ""}</Link> : null}
       </nav>
       {list.length === 0 ? (
         <EmptyState title={onlyUnread ? "No tienes avisos sin leer" : "No tienes avisos"} text="Te avisaremos aquí cuando tu servicio avance o tengas algo por revisar." />
@@ -60,6 +65,7 @@ export default async function NotificationsPage({ searchParams }: { searchParams
                       <span className={`text-[15px] ${n.read_at ? "font-semibold" : "font-extrabold"}`}>
                         {n.title}
                         {!n.read_at ? <span className="sr-only"> (sin leer)</span> : null}
+                        {n.type === "supervision" ? <span className="ml-2 rounded-full bg-[#EDEDEA] px-2 py-0.5 align-middle text-[11px] font-extrabold uppercase tracking-[0.04em] text-ink-2">Supervisión</span> : null}
                         {n.priority === "high" ? <span className="ml-2 rounded-full bg-[#FFF6E8] px-2 py-0.5 align-middle text-[11px] font-extrabold uppercase tracking-[0.04em] text-ink">Importante</span> : null}
                       </span>
                     </span>
@@ -73,6 +79,7 @@ export default async function NotificationsPage({ searchParams }: { searchParams
         </ul>
       )}
       <PushCard publicKey={publicKey} />
+      <SoundToggle />
       <PrefsForm email={prefs?.email_enabled ?? true} />
     </section>
   );

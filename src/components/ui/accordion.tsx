@@ -43,7 +43,8 @@ export function Accordion({
 
 /** Fila desplegable compacta dentro de una lista (p. ej. «¿Cómo va tu servicio?»). */
 export function AccordionRow({ icon, label, value, tone = "neutral", children }: { icon: ReactNode; label: string; value: string; tone?: "ok" | "wait" | "neutral" | "bad"; children: ReactNode }) {
-  const dot = { ok: "bg-ok-soft text-ok", wait: "bg-[#FFF0DD] text-[#7A3E00]", neutral: "bg-paper text-muted", bad: "bg-danger-soft text-danger" }[tone];
+  // Completado = verde; actual = naranja; pendiente = gris; atención = rojo (siempre acompañado del texto de estado).
+  const dot = { ok: "bg-ok text-white", wait: "bg-brand text-ink", neutral: "border border-line-strong bg-white text-muted", bad: "bg-danger text-white" }[tone];
   const mark = { ok: "Completado", wait: "En curso", neutral: "Pendiente", bad: "Requiere atención" }[tone];
   return (
     <li>

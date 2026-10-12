@@ -8,6 +8,8 @@ export type FlowFacts = {
   modality: string;
   hasReception: boolean;
   photosComplete: boolean;
+  /** Acta de recepción FIRMADA por el cliente (o excepción autorizada). Opcional: los datos antiguos no lo traen. */
+  receptionSigned?: boolean;
   hasDiagnosis: boolean;
   diagnosisFinalized: boolean;
   quoteStatus: string | null; // draft | sent | clarification | approved | rejected | expired | null
@@ -39,6 +41,7 @@ export function staffNextAction(f: FlowFacts): StaffNext {
     case "received":
       if (physical && !f.hasReception) return { title: "Recibir el equipo", body: f.payment === "none" ? "Cuando llegue el equipo, registra la recepción con sus fotos. El pago del diagnóstico sigue pendiente." : "Cuando llegue el equipo, registra la recepción con sus fotos: el ticket pasa solo a diagnóstico.", cta: { label: "Registrar recepción", anchor: "recepcion" }, waiting: false };
       if (physical && !f.photosComplete) return { title: "Completa las fotos de recepción", body: "Faltan fotos obligatorias. Al completarlas el ticket pasa solo a diagnóstico.", cta: { label: "Subir fotos", anchor: "recepcion" }, waiting: false };
+      if (physical && f.receptionSigned === false) return { title: "Falta la firma del cliente en el acta", body: "El acta ya está generada. El cliente la firma desde su sesión o dibujando su firma en este dispositivo; sin ella no se puede diagnosticar (solo administración puede autorizar una excepción).", cta: { label: "Ver acta", anchor: "recepcion" }, waiting: false };
       return { title: physical ? "Pasar a diagnóstico" : "Iniciar el soporte remoto", body: "Cambia el estado a «En diagnóstico» para empezar.", cta: { label: "Cambiar estado", anchor: "estado" }, waiting: false };
     case "diagnosing":
       if (!f.hasDiagnosis) return { title: "Registrar el diagnóstico", body: "Anota los hallazgos y pruebas. Después lo finalizas y el sistema prepara la propuesta.", cta: { label: "Escribir diagnóstico", anchor: "diagnostico" }, waiting: false };
@@ -83,6 +86,9 @@ export type ClientFacts = FlowFacts & {
   quoteDocId: string | null;
   /** Falta cobrar el diagnóstico (servicio de diagnóstico sin pago confirmado). */
   diagnosisPayable: boolean;
+  /** Acta vigente de recepción (PDF) y si el cliente ya la firmó. */
+  receptionDocId?: string | null;
+  receptionSigned?: boolean;
   /** Enlace para coordinar la entrega (WhatsApp de TechnoUltra con el código del ticket). Si no hay, no se muestra el botón. */
   deliveryHref?: string;
 };
@@ -100,6 +106,8 @@ export function clientNextAction(f: ClientFacts): ClientNext {
         const how = f.modality === "pickup" ? "Nuestro equipo coordinará contigo la recogida del equipo en la dirección indicada." : f.modality === "home" ? "Nuestro técnico se pondrá en contacto contigo para coordinar la visita." : "Puedes entregar el equipo en el punto acordado.";
         return { title: "Pendiente de recibir tu equipo", body: `Cuando recibamos tu equipo podremos iniciar el diagnóstico. ${how}`, tone: "wait" };
       }
+      if (f.receptionDocId && !f.receptionSigned) return { title: "Firma el acta de recepción", body: "Revisa cómo recibimos tu equipo (fotos, accesorios y estado) y fírmala con el dedo. Sin tu firma no iniciamos el diagnóstico.", primary: { label: "Revisar y firmar", href: `/c/documentos/${f.receptionDocId}` }, tone: "action" };
+      if (!f.receptionDocId) return { title: "Ya tenemos tu equipo", body: "Estamos preparando el acta de recepción para que la firmes.", tone: "wait" };
       return { title: "Ya tenemos tu equipo", body: "Pronto empieza la revisión.", tone: "wait" };
     }
     case "diagnosing":
@@ -115,7 +123,7 @@ export function clientNextAction(f: ClientFacts): ClientNext {
     case "awaiting_part":
       return { title: "Esperando un repuesto", body: "Aprobaste la cotización. Continuamos cuando llegue el repuesto.", tone: "wait" };
     case "in_service":
-      return { title: "Estamos trabajando en tu equipo", body: f.quotePayable ? "Ya recibimos tu anticipo. El saldo restante se paga al finalizar, antes de la entrega. Te avisaremos." : "Te avisaremos cuando pase a pruebas.", tone: "wait" };
+      return { title: "Tu servicio está habilitado", body: f.quotePayable ? "Ya recibimos tu anticipo. El saldo restante se paga al finalizar, antes de la entrega. Te avisaremos de los avances." : "Ya podemos trabajar en tu equipo. Te avisaremos de los avances.", tone: "wait" };
     case "testing":
       return { title: "Estamos probando tu equipo", body: "Verificamos que todo funcione bien antes de entregarlo.", tone: "wait" };
     case "ready":

@@ -113,7 +113,7 @@ export function ticketMessage(status: DisplayStatus, modality: string): string {
     case "awaiting_part":
       return "Estamos esperando un repuesto para continuar.";
     case "in_service":
-      return "Estamos trabajando en tu equipo.";
+      return "Tu servicio está habilitado. Te avisaremos de cada avance.";
     case "testing":
       return "Estamos probando que todo funcione bien.";
     case "ready":
@@ -122,5 +122,29 @@ export function ticketMessage(status: DisplayStatus, modality: string): string {
       return "Servicio finalizado. Tu garantía ya está activa.";
     case "cancelled":
       return "Este servicio fue cancelado.";
+  }
+}
+
+/**
+ * Mensaje breve tras un pago CONFIRMADO: resultado + siguiente paso. El plazo (`windowText`, p. ej. «24 horas») solo se menciona si
+ * la administración lo configuró; si no, no se promete ninguno. Nunca sugiere que la reparación ya empezó.
+ */
+export function paymentConfirmedText(o: { kind: "diagnosis" | "service" | "quote"; modality: string; ticketStatus: string; windowText: string | null; plan?: "deposit" | "full" | "balance" | null }): string {
+  const within = o.windowText ? `Te contactaremos en un máximo de ${o.windowText} para` : "Te contactaremos para";
+  if (o.kind === "quote") {
+    if (o.plan === "balance") return "Recibimos el pago del saldo. Tu servicio quedó pagado por completo.";
+    const what = o.plan === "full" ? "Tu cotización quedó pagada con el 5 % de descuento." : "Recibimos tu anticipo.";
+    return `${what} ${o.windowText ? `${within} programar el inicio del servicio.` : "Estamos preparando el inicio del servicio."}`;
+  }
+  if (o.ticketStatus !== "received") return "Tu pago está confirmado.";
+  switch (o.modality) {
+    case "home":
+      return `${within} coordinar la visita.`;
+    case "pickup":
+      return `${within} coordinar la recogida de tu equipo.`;
+    case "remote":
+      return `${within} iniciar el soporte remoto. No necesitas entregar tu equipo.`;
+    default:
+      return o.windowText ? `${within} coordinar la recepción de tu equipo.` : "Te indicaremos cómo coordinar la recepción de tu equipo.";
   }
 }

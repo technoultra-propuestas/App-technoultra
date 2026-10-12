@@ -15,7 +15,7 @@ const STEP: Record<string, { title: string; icon: NavIconName; tone: "info" | "w
   received: { title: "Recibimos tu solicitud", icon: "inbox", tone: "info", weight: 5 },
   diagnosing: { title: "Estamos diagnosticando tu equipo", icon: "wrench", tone: "info", weight: 4 },
   awaiting_part: { title: "Esperamos un repuesto para tu equipo", icon: "box", tone: "neutral", weight: 4 },
-  in_service: { title: "Estamos trabajando en tu equipo", icon: "wrench", tone: "info", weight: 4 },
+  in_service: { title: "Tu servicio está habilitado", icon: "wrench", tone: "info", weight: 4 },
   testing: { title: "Estamos probando tu equipo", icon: "shield", tone: "info", weight: 3 },
 };
 

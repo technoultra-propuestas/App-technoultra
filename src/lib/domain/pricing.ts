@@ -46,3 +46,14 @@ export const DIAGNOSIS_SCOPE =
 /** Texto de la condición del diagnóstico, para mostrar ANTES de pagarlo. */
 export const DIAGNOSIS_CONDITION =
   "Si apruebas la reparación, el valor del diagnóstico se abona al total de la reparación. Si no la apruebas, el diagnóstico se cobra y no se abona.";
+
+/**
+ * Texto del plazo de primer contacto tras un pago confirmado (`service.contact_window_hours`). Devuelve null si la administración no lo
+ * ha definido: entonces la aplicación NO promete ningún plazo. Múltiplos de 24 h se dicen en días.
+ */
+export function contactWindowText(hours: number | null | undefined): string | null {
+  const h = Number(hours);
+  if (!Number.isFinite(h) || h < 1) return null;
+  if (h >= 24 && h % 24 === 0) return `${h / 24} ${h === 24 ? "día" : "días"}`;
+  return `${h} ${h === 1 ? "hora" : "horas"}`;
+}

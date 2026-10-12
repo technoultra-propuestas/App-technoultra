@@ -5,7 +5,7 @@
  *  - Las navegaciones van siempre a la red; si falla, se muestra /offline.html.
  * La actualización es controlada: el SW nuevo espera hasta que la persona acepta "Actualizar" (mensaje SKIP_WAITING).
  */
-const VERSION = "tu-sw-v2";
+const VERSION = "tu-sw-v3";
 const STATIC_CACHE = `${VERSION}-static`;
 const OFFLINE_URL = "/offline.html";
 const PRECACHE = [OFFLINE_URL, "/offline.css", "/icons/icon-192.png"];
@@ -68,15 +68,18 @@ self.addEventListener("push", (event) => {
   }
   const title = typeof data.title === "string" && data.title ? data.title.slice(0, 120) : "TechnoUltra";
   const url = typeof data.url === "string" && data.url.startsWith("/") ? data.url : "/";
+  const tag = typeof data.tag === "string" ? data.tag : undefined;
+  // Avisa a las ventanas abiertas (solo el tag, nada sensible) para que la app pueda sonar su timbre si la persona lo activó.
+  const tell = self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((list) => list.forEach((c) => c.postMessage({ type: "PUSH_RECEIVED", tag })));
   event.waitUntil(
-    self.registration.showNotification(title, {
+    Promise.all([tell, self.registration.showNotification(title, {
       body: typeof data.body === "string" ? data.body.slice(0, 160) : "Abre TechnoUltra para ver los detalles.",
       icon: "/icons/icon-192.png",
       badge: "/icons/icon-192.png",
       tag: typeof data.tag === "string" ? data.tag : undefined,
       requireInteraction: data.urgent === true,
       data: { url },
-    }),
+    })]),
   );
 });
 

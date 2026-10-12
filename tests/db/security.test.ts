@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from "vitest";
-import { as, createDb, createUser, makeAdmin, makeTechnician, type Db } from "./harness";
+import { allowDiagnosis, as, createDb, createUser, makeAdmin, makeTechnician, type Db } from "./harness";
 
 /**
  * Pruebas de seguridad de la base de datos (RLS, anti-escalada, IDOR, máquina de estados, cobertura, dinero, auditoría).
@@ -303,6 +303,9 @@ describe("tickets, máquina de estados y autorización", () => {
         `insert into evidence (ticket_id, stage, slot, cloudinary_public_id) values ($1,'reception',$2,$3)`,
         [t1, slot, `tu/${t1}/${i}`],
       );
+    // con las fotos completas, ahora falta el acta FIRMADA (o una excepción autorizada del SUPERADMIN)
+    await expect(go(techA, t1, "diagnosing")).rejects.toThrow(/reception_signature_missing/);
+    await allowDiagnosis(db, t1);
     await go(techA, t1, "diagnosing");
     expect(await st(t1)).toBe("diagnosing");
   });
@@ -475,6 +478,7 @@ describe("tickets, máquina de estados y autorización", () => {
         id,
         `x/${id}/${i}`,
       ]);
+    await allowDiagnosis(db, id);
     await go(techA, id, "diagnosing");
     await go(techA, id, "in_service");
     await go(admin, id, "cancelled", "Cliente desistió");

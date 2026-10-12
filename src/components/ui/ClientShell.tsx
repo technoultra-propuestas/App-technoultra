@@ -1,5 +1,7 @@
 import { BottomNav, RailNav, type NavItem } from "@/components/ui/AppNav";
 import { AppTopBar } from "@/components/ui/AppTopBar";
+import { InstallBanner } from "@/components/pwa/InstallBanner";
+import { NotificationSound } from "@/components/pwa/NotificationSound";
 
 /** Misma estructura que el panel del personal, con los destinos del cliente (el producto se siente uno solo). */
 const ITEMS: NavItem[] = [
@@ -18,6 +20,8 @@ export function ClientShell({ children, name, unread, wide = false }: { children
       <div id="contenido" tabIndex={-1} className={`enter mx-auto ${wide ? "max-w-[1280px]" : "max-w-[1040px]"} px-5 pb-28 pt-6 outline-none lg:px-9 lg:pb-12 lg:pt-8`}>
         {children}
       </div>
+      <InstallBanner />
+      <NotificationSound />
       <BottomNav items={ITEMS} moreHref="/c/mas" moreAlso={MORE_ALSO} />
     </div>
   );

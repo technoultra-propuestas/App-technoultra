@@ -113,11 +113,11 @@ export function ServiceProgress({ f }: { f: ProgressFacts }) {
         <AccordionRow
           icon={<IconGear width={18} height={18} />}
           label="Reparación"
-          value={["ready", "delivered"].includes(f.status) ? "Finalizada" : IN_REPAIR.includes(f.status) ? (f.status === "awaiting_part" ? "Esperando repuesto" : "En curso") : "Pendiente"}
+          value={["ready", "delivered"].includes(f.status) ? "Finalizada" : f.status === "in_service" ? "Servicio habilitado" : IN_REPAIR.includes(f.status) ? (f.status === "awaiting_part" ? "Esperando repuesto" : "En pruebas") : "Pendiente"}
           tone={["ready", "delivered"].includes(f.status) ? "ok" : IN_REPAIR.includes(f.status) ? "wait" : "neutral"}
         >
           <Detail
-            what={["ready", "delivered"].includes(f.status) ? "Terminamos el trabajo y las pruebas." : f.status === "awaiting_part" ? "Esperamos un repuesto para continuar." : IN_REPAIR.includes(f.status) ? "Estamos trabajando en tu equipo." : "La reparación empieza cuando apruebes la cotización y se confirme el pago."}
+            what={["ready", "delivered"].includes(f.status) ? "Terminamos el trabajo y las pruebas." : f.status === "awaiting_part" ? "Esperamos un repuesto para continuar." : f.status === "in_service" ? "Tu servicio está habilitado: ya podemos trabajar en tu equipo." : IN_REPAIR.includes(f.status) ? "Estamos probando tu equipo." : "La reparación empieza cuando apruebes la cotización y se confirme el pago."}
             at={when(f.repairDoneAt)}
           />
         </AccordionRow>
@@ -134,27 +134,33 @@ export function ServiceProgress({ f }: { f: ProgressFacts }) {
 }
 
 /** «Resumen del servicio»: plegado por defecto. */
-export function ServiceSummary({ code, requestAt, modality, statusText, deliveredAt, balanceDue, warrantyUntil, diagnosisDocId, quoteDocId }: { code: string; requestAt: string; modality: string; statusText: string; deliveredAt: string | null; balanceDue: number; warrantyUntil: string | null; diagnosisDocId: string | null; quoteDocId: string | null }) {
-  const rows: [string, string][] = [
-    ["Servicio n.º", code],
-    ["Fecha de solicitud", fmtDateTime(requestAt)],
-    ["Modalidad", MODALITY_LABEL[modality] ?? modality],
-    ["Estado", statusText],
-    ["Saldo por pagar", balanceDue > 0 ? money(balanceDue) : "Sin saldo pendiente"],
-    ...(deliveredAt ? ([["Entregado", fmtDateTime(deliveredAt)]] as [string, string][]) : []),
-    ["Garantía", warrantyUntil ? `Activa hasta el ${new Date(`${warrantyUntil}T12:00:00`).toLocaleDateString("es-CO", { day: "numeric", month: "long", year: "numeric" })}` : "Se activa con la entrega"],
+export function ServiceSummary({ code, requestAt, modality, statusText, deliveredAt, balanceDue, warrantyUntil, diagnosisDocId, quoteDocId, extraDocs = [] }: { code: string; requestAt: string; modality: string; statusText: string; deliveredAt: string | null; balanceDue: number; warrantyUntil: string | null; diagnosisDocId: string | null; quoteDocId: string | null; extraDocs?: { id: string; label: string; state: string }[] }) {
+  const rows: { icon: React.ReactNode; k: string; v: string }[] = [
+    { icon: <IconDoc width={16} height={16} />, k: "Servicio n.º", v: code },
+    { icon: <IconClock width={16} height={16} />, k: "Solicitud", v: fmtDateTime(requestAt) },
+    { icon: <IconLaptop width={16} height={16} />, k: "Modalidad", v: MODALITY_LABEL[modality] ?? modality },
+    { icon: <IconGear width={16} height={16} />, k: "Estado", v: statusText },
+    { icon: <IconCard width={16} height={16} />, k: "Saldo por pagar", v: balanceDue > 0 ? money(balanceDue) : "Sin saldo pendiente" },
+    ...(deliveredAt ? [{ icon: <IconPackage width={16} height={16} />, k: "Entregado", v: fmtDateTime(deliveredAt) }] : []),
+    { icon: <IconShieldCheck width={16} height={16} />, k: "Garantía", v: warrantyUntil ? `Activa hasta el ${new Date(`${warrantyUntil}T12:00:00`).toLocaleDateString("es-CO", { day: "numeric", month: "long", year: "numeric" })}` : "Se activa con la entrega" },
   ];
   return (
     <Accordion title="Resumen del servicio" icon={<IconShieldCheck width={18} height={18} />} meta={`${code} · ${MODALITY_LABEL[modality] ?? modality}`}>
-      <dl className="m-0 grid grid-cols-[minmax(0,auto)_minmax(0,1fr)] gap-x-4 gap-y-2 text-[14px] sm:grid-cols-[minmax(160px,auto)_minmax(0,1fr)]">
-        {rows.map(([k, v]) => (
-          <div key={k} className="contents">
-            <dt className="font-semibold text-muted">{k}</dt>
-            <dd className="m-0 text-right font-bold text-ink sm:text-left">{v}</dd>
+      <dl className="m-0 grid gap-x-6 gap-y-1 text-[14px] sm:grid-cols-2">
+        {rows.map((r) => (
+          <div key={r.k} className="flex items-center gap-2.5 border-b border-line py-2 last:border-b-0 sm:[&:nth-last-child(2):nth-child(odd)]:border-b-0">
+            <span aria-hidden className="flex h-7 w-7 flex-none items-center justify-center rounded-full bg-paper text-ink-2">{r.icon}</span>
+            <dt className="min-w-0 flex-none text-[12.5px] font-semibold text-muted">{r.k}</dt>
+            <dd className="m-0 min-w-0 flex-1 text-right text-[14px] font-bold text-ink">{r.v}</dd>
           </div>
         ))}
       </dl>
       <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[14px] font-extrabold">
+        {extraDocs.map((d) => (
+          <Link key={d.id} href={`/c/documentos/${d.id}`} className="flex min-h-11 items-center gap-1.5 underline decoration-brand underline-offset-[3px]">
+            {d.label} <span className={`rounded-full px-2 py-0.5 text-[11px] no-underline ${d.state === "Firmada" ? "bg-ok-soft text-ok" : "bg-[#FBF1D9] text-[#6E4B00]"}`}>{d.state}</span>
+          </Link>
+        ))}
         {diagnosisDocId ? <Link href={`/c/documentos/${diagnosisDocId}`} className="flex min-h-11 items-center underline decoration-brand underline-offset-[3px]">Informe de diagnóstico</Link> : null}
         {quoteDocId ? <Link href={`/c/documentos/${quoteDocId}`} className="flex min-h-11 items-center underline decoration-brand underline-offset-[3px]">Cotización (PDF)</Link> : null}
         <Link href="/c/documentos" className="flex min-h-11 items-center underline decoration-brand underline-offset-[3px]">Todos mis documentos</Link>

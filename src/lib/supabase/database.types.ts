@@ -1063,6 +1063,8 @@ export type Database = {
       }
       document_signatures: {
         Row: {
+          capture_channel: string
+          captured_by: string | null
           consent_text: string
           document_id: string
           document_sha256: string
@@ -1071,10 +1073,12 @@ export type Database = {
           signature_ref: string
           signed_at: string
           signer_name: string
-          signer_profile_id: string
+          signer_profile_id: string | null
           user_agent: string | null
         }
         Insert: {
+          capture_channel?: string
+          captured_by?: string | null
           consent_text: string
           document_id: string
           document_sha256: string
@@ -1083,10 +1087,12 @@ export type Database = {
           signature_ref: string
           signed_at?: string
           signer_name: string
-          signer_profile_id: string
+          signer_profile_id?: string | null
           user_agent?: string | null
         }
         Update: {
+          capture_channel?: string
+          captured_by?: string | null
           consent_text?: string
           document_id?: string
           document_sha256?: string
@@ -1775,6 +1781,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      ticket_exceptions: {
+        Row: {
+          authorized_by: string
+          created_at: string
+          id: string
+          kind: string
+          reason: string
+          ticket_id: string
+        }
+        Insert: {
+          authorized_by: string
+          created_at?: string
+          id?: string
+          kind: string
+          reason: string
+          ticket_id: string
+        }
+        Update: {
+          authorized_by?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          reason?: string
+          ticket_id?: string
+        }
+        Relationships: []
       }
       notification_preferences: {
         Row: {
@@ -4077,6 +4110,8 @@ export type Database = {
       }
       record_delivery: { Args: { p_channel: string; p_error?: string; p_notification: string; p_status: string }; Returns: undefined }
       notify_stale_tickets: { Args: never; Returns: number }
+      notify_document_available: { Args: { p_doc: string }; Returns: undefined }
+      authorize_reception_exception: { Args: { p_actor: string; p_reason: string; p_ticket: string }; Returns: undefined }
       begin_quote_payment: {
         Args: { p_actor: string; p_plan: string; p_quote: string }
         Returns: { amount: number; external_reference: string; payment_id: string; ticket_id: string; title: string }[]

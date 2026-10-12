@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { QuotePricing } from "@/lib/domain/pricing";
 import { loadBusinessInfo } from "@/lib/seo";
+import { signedThumbUrl } from "@/lib/cloudinary";
 import {
   buildDeliveryPdf, buildDiagnosisPdf, buildQuotePdf, buildReceptionPdf, buildWarrantyPdf,
   type EquipmentInfo, type Party,
@@ -38,6 +39,26 @@ const USE_RECOMMENDATIONS: Record<string, string[]> = {
 };
 const genericRecs = ["Sigue las indicaciones del técnico y programa el próximo mantenimiento en la fecha recomendada."];
 
+const SLOT_LABEL: Record<string, string> = { front: "Vista frontal y pantalla", back: "Parte posterior o tapa", left: "Laterales y puertos", damage: "Daños visibles o vista adicional", screen: "Pantalla", serial: "Serial", right: "Lateral derecho", charger: "Cargador", other: "Otra vista" };
+const SLOT_ORDER = ["front", "back", "left", "damage", "screen", "right", "serial", "charger", "other"];
+
+/** Fotografías de la recepción (máx. 9) como miniaturas JPG obtenidas con URL firmada y temporal; si Cloudinary no responde, esa foto queda «no disponible». */
+async function receptionPhotos(rows: { slot: string | null; cloudinary_public_id: string }[]): Promise<{ label: string; bytes: Uint8Array | null }[]> {
+  const sorted = [...rows].sort((a, b) => SLOT_ORDER.indexOf(a.slot ?? "other") - SLOT_ORDER.indexOf(b.slot ?? "other")).slice(0, 9);
+  return Promise.all(
+    sorted.map(async (e) => {
+      const label = SLOT_LABEL[e.slot ?? "other"] ?? "Otra vista";
+      try {
+        const res = await fetch(signedThumbUrl(e.cloudinary_public_id), { signal: AbortSignal.timeout(15_000), cache: "no-store" });
+        if (!res.ok) return { label, bytes: null };
+        return { label, bytes: new Uint8Array(await res.arrayBuffer()) };
+      } catch {
+        return { label, bytes: null };
+      }
+    }),
+  );
+}
+
 async function loadTicket(ticketId: string): Promise<TicketRow | null> {
   const { data } = await createAdminClient()
     .from("tickets")
@@ -71,12 +92,15 @@ export async function generateTicketDocument(kind: DocKind, ticketId: string, ac
 
   if (kind === "reception") {
     const [{ data: r }, { data: ev }, { data: staff }] = await Promise.all([
-      admin.from("receptions").select("accessories, visible_damage, physical_condition, reason, observations").eq("ticket_id", ticketId).maybeSingle(),
-      admin.from("evidence").select("slot").eq("ticket_id", ticketId).eq("stage", "reception").is("deleted_at", null),
+      admin.from("receptions").select("accessories, visible_damage, physical_condition, reason, observations, received_by").eq("ticket_id", ticketId).maybeSingle(),
+      admin.from("evidence").select("slot, cloudinary_public_id, media_kind").eq("ticket_id", ticketId).eq("stage", "reception").is("deleted_at", null).order("created_at"),
       t.assigned_to ? admin.from("profiles").select("full_name").eq("id", t.assigned_to).maybeSingle() : Promise.resolve({ data: null }),
     ]);
     if (!r) return { ok: false, error: "Primero registra la recepción del equipo." };
-    pdf = await buildReceptionPdf({ ticketCode: t.code, receivedAt: t.received_at, modality: t.modality, customer: party(t), equipment: equip(t), accessories: r.accessories, damage: r.visible_damage, physicalCondition: r.physical_condition, reason: r.reason, observations: r.observations, photoSlots: (ev ?? []).map((e) => e.slot ?? "otra"), receivedBy: (staff as { full_name: string } | null)?.full_name }, meta);
+    // Quien registró la recepción (si es otra persona que la asignada) también se identifica.
+    const { data: by } = r.received_by ? await admin.from("profiles").select("full_name").eq("id", r.received_by).maybeSingle() : { data: null };
+    const photos = await receptionPhotos((ev ?? []).filter((e) => e.media_kind === "photo"));
+    pdf = await buildReceptionPdf({ ticketCode: t.code, receivedAt: t.received_at, modality: t.modality, customer: party(t), equipment: equip(t), accessories: r.accessories, damage: r.visible_damage, physicalCondition: r.physical_condition, reason: r.reason, observations: r.observations, photoSlots: (ev ?? []).map((e) => e.slot ?? "otra"), receivedBy: (by as { full_name: string } | null)?.full_name ?? (staff as { full_name: string } | null)?.full_name, photos }, meta);
   } else if (kind === "diagnosis") {
     const { data: d } = await admin.from("diagnostics").select("id, summary, tests_performed, recommendations, suggested_parts, technician_id, finalized_at").eq("ticket_id", ticketId).order("version", { ascending: false }).limit(1).maybeSingle();
     if (!d) return { ok: false, error: "Primero registra el diagnóstico." };
@@ -131,9 +155,7 @@ export async function generateTicketDocument(kind: DocKind, ticketId: string, ac
   const old = (prev ?? []).filter((p) => !["signed", "superseded"].includes(p.status)).map((p) => p.id);
   if (old.length) await admin.from("documents").update({ status: "superseded" }).in("id", old);
 
-  const { data: cust } = await admin.from("customers").select("profile_id").eq("id", t.customer_id).maybeSingle();
-  if (cust?.profile_id) {
-    await admin.from("notifications").insert({ recipient_id: cust.profile_id, type: "document.available", title: `Nuevo documento: ${TITLES[kind]}`, entity_type: "document", entity_id: row.id });
-  }
+  // Aviso idempotente (y copia de supervisión) por la base de datos. El acta de recepción tiene su propio aviso («Firma el acta»).
+  await admin.rpc("notify_document_available", { p_doc: row.id });
   return { ok: true, id: row.id, code };
 }
