@@ -27,6 +27,7 @@ const QUOTE_ERRORS: [RegExp, string][] = [
   [/diagnosis_already_paid/, "El diagnóstico de este ticket ya está pagado."],
   [/ticket_not_diagnosis/, "Este ticket no es de un servicio de diagnóstico."],
   [/diagnosis_credit_already_used/, "El abono del diagnóstico ya fue usado."],
+  [/product_unavailable/, "Ese producto ya no está disponible en el catálogo."],
 ];
 const GENERIC = "No pudimos completar la acción. Inténtalo de nuevo.";
 /** Mensaje claro para el usuario según el error real; lo desconocido cae en el genérico (y se registra con referencia). */
@@ -184,4 +185,59 @@ export async function setDeliveryAction(fd: FormData): Promise<void> {
   const { error } = await supabase.rpc("set_quote_delivery", { p_quote: p.data.quoteId, p_apply: p.data.apply === "true" });
   if (error) console.error("quote.delivery", error.code, friendly(error.message));
   refresh(p.data.ticketId);
+}
+
+const shopAdd = z.object({ ticketId: uuid, productId: uuid });
+export type ShopAddResult = { ok: boolean; message: string; productId?: string };
+
+/**
+ * «Agregar a cotización» desde las recomendaciones del Shop. Técnico asignado o SUPERADMIN (RLS `can_manage_quote` + rol aquí).
+ * - Usa el id real del producto; el PRECIO lo fija la base de datos con el catálogo vigente (`quote_item_before`), nunca este código.
+ * - Si no hay cotización, la crea en borrador (el diagnóstico y el ticket no se tocan). Si ya fue enviada/aprobada, NO se modifica:
+ *   se pide crear una nueva versión por el flujo actual.
+ * - Si el producto ya está, aumenta la cantidad en 1 (no duplica la línea).
+ * - Se guarda como concepto «producto» (no como repuesto instalado ni mano de obra), con la garantía del producto.
+ */
+export async function addShopProductToQuoteAction(_p: ShopAddResult | null, fd: FormData): Promise<ShopAddResult> {
+  await assertRole(["technician", "superadmin"]);
+  const p = shopAdd.safeParse(Object.fromEntries(fd.entries()));
+  if (!p.success) return { ok: false, message: "Producto no válido." };
+  const { ticketId, productId } = p.data;
+  const supabase = await createClient();
+  const { data: prod } = await supabase.from("products").select("id, name, is_active, source_available, warranty_days").eq("id", productId).maybeSingle();
+  if (!prod || !prod.is_active) return { ok: false, message: "Ese producto ya no está disponible en el catálogo.", productId };
+  if (prod.source_available === false) return { ok: false, message: "Ese producto está agotado en el proveedor; no se puede cotizar ahora.", productId };
+  let { data: quote } = await supabase.from("quotes").select("id, status").eq("ticket_id", ticketId).neq("status", "superseded").order("version", { ascending: false }).limit(1).maybeSingle();
+  if (!quote) {
+    const { data: t } = await supabase.from("tickets").select("customer_id").eq("id", ticketId).maybeSingle();
+    if (!t) return { ok: false, message: "Ticket no encontrado.", productId };
+    const { data: created, error } = await supabase.from("quotes").insert({ ticket_id: ticketId, customer_id: t.customer_id }).select("id, status").single();
+    if (error || !created) return { ok: false, message: friendly(error?.message), productId };
+    quote = created;
+  }
+  if (quote.status !== "draft") return { ok: false, message: "La cotización ya fue enviada al cliente. Para incluir el producto, crea una nueva versión desde la cotización.", productId };
+  const { data: existing } = await supabase.from("quote_items").select("id, qty").eq("quote_id", quote.id).eq("product_id", productId).maybeSingle();
+  if (existing) {
+    const { error } = await supabase.from("quote_items").update({ qty: Number(existing.qty) + 1 }).eq("id", existing.id);
+    if (error) return { ok: false, message: friendly(error.message), productId };
+    refresh(ticketId);
+    return { ok: true, message: `Ya estaba en la cotización: cantidad ${Number(existing.qty) + 1}.`, productId };
+  }
+  const { count } = await supabase.from("quote_items").select("id", { count: "exact", head: true }).eq("quote_id", quote.id);
+  const { error } = await supabase.from("quote_items").insert({
+    quote_id: quote.id,
+    position: (count ?? 0) + 1,
+    kind: "product",
+    product_id: productId,
+    description: prod.name,
+    qty: 1,
+    unit_price: null as unknown as number, // lo fija la base de datos con el precio vigente del catálogo
+    discount: 0,
+    warranty_days: Math.max(0, Number(prod.warranty_days ?? 0)),
+    warranty_kind: "product",
+    concept: "product",
+  });
+  if (error) return { ok: false, message: friendly(error.message), productId };
+  refresh(ticketId);
+  return { ok: true, message: "Agregado a la cotización.", productId };
 }

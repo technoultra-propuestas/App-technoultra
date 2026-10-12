@@ -2062,6 +2062,9 @@ export type Database = {
       }
       payments: {
         Row: {
+          discount_amount: number
+          installment: string | null
+          pricing_detail: Json | null
           amount: number
           approved_at: string | null
           code: string
@@ -2087,6 +2090,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          discount_amount?: number
+          installment?: string | null
+          pricing_detail?: Json | null
           amount: number
           approved_at?: string | null
           code?: string
@@ -2112,6 +2118,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          discount_amount?: number
+          installment?: string | null
+          pricing_detail?: Json | null
           amount?: number
           approved_at?: string | null
           code?: string
@@ -2815,6 +2824,9 @@ export type Database = {
       }
       quotes: {
         Row: {
+          amount_paid: number
+          early_discount: number
+          payment_plan: string | null
           code: string
           created_at: string
           created_by: string | null
@@ -2849,6 +2861,9 @@ export type Database = {
           version: number
         }
         Insert: {
+          amount_paid?: number
+          early_discount?: number
+          payment_plan?: string | null
           code?: string
           created_at?: string
           created_by?: string | null
@@ -2883,6 +2898,9 @@ export type Database = {
           version?: number
         }
         Update: {
+          amount_paid?: number
+          early_discount?: number
+          payment_plan?: string | null
           code?: string
           created_at?: string
           created_by?: string | null
@@ -4059,6 +4077,15 @@ export type Database = {
       }
       record_delivery: { Args: { p_channel: string; p_error?: string; p_notification: string; p_status: string }; Returns: undefined }
       notify_stale_tickets: { Args: never; Returns: number }
+      begin_quote_payment: {
+        Args: { p_actor: string; p_plan: string; p_quote: string }
+        Returns: { amount: number; external_reference: string; payment_id: string; ticket_id: string; title: string }[]
+      }
+      record_manual_quote_payment: {
+        Args: { p_actor: string; p_method: string; p_note?: string; p_plan: string; p_quote: string; p_reference?: string; p_voucher?: string }
+        Returns: string
+      }
+      quote_payment_summary: { Args: { p_quote: string }; Returns: Json }
       notify_stale_payments: { Args: never; Returns: number }
       complete_checklist: { Args: { p_run: string }; Returns: undefined }
       complete_onboarding: { Args: never; Returns: undefined }

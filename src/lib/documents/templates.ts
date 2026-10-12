@@ -92,10 +92,16 @@ export async function buildQuotePdf(d: QuoteData, meta: PdfMeta) {
     );
   }
   b.section("Resumen");
-  b.kv(
+  // Importes en su propia columna a la derecha (el texto largo del crédito ya no se superpone con su valor). Mismos valores y reglas.
+  b.amounts(
     d.pricing
-      ? quoteBreakdown(d.pricing).map((l): [string, string] => [l.key === "total" ? "TOTAL" : l.label, `${l.sign === -1 ? "-" : ""}${COP(l.amount)}`])
-      : [["Subtotal", COP(d.subtotal)], ["Descuentos", d.discountTotal > 0 ? `-${COP(d.discountTotal)}` : null], ["Impuestos", d.taxTotal > 0 ? COP(d.taxTotal) : null], ["TOTAL", COP(d.total)]],
+      ? quoteBreakdown(d.pricing).map((l) => ({ label: l.key === "total" ? "TOTAL" : l.label, amount: `${l.sign === -1 ? "- " : ""}${COP(l.amount)}`, strong: l.strong, muted: l.info }))
+      : [
+          { label: "Subtotal", amount: COP(d.subtotal) },
+          ...(d.discountTotal > 0 ? [{ label: "Descuentos", amount: `- ${COP(d.discountTotal)}` }] : []),
+          ...(d.taxTotal > 0 ? [{ label: "Impuestos", amount: COP(d.taxTotal) }] : []),
+          { label: "TOTAL", amount: COP(d.total), strong: true },
+        ],
   );
   const why = creditExplanation(Number(d.pricing?.diagnosis_credit ?? 0));
   if (why) b.note(why);

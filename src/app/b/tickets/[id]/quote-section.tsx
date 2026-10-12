@@ -48,12 +48,8 @@ export async function QuoteSection({ ticketId, canQuote, ticketOpen }: { ticketI
   const draft = quote.status === "draft";
   const lastQuestion = [...(events ?? [])].reverse().find((e) => e.event_type === "question");
   const rejection = [...(events ?? [])].reverse().find((e) => e.event_type === "rejected");
-  const [{ data: services }, { data: products }] = draft && canQuote
-    ? await Promise.all([
-        supabase.from("services").select("id, name").eq("is_active", true).neq("price_mode", "quote").order("name"),
-        supabase.from("products").select("id, name").eq("is_active", true).order("name"),
-      ])
-    : [{ data: [] }, { data: [] }];
+  // Los productos NO se descargan aquí: el selector los busca en el servidor mientras el técnico escribe (ver product-search.tsx).
+  const { data: services } = draft && canQuote ? await supabase.from("services").select("id, name").eq("is_active", true).neq("price_mode", "quote").order("name") : { data: [] };
 
   return (
     <Card id="cotizacion" className="flex flex-col gap-4">
@@ -165,7 +161,7 @@ export async function QuoteSection({ ticketId, canQuote, ticketOpen }: { ticketI
           <details className="rounded-[14px] border border-line p-3">
             <summary className="cursor-pointer text-[15px] font-extrabold">Agregar un concepto</summary>
             <div className="pt-3">
-              <AddItemForm ticketId={ticketId} quoteId={quote.id} services={services ?? []} products={products ?? []} />
+              <AddItemForm ticketId={ticketId} quoteId={quote.id} services={services ?? []} />
             </div>
           </details>
           {tk?.status === "diagnosing" ? (

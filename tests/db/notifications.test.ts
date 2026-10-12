@@ -146,6 +146,7 @@ describe("recepción, diagnóstico y reparación", () => {
     expect(await notes(tech, "quote.question", t1)).toHaveLength(1);
     await as(db, tech, () => q(`select public.answer_quote_question($1,'Sí')`, [q1]));
     await as(db, cliA, () => q(`select public.decide_quote($1,'approve',null)`, [q1]));
+    await q(`select public.record_manual_quote_payment($1,$2,'full','cash')`, [tech, q1]);
     expect(await notes(tech, "quote.approved", t1)).toHaveLength(1);
     expect(await notes(owner, "quote.approved", t1)).toHaveLength(1);
     expect(await notes(cliA, "quote.decision", t1)).toHaveLength(1);
@@ -161,6 +162,8 @@ describe("recepción, diagnóstico y reparación", () => {
     const t = await inDiagnosis();
     const quote = await sentQuote(t);
     await as(db, cliA, () => q(`select public.decide_quote($1,'approve',null)`, [quote]));
+    expect(await notes(cliA, "repair.started", t)).toHaveLength(0); // aprobada pero sin pago: el servicio no empieza
+    await q(`select public.record_manual_quote_payment($1,$2,'deposit','cash')`, [tech, quote]);
     expect(await notes(cliA, "repair.started", t)).toHaveLength(1);
     await q(`update checklist_items set state = 'pass' where false`);
     expect(await notes(tech2, "repair.started", t)).toHaveLength(0);

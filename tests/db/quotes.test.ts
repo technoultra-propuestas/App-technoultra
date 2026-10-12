@@ -62,6 +62,9 @@ describe("flujo de cotización", () => {
 
     await as(db, cliA, () => q(`select public.decide_quote($1,'approve',null)`, [quote]));
     expect(await qstatus(quote)).toBe("approved");
+    // aprobar NO inicia el servicio mientras haya algo por cobrar; empieza al confirmarse el pago
+    expect(await status(t)).toBe("awaiting_approval");
+    await q(`select public.record_manual_quote_payment($1,$2,'full','cash')`, [tech, quote]); // desde la migración 43 el servicio empieza con el pago confirmado
     expect(await status(t)).toBe("in_service");
     // decisión definitiva: no se puede decidir de nuevo
     await expect(as(db, cliA, () => q(`select public.decide_quote($1,'reject',null)`, [quote]))).rejects.toThrow(/quote_not_open/);
@@ -125,6 +128,8 @@ describe("flujo de cotización", () => {
     await as(db, tech, () => q(`select public.send_quote($1)`, [quote]));
     await expect(as(db, cliA, () => q(`select public.record_in_person_approval($1)`, [quote]))).rejects.toThrow(denied);
     await as(db, tech, () => q(`select public.record_in_person_approval($1)`, [quote]));
+    expect(await status(t)).toBe("awaiting_approval");
+    await q(`select public.record_manual_quote_payment($1,$2,'full','cash')`, [tech, quote]); // desde la migración 43 el servicio empieza con el pago confirmado
     expect(await status(t)).toBe("in_service");
     expect((await q(`select 1 from audit_logs where action = 'quote.approved_in_person' and entity_id = $1`, [quote])).length).toBe(1);
   });
@@ -146,6 +151,7 @@ describe("checklist y revisión de IA", () => {
     const quote = await draftQuote(t);
     await as(db, tech, () => q(`select public.send_quote($1)`, [quote]));
     await as(db, cliA, () => q(`select public.decide_quote($1,'approve',null)`, [quote]));
+    await q(`select public.record_manual_quote_payment($1,$2,'full','cash')`, [tech, quote]); // desde la migración 43 el servicio empieza con el pago confirmado
     await as(db, tech, () => q(`select public.transition_ticket($1,'testing')`, [t]));
     const [{ r }] = await as(db, tech, () => q<{ r: string }>(`select public.start_checklist($1) r`, [t]));
     expect((await q<{ n: number }>(`select count(*)::int n from checklist_items where run_id = $1`, [r]))[0].n).toBe(18);

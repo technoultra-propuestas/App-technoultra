@@ -47,15 +47,18 @@ export function staffNextAction(f: FlowFacts): StaffNext {
       return { title: "Revisar y enviar la cotización", body: f.quoteItems ? "La cotización está lista. Revisa los conceptos y envíala al cliente." : "Agrega al menos un concepto antes de enviarla.", cta: { label: "Ver cotización", anchor: "cotizacion" }, waiting: false };
     case "awaiting_approval":
       if (f.quoteStatus === "clarification") return { title: "El cliente tiene una pregunta", body: "Respóndele para que pueda decidir.", cta: { label: "Responder", anchor: "cotizacion" }, waiting: false };
+      if (f.quoteStatus === "approved")
+        return { title: "Esperando el pago de la cotización", body: "El cliente aprobó. No inicies la intervención: el servicio se habilita solo cuando se confirme el anticipo del 50 % o el pago total. Si paga en el local, regístralo en Pagos.", cta: { label: "Ver pagos", anchor: "pagos" }, waiting: true };
       return { title: "Esperando aprobación del cliente", body: "La cotización fue enviada. No hay nada más que hacer hasta que el cliente decida.", cta: { label: "Ver cotización", anchor: "cotizacion" }, waiting: true };
     case "awaiting_part":
       return { title: "Esperando repuesto", body: "Cuando llegue el repuesto, inicia el servicio.", cta: { label: "Cambiar estado", anchor: "estado" }, waiting: false };
     case "in_service":
-      return { title: "Realizar el servicio", body: f.quotePayable ? "El cliente aún no ha pagado el saldo de la cotización. Cuando termines, pasa a pruebas." : "Cuando termines, pasa el ticket a pruebas.", cta: { label: "Pasar a pruebas", anchor: "estado" }, waiting: false };
+      return { title: "Realizar el servicio", body: f.quotePayable ? "Pago confirmado (anticipo): puedes intervenir. El saldo se cobra antes de la entrega. Cuando termines, pasa a pruebas." : "Cuando termines, pasa el ticket a pruebas.", cta: { label: "Pasar a pruebas", anchor: "estado" }, waiting: false };
     case "testing":
       if (!f.hasChecklist || !f.checklistDone) return { title: "Completar las pruebas", body: "Inicia el checklist y resuelve las pruebas obligatorias. No se marca «Listo» sin pruebas.", cta: { label: "Ir al checklist", anchor: "pruebas" }, waiting: false };
       return { title: "Marcar como listo", body: "Las pruebas están completas. Pasa el ticket a «Listo para entregar».", cta: { label: "Cambiar estado", anchor: "estado" }, waiting: false };
     case "ready":
+      if (f.quotePayable) return { title: "Cobrar el saldo antes de entregar", body: "La cotización tiene saldo pendiente. No se puede entregar hasta que el saldo quede pagado (en línea o registrado en el local).", cta: { label: "Ver pagos", anchor: "pagos" }, waiting: false };
       return f.hasDelivery
         ? { title: "Entregar el equipo", body: "La entrega está registrada. Pasa el ticket a «Entregado».", cta: { label: "Cambiar estado", anchor: "estado" }, waiting: false }
         : { title: "Registrar la entrega", body: "Sube las fotos de entrega y registra quién recibe el equipo.", cta: { label: "Registrar entrega", anchor: "entrega" }, waiting: false };
@@ -104,18 +107,19 @@ export function clientNextAction(f: ClientFacts): ClientNext {
         ? { title: "Diagnóstico listo", body: "Ya tenemos el resultado de la revisión de tu equipo.", primary: { label: "Ver diagnóstico", href: `/c/documentos/${f.diagnosisDocId}` }, tone: "action" }
         : { title: "Tu equipo está en diagnóstico", body: "Estamos revisándolo para identificar la causa del problema.", tone: "wait" };
     case "awaiting_approval":
+      if (f.quoteStatus === "approved")
+        return { title: "Elige cómo pagar", body: "Aprobaste la cotización. Paga el anticipo del 50 % o el total con 5 % de descuento para que podamos comenzar tu servicio.", primary: { label: "Elegir cómo pagar", href: "#pago" }, tone: "action" };
       return f.quoteDocId || f.quoteStatus
         ? { title: "Tenemos una propuesta para ti", body: "Incluye reparación, mano de obra y repuestos. No hacemos ningún trabajo sin tu aprobación.", primary: { label: "Ver cotización", href: `${base}/cotizacion` }, secondary: f.diagnosisDocId ? { label: "Ver diagnóstico", href: `/c/documentos/${f.diagnosisDocId}` } : undefined, tone: "action" }
         : { title: "Estamos preparando tu cotización", body: "Te avisaremos apenas esté lista.", tone: "wait" };
     case "awaiting_part":
       return { title: "Esperando un repuesto", body: "Aprobaste la cotización. Continuamos cuando llegue el repuesto.", tone: "wait" };
     case "in_service":
-      return f.quotePayable
-        ? { title: "Falta el pago del saldo", body: "Tu cotización está aprobada. Paga el saldo para que podamos entregarte el equipo.", primary: { label: "Pagar", href: "#pago" }, tone: "action" }
-        : { title: "Estamos trabajando en tu equipo", body: "Te avisaremos cuando pase a pruebas.", tone: "wait" };
+      return { title: "Estamos trabajando en tu equipo", body: f.quotePayable ? "Ya recibimos tu anticipo. El saldo restante se paga al finalizar, antes de la entrega. Te avisaremos." : "Te avisaremos cuando pase a pruebas.", tone: "wait" };
     case "testing":
       return { title: "Estamos probando tu equipo", body: "Verificamos que todo funcione bien antes de entregarlo.", tone: "wait" };
     case "ready":
+      if (f.quotePayable) return { title: "Tu equipo está listo", body: "Paga el saldo restante para que podamos entregártelo.", primary: { label: "Pagar saldo restante", href: "#pago" }, tone: "action" };
       return { title: "Tu equipo está listo", body: "Coordinemos la entrega. Nos pondremos en contacto contigo.", primary: f.deliveryHref ? { label: "Coordinar entrega", href: f.deliveryHref } : undefined, tone: f.deliveryHref ? "action" : "wait" };
     default:
       return { title: "Estamos con tu solicitud", body: "Te mantendremos informado.", tone: "wait" };

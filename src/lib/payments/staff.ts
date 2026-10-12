@@ -69,4 +69,7 @@ export const PAYMENT_ERRORS: Record<string, string> = {
   forbidden: "No tienes permiso para registrar este pago.",
   quote_not_payable: "La cotización debe estar aprobada para cobrarla.",
   ticket_closed: "El ticket está cerrado.",
+  plan_already_chosen: "El cliente ya tiene un pago de esta cotización: registra el saldo restante.",
+  plan_required: "Primero debe pagarse el anticipo o el total de la cotización.",
+  nothing_to_pay: "No hay saldo por cobrar en esta cotización.",
 };

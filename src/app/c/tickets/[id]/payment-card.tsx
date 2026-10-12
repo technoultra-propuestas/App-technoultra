@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Alert, SubmitButton } from "@/components/ui/form";
-import { IconClock } from "@/components/ui/icons";
+import { IconChevronDown, IconClock } from "@/components/ui/icons";
 import { Card, money } from "@/components/ui/layout";
 import { PaymentTimeline } from "@/components/ui/service-flow";
 import { DIAGNOSIS_CONDITION, DIAGNOSIS_SCOPE } from "@/lib/domain/pricing";
@@ -10,6 +10,8 @@ import { createClient } from "@/lib/supabase/server";
 import { startServicePaymentAction } from "../pay-actions";
 import { PayStatusCard, type PayVariant } from "./pay-status-card";
 import { PendingCard } from "./pending-card";
+import { QuotePayPanel } from "./quote-pay";
+import { QUOTE_PAY_RESULT } from "@/lib/payments/quote-plan";
 
 /** Códigos que devuelve la acción de pago al fallar ANTES de abrir el pago. Ninguno nombra al proveedor. */
 const RESULT: Record<string, { tone: "ok" | "error"; text: string }> = {
@@ -19,6 +21,7 @@ const RESULT: Record<string, { tone: "ok" | "error"; text: string }> = {
   sin_saldo: { tone: "ok", text: "No hay saldo por pagar en esta cotización." },
   no_disponible: { tone: "error", text: "Este pago no está disponible en este momento." },
   error: { tone: "error", text: "No pudimos iniciar el pago. Inténtalo de nuevo en un momento." },
+  ...Object.fromEntries(Object.entries(QUOTE_PAY_RESULT).map(([k, text]) => [k, { tone: "error" as const, text }])),
 };
 
 type Kind = "diagnosis" | "service" | "quote";
@@ -163,15 +166,18 @@ export async function PaymentCard({ ticketId, result }: { ticketId: string; resu
       {showDiag ? (
         <>
           <PayBlock kind="diagnosis" title="Diagnóstico técnico" amount={Number(price)} refId={ticketId} ticketId={ticketId} rows={rowsOf("diagnosis")} settled={Boolean(credit)} modality={t.modality} ticketStatus={t.status} unknownNotice={unknownNotice} note="También puedes pagar en el local; el equipo lo registrará." />
-          <details className="rounded-[14px] border border-line bg-paper p-3.5 text-[13.5px] leading-snug text-ink-2" open={mainState === "none"}>
-            <summary className="flex min-h-11 cursor-pointer items-center text-[14px] font-extrabold text-ink">Qué incluye y cómo se aplica el diagnóstico</summary>
+          <details className="group rounded-[14px] border border-line bg-paper px-3.5 py-1 text-[13.5px] leading-snug text-ink-2">
+            <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 text-[14px] font-extrabold text-ink [&::-webkit-details-marker]:hidden">
+              ¿Qué incluye el diagnóstico?
+              <IconChevronDown aria-hidden width={18} height={18} className="flex-none text-muted transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none" />
+            </summary>
             <p className="m-0 mb-2">{DIAGNOSIS_SCOPE}</p>
             <p className="m-0">{DIAGNOSIS_CONDITION}</p>
           </details>
         </>
       ) : null}
       {showService ? <PayBlock kind="service" title="Servicio" amount={Number(price)} refId={ticketId} ticketId={ticketId} rows={rowsOf("service")} settled={Boolean(t.prepaid_at)} modality={t.modality} ticketStatus={t.status} unknownNotice={unknownNotice} note="También puedes pagar en el local; el equipo lo registrará." /> : null}
-      {showQuote && quote ? <PayBlock kind="quote" title={`Cotización ${quote.code}`} amount={Number(quote.total)} refId={quote.id} ticketId={ticketId} rows={rowsOf("quote", quote.id)} settled={Boolean(quote.paid_at)} modality={t.modality} ticketStatus={t.status} unknownNotice={unknownNotice} note="También puedes pagar en el local; el equipo lo registrará." /> : null}
+      {showQuote && quote ? <QuotePayPanel ticketId={ticketId} quoteId={quote.id} /> : null}
       {showNext ? (
         <div className="flex items-start gap-3 rounded-[14px] bg-paper p-3.5">
           <span aria-hidden className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-white text-ink">

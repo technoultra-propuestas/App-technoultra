@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-type Phase = "checking" | "unsupported" | "off" | "denied" | "on" | "busy";
+type Phase = "checking" | "unsupported" | "ios-install" | "off" | "denied" | "on" | "busy";
 
 /** Conversión de la clave pública VAPID (base64url) al formato que pide el navegador. */
 function toKey(b64: string): Uint8Array<ArrayBuffer> {
@@ -25,8 +25,11 @@ export function PushCard({ publicKey }: { publicKey: string | null }) {
   useEffect(() => {
     let alive = true;
     (async () => {
+      const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+      const standalone = window.matchMedia("(display-mode: standalone)").matches || (navigator as unknown as { standalone?: boolean }).standalone === true;
       if (!publicKey || !("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
-        if (alive) setPhase("unsupported");
+        // En iPhone/iPad el push web solo existe con la app instalada en la pantalla de inicio (iOS 16.4+).
+        if (alive) setPhase(ios && !standalone && publicKey ? "ios-install" : "unsupported");
         return;
       }
       if (Notification.permission === "denied") {
@@ -97,12 +100,15 @@ export function PushCard({ publicKey }: { publicKey: string | null }) {
       {phase === "unsupported" ? (
         <p className="m-0 text-[14px] leading-snug text-muted">Este navegador no permite avisos del sistema (o aún no están habilitados). Tus avisos siempre aparecen aquí y, si lo permites, también en tu correo. En iPhone, instala primero TechnoUltra en tu pantalla de inicio.</p>
       ) : null}
+      {phase === "ios-install" ? (
+        <p className="m-0 text-[14px] leading-snug text-muted">En iPhone y iPad los avisos del dispositivo funcionan solo con TechnoUltra instalada: en Safari toca <strong>Compartir → Añadir a pantalla de inicio</strong>, ábrela desde allí y vuelve a esta pantalla. Mientras tanto, tus avisos siempre aparecen aquí.</p>
+      ) : null}
       {phase === "denied" ? (
         <p className="m-0 text-[14px] leading-snug text-muted">Bloqueaste los avisos para este sitio. Si quieres recibirlos, permítelos en la configuración del navegador (candado junto a la dirección). Mientras tanto, los verás aquí.</p>
       ) : null}
       {phase === "off" || phase === "busy" ? (
         <>
-          <p className="m-0 text-[14px] leading-snug text-muted">Recibe una notificación en este dispositivo cuando haya algo importante. No incluye datos sensibles y puedes desactivarla cuando quieras.</p>
+          <p className="m-0 text-[14px] leading-snug text-muted">Te avisaremos en este dispositivo de lo importante: pagos confirmados, diagnóstico listo, cotizaciones, equipo listo y acciones pendientes. No incluye montos ni datos personales, y puedes desactivarlo cuando quieras. Primero tu navegador te pedirá permiso.</p>
           <button type="button" onClick={enable} disabled={phase === "busy"} className="press min-h-12 w-full rounded-2xl bg-brand px-5 text-[15px] font-extrabold text-ink disabled:opacity-60">
             {phase === "busy" ? "Activando…" : "Activar avisos en este dispositivo"}
           </button>

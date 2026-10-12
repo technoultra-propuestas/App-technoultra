@@ -169,9 +169,21 @@ describe("estados · «Ahora estamos aquí» del cliente", () => {
     expect(clientNextAction(cf({ status: "ready", deliveryHref: "https://wa.me/1" })).primary?.label).toBe("Coordinar entrega");
     expect(clientNextAction(cf({ status: "ready" })).primary).toBeUndefined();
   });
-  it("aprobada con saldo pendiente → pagar el saldo; sin saldo → solo esperar", () => {
-    expect(clientNextAction(cf({ status: "in_service", quotePayable: true })).primary?.label).toBe("Pagar");
+  it("cotización aprobada sin pago → elegir cómo pagar (anticipo o total); el técnico espera el pago", () => {
+    const c = clientNextAction(cf({ status: "awaiting_approval", quoteStatus: "approved" }));
+    expect(c.primary?.label).toBe("Elegir cómo pagar");
+    expect(c.body).toMatch(/anticipo del 50 %.*5 % de descuento/);
+    const s = staffNextAction(cf({ status: "awaiting_approval", quoteStatus: "approved" }));
+    expect(s.title).toBe("Esperando el pago de la cotización");
+    expect(s.body).toMatch(/No inicies la intervención/);
+  });
+  it("con anticipo: durante la reparación solo se informa el saldo; al estar listo → «Pagar saldo restante»", () => {
+    const working = clientNextAction(cf({ status: "in_service", quotePayable: true }));
+    expect(working.primary).toBeUndefined();
+    expect(working.body).toMatch(/saldo restante se paga al finalizar/);
     expect(clientNextAction(cf({ status: "in_service", quotePayable: false })).primary).toBeUndefined();
+    expect(clientNextAction(cf({ status: "ready", quotePayable: true })).primary?.label).toBe("Pagar saldo restante");
+    expect(staffNextAction(cf({ status: "ready", quotePayable: true })).title).toBe("Cobrar el saldo antes de entregar");
   });
   it("«Recibido» no se usa para la solicitud recién creada", () => {
     for (const status of ["received", "diagnosing", "awaiting_approval", "ready"]) {

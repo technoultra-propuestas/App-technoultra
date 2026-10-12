@@ -17,6 +17,7 @@ const registerSchema = z.object({
   reference: z.string().trim().max(80).optional(),
   note: z.string().trim().max(300).optional(),
   voucherId: z.string().uuid().optional().or(z.literal("")),
+  plan: z.enum(["deposit", "full", "balance"]).optional(),
 });
 
 function clean(code: string | undefined, message: string): string {
@@ -32,15 +33,13 @@ export async function registerPaymentAction(_: PaymentResult | null, fd: FormDat
   const p = registerSchema.safeParse(Object.fromEntries(fd.entries()));
   if (!p.success) return { ok: false, message: "Revisa los datos del pago." };
   if (!(await allow("manual-payment", actor.id, 30, 3600))) return { ok: false, message: TOO_MANY };
-  const { error } = await createAdminClient().rpc("record_manual_service_payment_v2", {
-    p_actor: actor.id,
-    p_kind: p.data.kind,
-    p_ref: p.data.ref,
-    p_method: p.data.method,
-    p_reference: p.data.reference || undefined,
-    p_note: p.data.note || undefined,
-    p_voucher: p.data.voucherId || undefined,
-  });
+  // Cotizaciones: siempre con modalidad (anticipo / total con 5 % / saldo); el importe y el descuento los fija la base de datos.
+  if (p.data.kind === "quote" && !p.data.plan) return { ok: false, message: "Elige la modalidad del pago." };
+  const common = { p_actor: actor.id, p_method: p.data.method, p_reference: p.data.reference || undefined, p_note: p.data.note || undefined, p_voucher: p.data.voucherId || undefined };
+  const { error } =
+    p.data.kind === "quote"
+      ? await createAdminClient().rpc("record_manual_quote_payment", { ...common, p_quote: p.data.ref, p_plan: p.data.plan! })
+      : await createAdminClient().rpc("record_manual_service_payment_v2", { ...common, p_kind: p.data.kind, p_ref: p.data.ref });
   if (error) {
     console.error("payment.manual", error.code, error.message);
     return { ok: false, message: clean(error.code, error.message) };

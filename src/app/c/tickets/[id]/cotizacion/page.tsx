@@ -8,6 +8,7 @@ import { quoteBreakdown } from "@/lib/domain/pricing";
 import { creditExplanation, groupQuoteItems } from "@/lib/quotes/concepts";
 import { createClient } from "@/lib/supabase/server";
 import { QuoteDecision } from "../quote-client";
+import { QuotePayPanel } from "../quote-pay";
 
 export const metadata: Metadata = { title: "Cotización", robots: { index: false } };
 
@@ -121,10 +122,12 @@ export default async function QuoteViewerPage({ params }: { params: Promise<{ id
         <div className="sticky bottom-[92px] z-20 -mx-1 rounded-card border border-line bg-paper/95 p-3 shadow-card backdrop-blur lg:bottom-4">
           <QuoteDecision ticketId={t.id} quoteId={quote.id} total={money(quote.total)} />
         </div>
+      ) : quote.status === "approved" ? (
+        <div id="pago">
+          <QuotePayPanel ticketId={t.id} quoteId={quote.id} />
+        </div>
       ) : (
-        <p className="m-0 text-center text-[14px] font-bold text-muted">
-          {quote.status === "approved" ? "Aprobaste esta cotización." : quote.status === "rejected" ? "Rechazaste esta cotización." : "Esta cotización ya no está vigente."}
-        </p>
+        <p className="m-0 text-center text-[14px] font-bold text-muted">{quote.status === "rejected" ? "Rechazaste esta cotización." : "Esta cotización ya no está vigente."}</p>
       )}
     </section>
   );

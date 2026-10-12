@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { ListRow } from "@/components/ui/kit";
 import type { NavIconName } from "@/components/ui/icons";
 import { SignOutRow } from "@/components/ui/SignOut";
+import { InstallApp } from "@/components/pwa/InstallApp";
 import { requireRole } from "@/lib/auth/session";
 
 export const metadata: Metadata = { title: "Más", robots: { index: false } };
@@ -33,6 +34,9 @@ export default async function MorePage() {
             </li>
           ))}
         </ul>
+      </div>
+      <div className="max-w-[640px]">
+        <InstallApp />
       </div>
       <div className="max-w-[640px]">
         <SignOutRow />

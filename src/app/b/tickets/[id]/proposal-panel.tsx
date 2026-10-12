@@ -4,12 +4,13 @@ import { COMPATIBILITY_NOTE } from "@/lib/ai/product-hints";
 import { loadProposal } from "@/lib/quotes/load";
 import { createClient } from "@/lib/supabase/server";
 import { ProposalForm } from "./proposal-form";
+import { AddShopProductButton } from "./shop-add";
 
 /**
  * «Propuesta automática»: servicios del catálogo que corresponden al diagnóstico, ya marcados. El técnico solo valida
  * (quita, modifica, agrega) y pulsa «Usar propuesta». Se muestra con el diagnóstico guardado y mientras la cotización siga en borrador o no exista.
  */
-export async function ProposalPanel({ ticketId, status }: { ticketId: string; status: string }) {
+export async function ProposalPanel({ ticketId, status, canEdit = true }: { ticketId: string; status: string; canEdit?: boolean }) {
   if (status !== "diagnosing") return null;
   const supabase = await createClient();
   const [{ data: quote }, { data: diag }] = await Promise.all([
@@ -50,14 +51,18 @@ export async function ProposalPanel({ ticketId, status }: { ticketId: string; st
       {products.length ? (
         <div className="flex flex-col gap-1 border-t border-line pt-3">
           <h3 className="m-0 text-[14px] font-extrabold">Productos del Shop que podrían servir</h3>
-          <ul className="m-0 flex list-none flex-col gap-1 p-0 text-[13.5px]">
+          <ul className="m-0 flex list-none flex-col gap-2 p-0 text-[13.5px]">
             {products.map((p) => (
-              <li key={p.id}>
-                <Link href={`/tienda/producto/${p.slug}`} className="font-bold text-ink underline decoration-brand underline-offset-[3px]">{p.name}</Link> · {money(p.price)}
+              <li key={p.id} className="flex flex-wrap items-start justify-between gap-2 border-b border-line pb-2 last:border-b-0 last:pb-0">
+                <span className="min-w-0 flex-1">
+                  <Link href={`/tienda/producto/${p.slug}`} className="font-bold text-ink underline decoration-brand underline-offset-[3px]">{p.name}</Link>
+                  <span className="block text-[12.5px] font-semibold text-muted">{money(p.price)} · precio vigente del catálogo</span>
+                </span>
+                {canEdit ? <AddShopProductButton ticketId={ticketId} productId={p.id} name={p.name} /> : null}
               </li>
             ))}
           </ul>
-          <p className="m-0 text-[12.5px] text-muted">{COMPATIBILITY_NOTE} Los productos del Shop se venden por WhatsApp; no entran a la cotización.</p>
+          <p className="m-0 text-[12.5px] text-muted">{COMPATIBILITY_NOTE} Al agregarlo entra a la cotización como <strong>producto</strong> (no como repuesto instalado ni mano de obra), con el precio vigente que fija el sistema.</p>
         </div>
       ) : null}
     </Card>

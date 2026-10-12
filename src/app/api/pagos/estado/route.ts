@@ -29,7 +29,7 @@ export async function POST(req: Request) {
   if (!(await allow("pay-refresh", auth.user.id, 40, 60))) return no(429, "rate_limited");
 
   // RLS: solo devuelve pagos de tickets del propio cliente. Uno ajeno aparece como inexistente (sin filtrar su existencia).
-  const { data: rows } = await supabase.from("payments").select("id, status, provider, created_at, purpose").eq("ticket_id", parsed.data.ticketId).order("created_at", { ascending: false });
+  const { data: rows } = await supabase.from("payments").select("id, status, provider, created_at, purpose, installment").eq("ticket_id", parsed.data.ticketId).order("created_at", { ascending: false });
   const list = rows ?? [];
   if (!list.length) return NextResponse.json({ ok: true, state: "none", verified: true, changed: false }, { headers: { "Cache-Control": "no-store" } });
 
@@ -48,8 +48,10 @@ export async function POST(req: Request) {
     }
   }
   // Estado definitivo = lo persistido ahora (nunca lo que dijo el navegador ni lo que respondió el proveedor sin aplicar).
-  const { data: fresh } = await supabase.from("payments").select("status, provider, created_at, purpose").eq("ticket_id", parsed.data.ticketId);
-  const purpose = pending?.purpose ?? list[0].purpose; // el estado se calcula para el MISMO concepto (diagnóstico, servicio o cotización)
-  const ui = derivePaymentUi((fresh ?? []).filter((p) => p.purpose === purpose).map((p) => ({ status: p.status as DbPaymentStatus, provider: p.provider, created_at: p.created_at })), false);
+  const { data: fresh } = await supabase.from("payments").select("status, provider, created_at, purpose, installment").eq("ticket_id", parsed.data.ticketId);
+  // El estado se calcula para el MISMO concepto (diagnóstico, servicio o cotización) y, en cotizaciones, para la MISMA modalidad
+  // (un anticipo confirmado no debe hacer creer que el saldo en validación ya se resolvió).
+  const target = pending ?? list[0];
+  const ui = derivePaymentUi((fresh ?? []).filter((p) => p.purpose === target.purpose && (p.purpose !== "quote" || (p.installment ?? null) === (target.installment ?? null))).map((p) => ({ status: p.status as DbPaymentStatus, provider: p.provider, created_at: p.created_at })), false);
   return NextResponse.json({ ok: true, state: ui.state, verified, changed }, { headers: { "Cache-Control": "no-store" } });
 }

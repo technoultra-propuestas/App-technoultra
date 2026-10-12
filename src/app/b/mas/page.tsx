@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ListRow } from "@/components/ui/kit";
 import { SignOutRow } from "@/components/ui/SignOut";
+import { InstallApp } from "@/components/pwa/InstallApp";
 import type { NavIconName } from "@/components/ui/icons";
 import { requireRole } from "@/lib/auth/session";
 
@@ -75,6 +76,9 @@ export default async function StaffMorePage() {
             </ul>
           </section>
         ))}
+      </div>
+      <div className="max-w-[640px]">
+        <InstallApp />
       </div>
       <div className="max-w-[420px]">
         <SignOutRow />

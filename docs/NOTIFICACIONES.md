@@ -29,16 +29,20 @@ Canales: **App** = centro de avisos (siempre). **Correo** = según preferencia d
 | Inicio de diagnóstico | «Tu equipo está en diagnóstico» | Tarea «Diagnóstico por completar» | — | normal |
 | Diagnóstico finalizado | «Tu diagnóstico está listo» | — | — | alta |
 | Cotización publicada (`send_quote`) | «Tienes una cotización» | — | — | alta |
-| Cliente pregunta en la cotización | — | «Pregunta del cliente» (si no hay técnico, SUPERADMIN) | — | alta |
-| Cotización aprobada | «Registramos tu aprobación» | «Cotización aprobada» | «Cotización aprobada» (cobro/seguimiento) | alta |
+| Cliente pregunta en la cotización | — | «Pregunta del cliente» (la responde) | «Pregunta del cliente» (seguimiento; si no hay técnico, la atiende) | alta/normal |
+| Cotización aprobada | «¡Cotización aprobada!» + elegir cómo pagar (anticipo 50 % o total −5 %) | «Cotización aprobada»: esperar el pago antes de intervenir | «Cotización aprobada» (cobro/seguimiento) | alta |
+| Anticipo de la cotización confirmado | «¡Pago confirmado!» (anticipo; el saldo se paga antes de la entrega) | «Anticipo confirmado»: puede iniciar | «Pago de cotización» | alta/normal |
+| Pago total confirmado (5 %) | «Pago completo confirmado» | «Pago completo» | «Pago de cotización» | alta/normal |
+| Saldo restante confirmado | «Saldo pagado» | «Saldo liquidado» | «Pago de cotización» | alta/normal |
 | Cotización rechazada | «Registramos tu decisión» | «Cotización rechazada» | «Cotización rechazada» (cierre) | alta/normal |
 | Espera de repuesto | «Estamos esperando un repuesto» | — | «Ticket en espera de repuesto» | normal/alta |
-| Reparación iniciada | «Iniciamos la reparación» | — | — | normal |
-| Equipo listo | «Tu equipo está listo» | — | — | alta |
+| Servicio habilitado (en servicio) | «Tu servicio quedó habilitado» (no afirma que el técnico ya empezó) | — | — | normal |
+| Equipo listo | «Tu equipo está listo» (con saldo: «paga el saldo restante de $X») | — | — | alta |
 | Entrega confirmada | «Entrega confirmada» (documentos y garantía disponibles) | — | — | normal |
 | Ticket cancelado | «Tu servicio fue cancelado» | «Ticket cancelado» | «Ticket cancelado» | normal |
 | Ticket sin asignar > 4 h (cron diario) | — | — | «Ticket sin asignar» | alta |
 | Equipo listo sin entregar > 3 días (cron diario) | — | — | «Equipo listo sin entregar» | normal |
+| Pago en línea sin confirmar > 30 min (cron diario) | — | — | «Pago en línea sin confirmar» (1 por pago y día) | alta |
 
 Estados sin aviso propio a propósito: `received` (la solicitud ya se avisó), `awaiting_approval` (lo avisa la cotización) y `testing` (interno).
 

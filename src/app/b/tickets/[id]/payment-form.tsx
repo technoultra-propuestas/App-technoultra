@@ -6,10 +6,12 @@ import { registerPaymentAction, type PaymentResult } from "../payment-actions";
 import { EvidenceUploader } from "./evidence-uploader";
 
 /** Registro manual de un cobro. Solo se renderiza cuando el servidor confirmó que NO hay cobro confirmado ni en curso. */
-export function ManualPaymentForm({ ticketId, kind, refId, amountText }: { ticketId: string; kind: "diagnosis" | "service" | "quote"; refId: string; amountText: string }) {
+export function ManualPaymentForm({ ticketId, kind, refId, amountText, plans }: { ticketId: string; kind: "diagnosis" | "service" | "quote"; refId: string; amountText: string; plans?: { value: "deposit" | "full" | "balance"; label: string; amountText: string }[] }) {
   const [state, action, pending] = useActionState<PaymentResult | null, FormData>(registerPaymentAction, null);
   const [method, setMethod] = useState<ManualMethod>("cash");
   const [voucher, setVoucher] = useState<string | null>(null);
+  const [plan, setPlan] = useState(plans?.[0]?.value ?? "");
+  const shown = plans?.find((x) => x.value === plan)?.amountText ?? amountText;
   const hint = MANUAL_METHODS.find((m) => m.value === method)?.hint;
   const problem = manualPaymentProblem(method, voucher);
   return (
@@ -18,6 +20,17 @@ export function ManualPaymentForm({ ticketId, kind, refId, amountText }: { ticke
       <input type="hidden" name="kind" value={kind} />
       <input type="hidden" name="ref" value={refId} />
       <input type="hidden" name="voucherId" value={voucher ?? ""} />
+      {plans?.length ? (
+        <label className="flex flex-col gap-1 text-[13px] font-bold">
+          Modalidad
+          <select name="plan" value={plan} onChange={(e) => setPlan(e.target.value as typeof plan)} className="h-11 w-full min-w-0 rounded-[12px] border border-line-strong bg-white px-3 text-[15px]">
+            {plans.map((x) => (
+              <option key={x.value} value={x.value}>{`${x.label} · ${x.amountText}`}</option>
+            ))}
+          </select>
+          <span className="text-[12px] font-semibold text-muted">El importe y el descuento los calcula el servidor.</span>
+        </label>
+      ) : null}
       <label className="flex flex-col gap-1 text-[13px] font-bold">
         Método de pago
         <select name="method" value={method} onChange={(e) => setMethod(e.target.value as ManualMethod)} className="h-11 w-full min-w-0 rounded-[12px] border border-line-strong bg-white px-3 text-[15px]">
@@ -43,7 +56,7 @@ export function ManualPaymentForm({ ticketId, kind, refId, amountText }: { ticke
       {problem ? <p className="m-0 text-[13px] font-semibold text-muted">{problem}</p> : null}
       {state ? <p role={state.ok ? "status" : "alert"} className={`m-0 text-[13.5px] font-bold ${state.ok ? "text-ok" : "text-[#9A2B1E]"}`}>{state.message}</p> : null}
       <button type="submit" disabled={pending || Boolean(problem)} className="min-h-12 rounded-[12px] bg-ink px-4 text-[15px] font-extrabold text-white disabled:opacity-50">
-        {pending ? "Registrando…" : `Registrar pago manual · ${amountText}`}
+        {pending ? "Registrando…" : `Registrar pago manual · ${shown}`}
       </button>
     </form>
   );

@@ -119,6 +119,47 @@ export const IconLaptop = (p: SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
+/* Íconos de pagos, acordeones e instalación (trazos equivalentes a Lucide: wallet, package-check, chevron-down, smartphone, download, share). */
+export const IconWallet = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base(p)}>
+    <path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1" />
+    <path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4" />
+  </svg>
+);
+export const IconPackageCheck = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base(p)}>
+    <path d="m16 16 2 2 4-4" />
+    <path d="M21 10V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l2-1.14" />
+    <path d="m7.5 4.27 9 5.15M3.29 7 12 12l8.71-5M12 22V12" />
+  </svg>
+);
+export const IconChevronDown = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base(p)}>
+    <path d="m6 9 6 6 6-6" />
+  </svg>
+);
+export const IconSmartphone = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base(p)}>
+    <rect x="5" y="2" width="14" height="20" rx="2" />
+    <path d="M12 18h.01" />
+  </svg>
+);
+export const IconDownload = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base(p)}>
+    <path d="M12 15V3M7 10l5 5 5-5M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+  </svg>
+);
+export const IconShare = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base(p)}>
+    <path d="M12 3v13M7 8l5-5 5 5M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7" />
+  </svg>
+);
+export const IconPlus = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base(p)}>
+    <path d="M12 5v14M5 12h14" />
+  </svg>
+);
+
 export const GoogleG = (p: SVGProps<SVGSVGElement>) => (
   <svg aria-hidden viewBox="0 0 48 48" width={22} height={22} {...p}>
     <path

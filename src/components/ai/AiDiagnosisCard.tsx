@@ -1,3 +1,5 @@
+import { Accordion } from "@/components/ui/accordion";
+import { IconSparkles } from "@/components/ui/icons";
 import { Card } from "@/components/ui/layout";
 
 type Output = {
@@ -14,14 +16,14 @@ const VALIDATION: Record<string, string> = {
   rejected: "Descartado por el técnico",
 };
 
-/** Muestra SIEMPRE el aviso de diagnóstico preliminar y el estado de validación humana. */
-export function AiDiagnosisCard({ row, audience, children }: { row: Row; audience: "client" | "staff"; children?: React.ReactNode }) {
-  return (
-    <Card className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="m-0 text-[17px] font-extrabold">Diagnóstico preliminar con IA</h2>
-        <span className="rounded-full bg-[#FFF0DD] px-3 py-1 text-[12px] font-extrabold text-[#7A3E00]">{VALIDATION[row.validation_status] ?? row.validation_status}</span>
-      </div>
+/**
+ * Muestra SIEMPRE el aviso de diagnóstico preliminar y el estado de validación humana. Con `collapsible` se presenta cerrado (el cliente ya
+ * lo vio al solicitar): abrirlo solo muestra el contenido guardado, NO regenera nada ni llama a la IA.
+ */
+export function AiDiagnosisCard({ row, audience, children, collapsible = false }: { row: Row; audience: "client" | "staff"; children?: React.ReactNode; collapsible?: boolean }) {
+  const badge = <span className="rounded-full bg-[#FFF0DD] px-3 py-1 text-[12px] font-extrabold text-[#7A3E00]">{VALIDATION[row.validation_status] ?? row.validation_status}</span>;
+  const body = (
+    <>
       <div className="rounded-[12px] bg-[#FFF0DD] px-3 py-2 text-[13px] font-bold text-[#7A3E00]">{row.disclaimer}</div>
       {row.output.summary ? <p className="m-0 text-[15px] leading-normal">{row.output.summary}</p> : null}
       {(row.output.causes ?? []).length > 0 ? (
@@ -33,6 +35,22 @@ export function AiDiagnosisCard({ row, audience, children }: { row: Row; audienc
       ) : null}
       {audience === "staff" ? <p className="m-0 text-[12px] text-muted">Modelo: {row.model} · Urgencia: {row.urgency ?? "—"}</p> : null}
       {children}
+    </>
+  );
+  if (collapsible) {
+    return (
+      <Accordion title="Diagnóstico preliminar con IA" icon={<IconSparkles width={18} height={18} />} meta={VALIDATION[row.validation_status] ?? row.validation_status}>
+        <div className="flex flex-col gap-3">{body}</div>
+      </Accordion>
+    );
+  }
+  return (
+    <Card className="flex flex-col gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="m-0 text-[17px] font-extrabold">Diagnóstico preliminar con IA</h2>
+        {badge}
+      </div>
+      {body}
     </Card>
   );
 }

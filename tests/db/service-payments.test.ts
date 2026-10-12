@@ -107,46 +107,47 @@ describe("pago del diagnóstico", () => {
 });
 
 describe("pago de la cotización aprobada", () => {
-  it("solo se paga una cotización APROBADA, por su dueño, con el total congelado de la base de datos", async () => {
+  const beginQ = (actor: string, quote: string, plan: string) => q<{ payment_id: string; amount: string; external_reference: string }>(`select * from public.begin_quote_payment($1,$2,$3)`, [actor, quote, plan]);
+  it("solo se paga una cotización APROBADA, por su dueño, con el total congelado de la base de datos (modalidad obligatoria)", async () => {
     const t = await ticket(svc);
     const [{ id: draft }] = await as(db, tech, () => q<{ id: string }>(`insert into quotes (ticket_id, customer_id) values ($1,$2) returning id`, [t, custA]));
     await as(db, tech, () => q(`insert into quote_items (quote_id, kind, service_id, description, qty, warranty_days) values ($1,'service',$2,'Reparación',1,0)`, [draft, svc]));
-    await expect(begin(cliA, "quote", draft)).rejects.toThrow(/quote_not_payable/); // borrador
+    await expect(beginQ(cliA, draft, "full")).rejects.toThrow(/quote_not_payable/); // borrador
     await as(db, tech, () => q(`select public.send_quote($1)`, [draft]));
-    await expect(begin(cliA, "quote", draft)).rejects.toThrow(/quote_not_payable/); // enviada, no aprobada
+    await expect(beginQ(cliA, draft, "full")).rejects.toThrow(/quote_not_payable/); // enviada, no aprobada
     await as(db, cliA, () => q(`select public.decide_quote($1,'approve',null)`, [draft]));
-    await expect(begin(cliB, "quote", draft)).rejects.toThrow(/not_found/);
-    const [p] = await begin(cliA, "quote", draft);
-    expect(num(p.amount)).toBe(150000);
-    expect((await begin(cliA, "quote", draft))[0].payment_id).toBe(p.payment_id);
+    await expect(beginQ(cliB, draft, "full")).rejects.toThrow(/not_found/);
+    await expect(begin(cliA, "quote", draft)).rejects.toThrow(/plan_required/); // el camino genérico ya no cobra cotizaciones
+    const [p] = await beginQ(cliA, draft, "full");
+    expect(num(p.amount)).toBe(142500); // 150.000 − 5 %
+    expect((await beginQ(cliA, draft, "full"))[0].payment_id).toBe(p.payment_id);
     await q(`update services set base_price = 1 where id = $1`, [svc]); // un cambio posterior del catálogo no altera lo aprobado
     await q(`update services set base_price = 150000 where id = $1`, [svc]);
-    expect(await event(p.external_reference, "approved", 150000)).toBe("approved");
+    expect(await event(p.external_reference, "approved", 142500)).toBe("approved");
     expect((await q<{ p: string | null }>(`select paid_at p from quotes where id = $1`, [draft]))[0].p).not.toBeNull();
-    await expect(begin(cliA, "quote", draft)).rejects.toThrow(/quote_already_paid/);
-    expect(await event(p.external_reference, "approved", 150000)).toBe("noop");
+    await expect(beginQ(cliA, draft, "balance")).rejects.toThrow(/quote_already_paid/);
+    expect(await event(p.external_reference, "approved", 142500)).toBe("noop");
   });
   it("con el diagnóstico ya pagado, el cobro de la cotización descuenta el abono (monto desde BD)", async () => {
     const t = await ticket(diag);
-    await q(`select public.record_manual_service_payment($1,'diagnosis',$2,'cash')`, [owner, t]);
+    await q(`select public.record_manual_service_payment_v2($1,'diagnosis',$2,'cash')`, [owner, t]);
     const quote = await approvedQuote(t);
     const [row] = await q<{ total: string; diagnosis_credit: string }>(`select total, diagnosis_credit from quotes where id = $1`, [quote]);
     expect(num(row.diagnosis_credit)).toBe(39900);
-    const [p] = await begin(cliA, "quote", quote);
-    expect(num(p.amount)).toBe(num(row.total));
-    expect(num(p.amount)).toBe(150000 - 39900);
+    const [p] = await beginQ(cliA, quote, "deposit");
+    expect(num(p.amount)).toBe(Math.round((150000 - 39900) / 2));
   });
-  it("el pago manual de la cotización lo hace solo el SUPERADMIN", async () => {
+  it("el pago manual de la cotización lo hace el técnico asignado o el SUPERADMIN, con modalidad, y no se duplica", async () => {
     const quote = await approvedQuote(await ticket(svc));
-    await expect(q(`select public.record_manual_service_payment($1,'quote',$2,'cash')`, [tech, quote])).rejects.toThrow(/forbidden/);
-    await q(`select public.record_manual_service_payment($1,'quote',$2,'cash')`, [owner, quote]);
+    await expect(q(`select public.record_manual_service_payment_v2($1,'quote',$2,'cash')`, [owner, quote])).rejects.toThrow(/plan_required/);
+    await q(`select public.record_manual_quote_payment($1,$2,'full','cash')`, [owner, quote]);
     expect((await q<{ p: string | null }>(`select paid_at p from quotes where id = $1`, [quote]))[0].p).not.toBeNull();
-    await expect(q(`select public.record_manual_service_payment($1,'quote',$2,'cash')`, [owner, quote])).rejects.toThrow(/quote_already_paid/);
+    await expect(q(`select public.record_manual_quote_payment($1,$2,'balance','cash')`, [owner, quote])).rejects.toThrow(/quote_already_paid/);
   });
   it("el cliente no puede escribir pagos, ni cambiar importes, ni llamar a las funciones de cobro", async () => {
     await expect(as(db, cliA, () => q(`insert into payments (customer_id, quote_id, purpose, provider, status, amount, approved_at) values ($1,gen_random_uuid(),'quote','mercadopago','approved',1,now())`, [custA]))).rejects.toThrow(denied);
     await expect(as(db, cliA, () => q(`update payments set amount = 1`))).rejects.toThrow(denied);
-    for (const sql of [`select public.begin_service_payment('${cliA}','quote',gen_random_uuid())`, `select public.expire_pending_service_payments()`, `select private.settle_payment(gen_random_uuid())`]) {
+    for (const sql of [`select public.begin_service_payment('${cliA}','quote',gen_random_uuid())`, `select public.begin_quote_payment('${cliA}',gen_random_uuid(),'full')`, `select public.record_manual_quote_payment('${cliA}',gen_random_uuid(),'full','cash')`, `select public.quote_payment_summary(gen_random_uuid())`, `select public.expire_pending_service_payments()`, `select private.settle_payment(gen_random_uuid())`]) {
       await expect(as(db, cliA, () => q(sql))).rejects.toThrow(denied);
     }
   });

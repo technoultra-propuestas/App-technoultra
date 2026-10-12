@@ -389,7 +389,14 @@ describe("tickets, máquina de estados y autorización", () => {
     ).rejects.toThrow(/quote_not_editable/);
     await go(techA, t1, "awaiting_approval");
     await q(`update quotes set status = 'approved', decided_at = now() where id = $1`, [qid]);
-    await go(techA, t1, "in_service");
+    // desde la migración 43: sin pago confirmado (si hay algo que cobrar) no se inicia el servicio
+    if (Number((await q<{ b: string }>(`select base b from private.quote_money($1)`, [qid]))[0].b) > 0) {
+      await expect(go(techA, t1, "in_service")).rejects.toThrow(/quote_payment_pending/);
+      await q(`select public.record_manual_quote_payment($1,$2,'full','cash')`, [admin, qid]);
+    }
+    // el pago confirmado habilita el servicio solo (transición del sistema); sin cobro, lo inicia el técnico
+    if ((await st(t1)) !== "in_service") await go(techA, t1, "in_service");
+    expect(await st(t1)).toBe("in_service");
     await go(techA, t1, "testing");
     await expect(go(techA, t1, "ready")).rejects.toThrow(/checklist_missing/);
     const [{ id: run }] = await as(db, techA, () =>
@@ -540,7 +547,8 @@ describe("dinero: inventario y pagos", () => {
       q(`update payment_events set payload = '{"x":1}' where provider_event_id = 'evt-1'`),
     ).rejects.toThrow(/immutable/);
     // el cliente ve sus pagos, otro cliente no
-    expect(await as(db, cliA, () => q(`select id from payments`))).toHaveLength(1);
+    // (cliA también tiene el pago de la cotización de una prueba anterior: se mira el de ESTE pedido)
+    expect(await as(db, cliA, () => q(`select id from payments where order_id = $1`, [id]))).toHaveLength(1);
     expect(await as(db, cliB, () => q(`select id from payments`))).toHaveLength(0);
     // pago manual aprobado requiere confirmación administrativa
     await expect(

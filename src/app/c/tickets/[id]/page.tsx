@@ -1,10 +1,9 @@
 import { TextLink } from "@/components/ui/kit";
-import { Panel, StatusHero, StatusRow, Timeline } from "@/components/ui/detail";
+import { Panel, StatusHero } from "@/components/ui/detail";
 import { clientNextAction } from "@/lib/domain/next-action";
 import { serviceStages } from "@/lib/domain/service-stages";
-import { effectiveStatus, equipmentWhere, ticketMessage } from "@/lib/domain/ticket-flow";
+import { effectiveStatus, ticketMessage } from "@/lib/domain/ticket-flow";
 import { ServiceTimeline } from "@/components/ui/service-flow";
-import { PAYMENT_LABEL } from "@/lib/payments/state";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -14,6 +13,8 @@ import { COMPATIBILITY_NOTE } from "@/lib/ai/product-hints";
 import { findRelatedProducts } from "@/lib/ai/related-products";
 import { WHATSAPP_NUMBER } from "@/lib/catalog/config";
 import { PaymentCard } from "./payment-card";
+import { ServiceHistory, ServiceProgress, ServiceSummary } from "./tracking-blocks";
+import { parseQuoteSummary } from "@/lib/payments/quote-plan";
 import { Card, fmtDateTime, money, MODALITY_LABEL, statusLabel } from "@/components/ui/layout";
 import { requireRole } from "@/lib/auth/session";
 import { loadFlowFacts } from "@/lib/tickets/facts";
@@ -36,14 +37,15 @@ export default async function TicketDetail({ params, searchParams }: { params: P
     .eq("id", id.data)
     .maybeSingle();
   if (!t) notFound();
-  const [{ count: receptions }, { data: pays }, { data: credit }, facts] = await Promise.all([
-    supabase.from("receptions").select("id", { count: "exact", head: true }).eq("ticket_id", t.id),
-    supabase.from("payments").select("status, approved_at").eq("ticket_id", t.id),
+  const [{ data: receptionRows }, { data: pays }, { data: credit }, facts] = await Promise.all([
+    supabase.from("receptions").select("id, created_at").eq("ticket_id", t.id).limit(1),
+    supabase.from("payments").select("status, approved_at, created_at").eq("ticket_id", t.id),
     supabase.from("diagnosis_credits").select("id").eq("ticket_id", t.id).maybeSingle(),
     loadFlowFacts(t.id),
   ]);
   // «Equipo recibido» solo existe cuando TechnoUltra ya levantó el acta de recepción (tiene físicamente el equipo).
-  const equipmentReceived = (receptions ?? 0) > 0;
+  const receptionAt = receptionRows?.[0]?.created_at ?? null;
+  const equipmentReceived = Boolean(receptionAt);
   const view = effectiveStatus(t.status, equipmentReceived, t.modality);
   const payConfirmed = Boolean(t.prepaid_at || credit || (pays ?? []).some((p) => p.status === "approved"));
   const payValidating = !payConfirmed && (pays ?? []).some((p) => p.status === "pending");
@@ -91,7 +93,9 @@ export default async function TicketDetail({ params, searchParams }: { params: P
       delivered: t.delivered_at,
     },
   });
-  const paymentIsPrimary = !payConfirmed && (payValidating || diagnosisPayable);
+  // La tarjeta de pago ya es la acción principal: no se repite en «Ahora estamos aquí» (diagnóstico por pagar o cotización aprobada sin pago).
+  const quoteAwaitingPayment = quote?.status === "approved" && t.status === "awaiting_approval";
+  const paymentIsPrimary = (!payConfirmed && (payValidating || diagnosisPayable)) || quoteAwaitingPayment;
   const now = facts && !paymentIsPrimary
     ? clientNextAction({
         ...facts,
@@ -105,6 +109,21 @@ export default async function TicketDetail({ params, searchParams }: { params: P
         deliveryHref: `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(`Hola TechnoUltra 👋 Quiero coordinar la entrega de mi equipo. Servicio ${t.code}.`)}`,
       })
     : null;
+  // Saldo real de la cotización aprobada (base de datos), para el resumen y «¿Cómo va tu servicio?».
+  const { data: qsRaw } = quote?.status === "approved" ? await supabase.rpc("quote_payment_summary", { p_quote: quote.id }) : { data: null };
+  const qs = parseQuoteSummary(qsRaw);
+  const balanceDue = qs ? qs.balance : 0;
+  const latestPay = [...(pays ?? [])].sort((a, b) => b.created_at.localeCompare(a.created_at))[0];
+  const payFact: "confirmed" | "validating" | "failed" | "none" | "not_required" = payConfirmed
+    ? "confirmed"
+    : payValidating
+      ? "validating"
+      : latestPay && ["rejected", "cancelled", "expired"].includes(latestPay.status)
+        ? "failed"
+        : svc?.is_diagnostic_fee || (immediate && svc?.allow_online_payment)
+          ? "none"
+          : "not_required";
+  const warrantyUntil = [...(warranties ?? [])].sort((a, b) => b.end_date.localeCompare(a.end_date))[0]?.end_date ?? null;
   // Productos del Shop SOLO si el diagnóstico ya fue emitido y hay evidencia en el texto (reglas explícitas; sin compatibilidad inventada).
   const related = diag0?.finalized_at ? await findRelatedProducts([t.problem, diag0.summary, diag0.recommendations].filter(Boolean).join("\n"), []).catch(() => []) : [];
 
@@ -154,7 +173,7 @@ export default async function TicketDetail({ params, searchParams }: { params: P
             <span className="text-[20px] font-extrabold">{money(quote.total)}</span>
           </div>
           <p className="m-0 text-[14px] text-muted">
-            {quote.status === "approved" ? "Aprobaste esta cotización." : quote.status === "rejected" ? "Rechazaste esta cotización." : quote.status === "clarification" ? "Enviaste una pregunta; te respondemos en la cotización." : "Incluye mano de obra y repuestos. Revísala y decide."}
+            {quote.status === "approved" ? (qs && qs.balance > 0 && t.status === "awaiting_approval" ? "Aprobaste esta cotización. Elige cómo pagar en la sección «Pago»." : "Aprobaste esta cotización.") : quote.status === "rejected" ? "Rechazaste esta cotización." : quote.status === "clarification" ? "Enviaste una pregunta; te respondemos en la cotización." : "Incluye mano de obra y repuestos. Revísala y decide."}
           </p>
           <Link href={`/c/tickets/${t.id}/cotizacion`} className={`press flex min-h-12 w-full items-center justify-center rounded-2xl px-5 text-[15px] font-extrabold no-underline ${["sent", "clarification"].includes(quote.status) ? "bg-brand text-ink" : "border-[1.5px] border-line-strong bg-white text-ink"}`}>
             {["sent", "clarification"].includes(quote.status) ? "Revisar cotización" : "Ver cotización"}
@@ -186,36 +205,29 @@ export default async function TicketDetail({ params, searchParams }: { params: P
           <p className="m-0 text-[12.5px] text-muted">{COMPATIBILITY_NOTE}</p>
         </Card>
       ) : null}
-      <Panel title="¿Cómo va tu servicio?" hint="Cada línea es independiente: el pago no cambia el estado de tu equipo.">
-        <ul className="m-0 flex list-none flex-col divide-y divide-line p-0">
-          <StatusRow label="Solicitud" value="Registrada" tone="ok" />
-          <StatusRow label="Pago" value={payConfirmed ? PAYMENT_LABEL.confirmed : payValidating ? PAYMENT_LABEL.validating : "Pendiente o no requerido por ahora"} tone={payConfirmed ? "ok" : payValidating ? "wait" : "neutral"} />
-          <StatusRow label="Equipo" value={equipmentWhere(t.status, equipmentReceived, t.modality)} tone={t.modality === "remote" || equipmentReceived || ["delivered", "ready"].includes(t.status) ? "ok" : "wait"} />
-          <StatusRow label="Diagnóstico" value={diag0?.finalized_at ? "Listo" : t.status === "diagnosing" ? "En curso" : "Pendiente"} tone={diag0?.finalized_at ? "ok" : t.status === "diagnosing" ? "wait" : "neutral"} />
-          <StatusRow label="Servicio" value={["ready", "delivered"].includes(t.status) ? "Completado" : ["in_service", "testing", "awaiting_part"].includes(t.status) ? "En curso" : "Pendiente"} tone={["ready", "delivered"].includes(t.status) ? "ok" : ["in_service", "testing", "awaiting_part"].includes(t.status) ? "wait" : "neutral"} />
-          <StatusRow label="Entrega" value={t.status === "delivered" ? "Entregado" : t.status === "ready" ? "Listo para entregar" : "Pendiente"} tone={t.status === "delivered" ? "ok" : t.status === "ready" ? "wait" : "neutral"} />
-        </ul>
-      </Panel>
-      <Panel title="Resumen del servicio">
-        <ul className="m-0 flex list-none flex-col divide-y divide-line p-0">
-          <StatusRow label="Servicio n.º" value={t.code} tone="neutral" />
-          <StatusRow label="Solicitud creada" value={fmtDateTime(t.received_at)} tone="neutral" />
-          {t.delivered_at ? <StatusRow label="Entregado" value={fmtDateTime(t.delivered_at)} tone="ok" /> : null}
-          {quote && quote.status === "approved" && !quote.paid_at && Number(quote.total) > 0 ? <StatusRow label="Saldo por pagar" value={money(quote.total)} tone="wait" /> : null}
-          {(warranties ?? []).length > 0 ? <StatusRow label="Garantía" value={`Activa hasta el ${new Date(`${[...(warranties ?? [])].sort((a, b) => b.end_date.localeCompare(a.end_date))[0].end_date}T12:00:00`).toLocaleDateString("es-CO", { day: "numeric", month: "long", year: "numeric" })}`} tone="ok" /> : null}
-        </ul>
-        {diagnosisDocId || quoteDocId ? (
-          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[14px] font-extrabold">
-            {diagnosisDocId ? <Link href={`/c/documentos/${diagnosisDocId}`} className="flex min-h-11 items-center underline decoration-brand underline-offset-[3px]">Informe de diagnóstico</Link> : null}
-            {quoteDocId ? <Link href={`/c/documentos/${quoteDocId}`} className="flex min-h-11 items-center underline decoration-brand underline-offset-[3px]">Cotización (PDF)</Link> : null}
-            <Link href="/c/documentos" className="flex min-h-11 items-center underline decoration-brand underline-offset-[3px]">Todos mis documentos</Link>
-          </div>
-        ) : null}
-      </Panel>
+      <ServiceProgress
+        f={{
+          status: t.status,
+          modality: t.modality,
+          requestAt: t.received_at,
+          pay: payFact,
+          payAt: (pays ?? []).filter((p) => p.status === "approved").map((p) => p.approved_at).filter(Boolean).sort()[0] ?? null,
+          receptionAt,
+          diagnosisAt: diag0?.finalized_at ?? null,
+          diagnosisDocId,
+          quoteStatus: quote?.status ?? null,
+          quoteDocId,
+          repairDoneAt: firstAt("ready"),
+          deliveredAt: t.delivered_at,
+          balanceDue,
+          ticketId: t.id,
+        }}
+      />
+      <ServiceSummary code={t.code} requestAt={t.received_at} modality={t.modality} statusText={statusLabel(t.status)} deliveredAt={t.delivered_at} balanceDue={balanceDue} warrantyUntil={warrantyUntil} diagnosisDocId={diagnosisDocId} quoteDocId={quoteDocId} />
       <Panel title="Lo que nos contaste">
         <p className="m-0 text-[15px] leading-normal text-ink-2">{t.problem}</p>
       </Panel>
-      {ai ? <AiDiagnosisCard row={ai as unknown as AiRow} audience="client" /> : null}
+      {ai ? <AiDiagnosisCard row={ai as unknown as AiRow} audience="client" collapsible /> : null}
       {(notes ?? []).length > 0 ? (
         <Card className="flex flex-col gap-2">
           <h2 className="m-0 text-[17px] font-extrabold">Mensajes del equipo</h2>
@@ -229,7 +241,7 @@ export default async function TicketDetail({ params, searchParams }: { params: P
         </div>
       </div>
       <Panel title="Historial">
-        <Timeline items={[...(history ?? [])].reverse().map((h) => ({ id: h.id, title: statusLabel(h.to_status), at: h.created_at, detail: h.reason }))} />
+        <ServiceHistory items={history ?? []} status={t.status} />
       </Panel>
     </section>
   );

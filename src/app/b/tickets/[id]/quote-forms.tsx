@@ -12,6 +12,7 @@ import {
   reviseQuoteAction,
   sendQuoteAction,
 } from "../quote-actions";
+import { ProductSearch } from "./product-search";
 
 function Result({ state }: { state: { ok: boolean; error?: string; message?: string; fieldErrors?: Record<string, string> } }) {
   return (
@@ -37,16 +38,14 @@ export function AddItemForm({
   ticketId,
   quoteId,
   services,
-  products,
 }: {
   ticketId: string;
   quoteId: string;
   services: { id: string; name: string }[];
-  products: { id: string; name: string }[];
 }) {
   const [state, action] = useActionState(addItemAction, initialState);
   const [kind, setKind] = useState<"service" | "product" | "custom">("service");
-  const list = kind === "service" ? services : products;
+
   return (
     <form action={action} className="flex flex-col gap-3" noValidate>
       <input type="hidden" name="ticketId" value={ticketId} />
@@ -56,9 +55,10 @@ export function AddItemForm({
         <option value="product">Producto (precio de catálogo)</option>
         <option value="custom">Repuesto u otro concepto (precio manual)</option>
       </Select>
-      {kind !== "custom" ? (
+      {kind === "product" ? <ProductSearch key="product-search" error={state.fieldErrors?.refId} /> : null}
+      {kind === "service" ? (
         <Select label="Ítem" name="refId" error={state.fieldErrors?.refId}>
-          {list.map((i) => (
+          {services.map((i) => (
             <option key={i.id} value={i.id}>
               {i.name}
             </option>

@@ -50,7 +50,7 @@ export async function run({ b, rep, state, save }) {
   await clientLogin(b, state.client);
   await b.goto(`/c/tickets/${t1}`, 2000);
   txt = await b.text();
-  rep.check("cliente: «Ahora estamos aquí» → pendiente de recibir el equipo, pago confirmado y sin «Pagar»", /Ahora estamos aquí/i.test(txt) && /Pendiente de recibir tu equipo/.test(txt) && /Pago confirmado/.test(txt) && !/Pagar ·/.test(txt) && !/Mercado ?Pago/i.test(txt));
+  rep.check("cliente: «Ahora estamos aquí» → pendiente de recibir el equipo, pago confirmado y sin «Pagar»", /Ahora estamos aquí/i.test(txt) && /Pendiente de recibir tu equipo/.test(txt) && /Recibimos tu pago/.test(txt) && !/Pagar ·/.test(txt) && !/Mercado ?Pago/i.test(txt));
   rep.check("«Recibido» no aparece para una solicitud sin equipo", !/\bRecibido\b/.test(txt.replace(/Solicitud recibida/gi, "")));
 
   // ---------------------------------------------------------------- C · datáfono: comprobante obligatorio → pago confirmado

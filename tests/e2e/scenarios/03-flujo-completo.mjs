@@ -193,9 +193,13 @@ export async function run({ b, rep, state, save }) {
   await phase("pago_en_linea", async () => {
     await clientLogin(b, state.client);
     await b.goto(`/c/tickets/${flow.ticketId}`);
-    await must(b, /Pagar · \$/, 15000);
+    // Aprobada: el cliente elige cómo pagar (anticipo del 50 % o total con 5 % de descuento); el servicio aún NO empieza.
+    await must(b, /Pagar anticipo · \$/, 15000);
+    const opts = await b.text();
+    rep.check("tras aprobar: «¡Cotización aprobada!» con las dos modalidades e importes del servidor", /Cotización aprobada/.test(opts) && opts.includes("Pagar anticipo · $94.950") && opts.includes("Pagar total con 5 % de descuento · $180.405") && /ahorras \$9\.495/.test(opts), opts.slice(0, 200));
+    rep.check("aprobar NO inicia el servicio mientras no haya pago confirmado", q(`select status from tickets where id = '${flow.ticketId}'`) === "awaiting_approval");
     await sleep(1500);
-    await b.clickText("Pagar ·", "body");
+    await b.clickText("Pagar total con 5 % de descuento", "body");
     await b.waitPath((x) => x.includes("pago="), 20000);
     const p = await b.path();
     rep.check("sin credenciales del proveedor de pagos el cliente vuelve al ticket con aviso (no_configurado)", p.includes("pago=no_configurado"), p);
@@ -207,16 +211,18 @@ export async function run({ b, rep, state, save }) {
     await staff("owner");
     await b.goto(ticketUrl());
     if (q(`select count(*) from payments where ticket_id = '${flow.ticketId}'`) === "0") {
-      await must(b, /Registrar pago manual · \$189\.900/, 15000);
+      await must(b, /Registrar pago manual · \$94\.950/, 15000); // por defecto: anticipo del 50 %
       await sleep(1500);
-      await b.clickText("Registrar pago manual · $189.900", "body");
+      await b.fillIn("form:has(select[name=plan])", "plan", "full");
+      await must(b, /Registrar pago manual · \$180\.405/, 8000);
+      await b.clickText("Registrar pago manual · $180.405", "body");
       await sleep(3500);
     }
-    const pay = q(`select provider || '|' || method || '|' || status || '|' || amount || '|' || purpose from payments where ticket_id = '${flow.ticketId}'`);
-    rep.check("el pago manual queda aprobado por el monto del servidor", pay === "manual|cash|approved|189900.00|quote", pay);
+    const pay = q(`select provider || '|' || method || '|' || status || '|' || amount || '|' || purpose || '|' || installment || '|' || discount_amount from payments where ticket_id = '${flow.ticketId}'`);
+    rep.check("el pago manual (total con 5 %) queda aprobado por el monto y el descuento del servidor", pay === "manual|cash|approved|180405.00|quote|full|9495.00", pay);
     rep.check("la cotización queda pagada", q(`select paid_at is not null from quotes where id = '${flow.quoteId}'`) === "t");
     await b.goto(ticketUrl());
-    rep.check("no se puede cobrar dos veces la misma cotización", !(await b.text()).includes("Registrar pago manual · $189.900") && /Pago confirmado/.test(await b.text()) && q(`select count(*) from payments where ticket_id = '${flow.ticketId}'`) === "1");
+    rep.check("no se puede cobrar dos veces la misma cotización", !/Registrar pago manual/.test(await b.text()) && /Pago completo confirmado/.test(await b.text()) && q(`select count(*) from payments where ticket_id = '${flow.ticketId}'`) === "1");
     const audit = q(`select count(*) from audit_logs where action ilike '%payment%'`);
     rep.check("el pago deja rastro en la auditoría", Number(audit) >= 1, audit);
   });

@@ -29,7 +29,7 @@ export async function run({ b, rep, state, save }) {
 
   // sin pagos: se ofrece pagar y se explica el diagnóstico antes de pagar
   let txt = await open();
-  rep.check("sin pago: «Diagnóstico técnico», qué cubre, condición de abono y botón «Pagar»", /Diagnóstico técnico/.test(txt) && /Revisión técnica del equipo/.test(txt) && /se abona al total de la reparación/.test(txt) && txt.includes(`Pagar · ${money}`), txt.slice(0, 100));
+  rep.check("sin pago: «Diagnóstico técnico», acordeón «¿Qué incluye?» (cerrado) con qué cubre y la condición de abono, y botón «Pagar»", /Diagnóstico técnico/.test(txt) && /¿Qué incluye el diagnóstico\?/.test(txt) && /Revisión técnica del equipo/.test(await b.eval("document.body.textContent")) && /se abona al total de la reparación/.test(await b.eval("document.body.textContent")) && txt.includes(`Pagar · ${money}`), txt.slice(0, 100));
   rep.check("sin pago: no promete plazos ni menciona al proveedor", !/Mercado ?Pago/i.test(txt) && !/\b\d+\s*(horas|minutos)\b/i.test(txt));
 
   // A · fallido: botón «Intentar pagar nuevamente» SIEMPRE visible

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { EmptyState, fmtDate, MODALITY_LABEL, StatusBadge } from "@/components/ui/layout";
+import { EmptyState, fmtDate, MODALITY_LABEL, money, StatusBadge } from "@/components/ui/layout";
 import { ChipRow, FilterChip, PrimaryLink, SearchField } from "@/components/ui/kit";
 import { requireRole } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
@@ -38,6 +38,24 @@ export default async function StaffTicketsPage({ searchParams }: { searchParams:
     .order("created_at", { ascending: false })
     .limit(500);
   const all = data ?? [];
+  // Situación económica de las cotizaciones aprobadas (datos persistidos; RLS limita lo que ve cada rol).
+  const ids = all.map((t) => t.id);
+  const [{ data: qrows }, { data: pend }] = ids.length
+    ? await Promise.all([
+        supabase.from("quotes").select("ticket_id, total, amount_paid, early_discount, payment_plan, paid_at").eq("status", "approved").in("ticket_id", ids),
+        supabase.from("payments").select("ticket_id").eq("purpose", "quote").eq("status", "pending").in("ticket_id", ids),
+      ])
+    : [{ data: [] }, { data: [] }];
+  const pendingSet = new Set((pend ?? []).map((p) => p.ticket_id));
+  const payChip = (ticketId: string): { text: string; tone: string } | null => {
+    const qq = (qrows ?? []).find((x) => x.ticket_id === ticketId);
+    if (!qq || Math.round(Number(qq.total)) <= 0) return null;
+    if (pendingSet.has(ticketId)) return { text: "Pago en validación", tone: "bg-[#FFF0DD] text-[#7A3E00]" };
+    if (qq.paid_at) return { text: qq.payment_plan === "full" ? "Pagada (total −5 %)" : "Liquidada", tone: "bg-[#E3F3E8] text-[#1F6B3A]" };
+    const balance = Math.round(Number(qq.total)) - Number(qq.amount_paid) - Number(qq.early_discount);
+    if (Number(qq.amount_paid) > 0) return { text: `Anticipo · saldo ${money(balance)}`, tone: "bg-[#FFF0DD] text-[#7A3E00]" };
+    return { text: "Aprobada sin pago", tone: "bg-[#FDE8E4] text-[#9A2B1E]" };
+  };
   const counts: Record<string, number> = { all: all.length, open: all.filter((t) => !CLOSED.includes(t.status)).length, closed: all.filter((t) => CLOSED.includes(t.status)).length };
   for (const [k] of FILTERS) if (!(k in counts)) counts[k] = all.filter((t) => t.status === k).length;
 
@@ -91,8 +109,9 @@ export default async function StaffTicketsPage({ searchParams }: { searchParams:
                     </span>
                   </span>
                   <span className="truncate text-[14px] text-ink-2">{t.problem}</span>
-                  <span className="justify-self-start md:justify-self-end">
+                  <span className="flex flex-wrap items-center gap-1.5 justify-self-start md:flex-col md:items-end md:justify-self-end">
                     <StatusBadge status={t.status} />
+                    {payChip(t.id) ? <span className={`rounded-full px-2.5 py-0.5 text-[12px] font-extrabold ${payChip(t.id)!.tone}`}>{payChip(t.id)!.text}</span> : null}
                   </span>
                 </Link>
               </li>

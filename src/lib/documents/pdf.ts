@@ -105,17 +105,44 @@ export class PdfBuilder {
   }
 
   kv(pairs: [string, string | null | undefined][]) {
+    const keyWidth = 180 - PAGE.margin - 8; // la etiqueta se parte en líneas dentro de su columna: nunca invade el valor
     for (const [k, v] of pairs) {
       if (v === null || v === undefined || v === "") continue;
-      this.ensure(16);
-      this.page().drawText(winAnsi(k), { x: PAGE.margin, y: this.y - 10, size: 9, font: this.bold, color: MUTED });
+      const keys = this.wrap(k, this.bold, 9, keyWidth);
       const lines = this.wrap(v, this.font, 10, PAGE.w - PAGE.margin - 190);
-      for (const l of lines) {
-        this.ensure(14);
-        this.page().drawText(l, { x: 180, y: this.y - 10, size: 10, font: this.font, color: INK });
-        this.y -= 14;
+      const rows = Math.max(keys.length, lines.length, 1);
+      this.ensure(rows * 14 + 2);
+      keys.forEach((l, i) => this.page().drawText(l, { x: PAGE.margin, y: this.y - 10 - i * 14, size: 9, font: this.bold, color: MUTED }));
+      lines.forEach((l, i) => this.page().drawText(l, { x: 180, y: this.y - 10 - i * 14, size: 10, font: this.font, color: INK }));
+      this.y -= rows * 14;
+    }
+  }
+
+  /**
+   * Resumen de importes: conceptos a la izquierda (con salto de línea si son largos) e importes ALINEADOS A LA DERECHA en su propia
+   * columna. El concepto nunca invade el importe, ni en pantalla, ni al imprimir, ni en páginas estrechas.
+   */
+  amounts(rows: { label: string; amount: string; strong?: boolean; muted?: boolean }[]) {
+    const right = PAGE.w - PAGE.margin;
+    const amountCol = 130;
+    const labelWidth = right - PAGE.margin - amountCol - 12;
+    for (const r of rows) {
+      const size = r.strong ? 12 : 10;
+      const lf = r.strong ? this.bold : this.font;
+      const labels = this.wrap(r.label, lf, size, labelWidth);
+      const lh = size + 5;
+      const h = labels.length * lh + (r.strong ? 6 : 2);
+      this.ensure(h + 4);
+      if (r.strong) {
+        this.page().drawLine({ start: { x: PAGE.margin, y: this.y - 1 }, end: { x: right, y: this.y - 1 }, thickness: 0.8, color: LINE });
+        this.y -= 6;
       }
-      if (lines.length === 0) this.y -= 14;
+      const color = r.muted ? MUTED : INK;
+      labels.forEach((l, i) => this.page().drawText(l, { x: PAGE.margin, y: this.y - size - i * lh, size, font: lf, color }));
+      const amt = winAnsi(r.amount);
+      const af = r.strong ? this.bold : this.font;
+      this.page().drawText(amt, { x: right - af.widthOfTextAtSize(amt, size), y: this.y - size, size, font: af, color });
+      this.y -= labels.length * lh + 2;
     }
   }
 
