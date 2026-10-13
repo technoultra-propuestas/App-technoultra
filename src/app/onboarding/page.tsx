@@ -21,7 +21,7 @@ const TITLES = [
   "Tu celular",
   "Tu dirección",
   "Tu primer equipo",
-  "Avisos",
+  "Notificaciones",
   "Documentos",
 ];
 const SUBTITLES = [

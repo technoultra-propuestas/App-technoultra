@@ -35,10 +35,10 @@ async function subscribeAndRegister(publicKey: string): Promise<boolean> {
 }
 
 /**
- * Avisos del dispositivo, SIN depender de la campanita:
+ * Notificaciones del dispositivo, SIN depender de la campanita:
  *  1) Si ya hay permiso y el usuario los tiene activados, repara en silencio la suscripción (el navegador la pudo renovar o el servidor perderla).
- *  2) Si aún no decidió, ofrece «Activar avisos»: el permiso del sistema solo se pide al pulsar el botón (un gesto del usuario), nunca al cargar.
- *  3) Si lo bloqueó, no insiste (la pantalla de Avisos explica cómo permitirlos). En iPhone/iPad sin instalar no hay push: primero se instala.
+ *  2) Si aún no decidió, ofrece «Activar notificaciones»: el permiso del sistema solo se pide al pulsar el botón (un gesto del usuario), nunca al cargar.
+ *  3) Si lo bloqueó, no insiste (la pantalla de Notificaciones explica cómo permitirlos). En iPhone/iPad sin instalar no hay push: primero se instala.
  * El sonido y la vibración los decide el teléfono; aquí no se silencia nada.
  */
 export function PushPrompt({ publicKey, pushEnabled }: { publicKey: string | null; pushEnabled: boolean }) {
@@ -83,7 +83,7 @@ export function PushPrompt({ publicKey, pushEnabled }: { publicKey: string | nul
     };
   }, [publicKey, pushEnabled]);
 
-  // Para no apilar dos avisos: si todavía se está ofreciendo instalar (Android/iPhone), el de avisos espera. En iPhone sin instalar no existe push.
+  // Para no apilar dos avisos: si todavía se está ofreciendo instalar (Android/iPhone), el de notificaciones espera. En iPhone sin instalar no existe push.
   const installPending = mode === "prompt" || mode === "ios-safari" || mode === "ios-other";
   if (!ask || installPending) return note ? <Toast text={note} /> : null;
 
@@ -92,15 +92,15 @@ export function PushPrompt({ publicKey, pushEnabled }: { publicKey: string | nul
       const perm = await Notification.requestPermission();
       if (perm !== "granted") {
         setAsk(false);
-        setNote(perm === "denied" ? "No activaste los avisos. Puedes permitirlos en la configuración del navegador." : "");
+        setNote(perm === "denied" ? "No activaste las notificaciones. Puedes permitirlas en la configuración del navegador." : "");
         return;
       }
       const ok = await subscribeAndRegister(publicKey as string);
       setAsk(false);
-      setNote(ok ? "Avisos activados en este dispositivo." : "No pudimos activar los avisos. Inténtalo desde «Avisos».");
+      setNote(ok ? "Notificaciones activadas en este dispositivo." : "No pudimos activar las notificaciones. Inténtalo desde «Notificaciones».");
     } catch {
       setAsk(false);
-      setNote("No pudimos activar los avisos. Inténtalo desde «Avisos».");
+      setNote("No pudimos activar las notificaciones. Inténtalo desde «Notificaciones».");
     }
   }
   function dismiss() {
@@ -113,10 +113,10 @@ export function PushPrompt({ publicKey, pushEnabled }: { publicKey: string | nul
   }
 
   return (
-    <aside aria-label="Activar avisos del dispositivo" className="fixed inset-x-3 bottom-[calc(84px+env(safe-area-inset-bottom))] z-40 mx-auto flex max-w-[460px] flex-col gap-2 rounded-card border border-line bg-white p-3.5 shadow-pop lg:bottom-4 lg:left-auto lg:right-4">
+    <aside aria-label="Activar notificaciones del dispositivo" className="fixed inset-x-3 bottom-[calc(84px+env(safe-area-inset-bottom))] z-40 mx-auto flex max-w-[460px] flex-col gap-2 rounded-card border border-line bg-white p-3.5 shadow-pop lg:bottom-4 lg:left-auto lg:right-4">
       <div className="flex items-start gap-3">
         <div className="flex min-w-0 flex-1 flex-col">
-          <span className="text-[14.5px] font-extrabold leading-tight">Activar avisos del dispositivo</span>
+          <span className="text-[14.5px] font-extrabold leading-tight">Activar notificaciones del dispositivo</span>
           <span className="text-[12.5px] leading-snug text-ink-2">Te avisamos en tu teléfono cuando algo requiera tu atención, como firmar un acta, aunque no tengas la app abierta. Sin montos ni datos personales.</span>
         </div>
         <button type="button" onClick={dismiss} aria-label="Ahora no" className="flex h-11 w-11 flex-none items-center justify-center text-muted">
@@ -124,7 +124,7 @@ export function PushPrompt({ publicKey, pushEnabled }: { publicKey: string | nul
         </button>
       </div>
       <button type="button" onClick={() => void enable()} className="press min-h-11 rounded-[12px] bg-brand px-4 text-[14px] font-extrabold text-ink">
-        Activar avisos
+        Activar notificaciones
       </button>
     </aside>
   );

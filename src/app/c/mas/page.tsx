@@ -15,8 +15,8 @@ const LINKS: { href: string; label: string; text: string; icon: NavIconName }[] 
   { href: "/c/proyectos", label: "Mis proyectos", text: "Avance de tus soluciones digitales.", icon: "folder" },
   { href: "/c/documentos", label: "Documentos", text: "Actas, cotizaciones, garantías y firmas.", icon: "quote" },
   { href: "/c/direcciones", label: "Direcciones", text: "Dónde recogemos o atendemos.", icon: "map" },
-  { href: "/c/perfil", label: "Mi perfil", text: "Tus datos y preferencias de avisos.", icon: "users" },
-  { href: "/avisos", label: "Avisos", text: "Novedades de tus servicios.", icon: "bell" },
+  { href: "/c/perfil", label: "Mi perfil", text: "Tus datos y preferencias de notificaciones.", icon: "users" },
+  { href: "/notificaciones", label: "Notificaciones", text: "Novedades de tus servicios.", icon: "bell" },
   { href: "/c/ayuda", label: "Ayuda", text: "Preguntas frecuentes, asistente y contacto.", icon: "shield" },
   { href: "/soporte-remoto", label: "Soporte remoto", text: "Asistencia técnica desde tu casa.", icon: "wrench" },
 ];

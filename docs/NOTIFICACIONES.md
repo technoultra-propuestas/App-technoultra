@@ -94,3 +94,6 @@ La notificación del sistema lleva **título + cuerpo genérico («Abre TechnoUl
 
 ## Envío inmediato y dispositivos (2026-10-13)
 Todas las acciones que generan avisos (firma del cliente, acta, firma presencial, excepción, pagos, cotización, diagnóstico, solicitud) llaman a `scheduleEmailFlush()`; como respaldo, los layouts con sesión programan el envío como mucho una vez cada 20 s por instancia (`scheduleFlushThrottled`). Detalle de causas, limitaciones de Android/iOS y qué sigue sin probarse en dispositivos reales: [`PWA-INSTALACION-Y-AVISOS.md`](PWA-INSTALACION-Y-AVISOS.md).
+
+## Nombre en la interfaz (2026-10-13)
+En la app todo se llama **«Notificaciones»** (antes «Avisos»): pantalla `/notificaciones` (el enlace antiguo `/avisos` redirige y conserva la consulta), permiso «Activar notificaciones», preferencias, perfil y menús. Se conservan los verbos («te avisaremos») y el sentido legal de «aviso» (aviso obligatorio de la IA, aviso de envíos del Shop). `tests/unit/terminology.test.ts` impide que reaparezca «aviso(s)» como sinónimo de notificación en textos visibles. Los documentos de esta carpeta aún usan «avisos» en su prosa técnica.

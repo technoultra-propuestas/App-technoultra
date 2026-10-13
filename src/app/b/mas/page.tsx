@@ -21,7 +21,7 @@ const GROUPS: Group[] = [
       { href: "/b/solicitudes", title: "Solicitudes", detail: "Peticiones de clientes por atender", icon: "inbox" },
       { href: "/b/proyectos", title: "Proyectos digitales", detail: "Servicios digitales y entregables", icon: "folder" },
       { href: "/b/pedidos", title: "Pedidos de la tienda", detail: "Compras, envíos e instalación", icon: "box" },
-      { href: "/avisos", title: "Avisos", detail: "Notificaciones del panel", icon: "bell" },
+      { href: "/notificaciones", title: "Notificaciones", detail: "Las del panel y su historial", icon: "bell" },
     ],
   },
   {

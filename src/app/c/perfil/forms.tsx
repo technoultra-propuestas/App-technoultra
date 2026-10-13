@@ -82,7 +82,7 @@ export function PreferencesForm({ emailEnabled }: { emailEnabled: boolean }) {
           defaultChecked={emailEnabled}
           className="h-6 w-6 accent-[#FF8A00]"
         />
-        Recibir avisos importantes por correo
+        Recibir notificaciones importantes por correo
       </label>
       {state.ok && state.message ? <Alert tone="ok">{state.message}</Alert> : null}
       {state.error ? <Alert>{state.error}</Alert> : null}

@@ -16,7 +16,7 @@ export async function openNotificationAction(fd: FormData): Promise<void> {
   if (!id.success) return;
   const supabase = await createClient();
   const { data: n } = await supabase.from("notifications").update({ read_at: new Date().toISOString() }).eq("id", id.data).select("entity_type, entity_id").maybeSingle();
-  revalidatePath("/avisos");
+  revalidatePath("/notificaciones");
   const href = n ? notificationHref(profile.role, n.entity_type, n.entity_id) : null;
   if (href) redirect(href);
 }
@@ -25,7 +25,7 @@ export async function markAllReadAction(): Promise<void> {
   const profile = await getProfile();
   if (!profile) redirect("/login");
   await (await createClient()).from("notifications").update({ read_at: new Date().toISOString() }).is("read_at", null);
-  revalidatePath("/avisos");
+  revalidatePath("/notificaciones");
 }
 
 /** Preferencias del propio usuario (correo). RLS limita la fila al dueño; el id sale de la sesión, no del formulario. */
@@ -35,6 +35,6 @@ export async function savePreferencesAction(_prev: { ok: boolean; message: strin
   const email = fd.get("email") === "on";
   const ok = await setPreference(await createClient(), profile.id, { email_enabled: email });
   if (!ok) return { ok: false, message: "No pudimos guardar tus preferencias. Inténtalo de nuevo." };
-  revalidatePath("/avisos");
+  revalidatePath("/notificaciones");
   return { ok: true, message: "Preferencias guardadas." };
 }

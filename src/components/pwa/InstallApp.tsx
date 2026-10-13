@@ -42,7 +42,7 @@ export function InstallApp() {
           <li>
             Elige <strong>Añadir a pantalla de inicio</strong> y confirma.
           </li>
-          <li className="list-none pl-0 text-[12.5px] text-muted">En iPhone y iPad, los avisos del dispositivo solo funcionan con TechnoUltra instalada así (iOS 16.4 o superior).</li>
+          <li className="list-none pl-0 text-[12.5px] text-muted">En iPhone y iPad, las notificaciones del dispositivo solo funcionan con TechnoUltra instalada así (iOS 16.4 o superior).</li>
         </ol>
       ) : null}
       {mode === "manual" ? (

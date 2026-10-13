@@ -36,3 +36,6 @@ Con el código nuevo y sin migración fallarían las consultas a `ticket_excepti
 1. **Fallo al aplicar:** la migración corre en una sola transacción (`db push`): si falla, no queda nada a medias.
 2. **Problema después de aplicar (sin pérdida de datos):** ejecutar `supabase/rollbacks/20261012000044_rollback.sql` (restaura las dos funciones a su definición exacta previa y retira lo agregado; borra las excepciones y el canal de captura registrados desde entonces) y después `delete from supabase_migrations.schema_migrations where version = '20261012000044'`. Probado sobre una copia restaurada.
 3. **Daño de datos:** restaurar desde la copia (`docs/BACKUPS.md` → «Restaurar de verdad»).
+
+## Migración 45 (aplicada a producción el 2026-10-13)
+`20261013000045_signature_push_audit.sql`: aviso real (con push) al SUPERADMIN al firmarse el acta y auditoría detallada de la firma (`document.signed`: canal, versión, huella). Aplicada con el procedimiento aprobado (identidad verificada, respaldo `pre-mig45-20261012-2339`, ensayo con ROLLBACK, `db push`). Verificación posterior: 45 migraciones registradas; instantánea de datos, políticas RLS, privilegios de tablas y EXECUTE idéntica salvo la función nueva (sin acceso para `anon`/`authenticated`). Reversión: `supabase/rollbacks/20261013000045_rollback.sql`.

@@ -103,7 +103,7 @@ export async function ReceptionSection({ ticketId, problem, open, role, customer
           )}
           {acta && acta.status !== "signed" ? (
             <>
-              <p className="m-0 text-[13px] text-muted">El cliente debe firmar el acta antes de pasar a diagnóstico: desde su sesión (recibió el aviso) o aquí, dibujando él mismo su firma.</p>
+              <p className="m-0 text-[13px] text-muted">El cliente debe firmar el acta antes de pasar a diagnóstico: desde su sesión (recibió la notificación) o aquí, dibujando él mismo su firma.</p>
               <AssistedSignature documentId={acta.id} code={acta.code} customer={customer} />
               {role === "superadmin" && !exception ? (
                 <details className="rounded-[12px] border border-line bg-[#F6F6F5] p-3">

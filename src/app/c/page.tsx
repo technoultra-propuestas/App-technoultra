@@ -62,7 +62,7 @@ export default async function ClientHome() {
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
         <StatCard tone="dark" icon="ticket" value={active.length} label="Servicios en curso" href="/c/tickets" />
         <StatCard icon="box" value={equipment.count ?? 0} label="Equipos registrados" href="/c/equipos" />
-        <StatCard icon="bell" value={unread.count ?? 0} label="Avisos sin leer" href="/avisos" />
+        <StatCard icon="bell" value={unread.count ?? 0} label="Notificaciones sin leer" href="/notificaciones" />
       </div>
       <Link href="/c/asistente" className="press flex min-h-14 items-center justify-between gap-3 rounded-card border border-line bg-white px-5 py-3 text-ink no-underline shadow-card">
         <span className="flex flex-col">

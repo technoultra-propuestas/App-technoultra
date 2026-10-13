@@ -14,6 +14,10 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
+  // El nombre «Avisos» pasó a «Notificaciones»: los enlaces y marcadores antiguos siguen funcionando (conserva la consulta, p. ej. ?f=sin-leer).
+  async redirects() {
+    return [{ source: "/avisos", destination: "/notificaciones", permanent: false }];
+  },
   async headers() {
     return [
       { source: "/:path*", headers: securityHeaders },

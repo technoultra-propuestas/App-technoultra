@@ -2,7 +2,7 @@
  * Destinos de retorno seguros («volver a donde estabas»). Solo rutas internas de la app: sin esquema, sin host, sin `//`, sin `\`,
  * sin caracteres de control. Evita redirecciones abiertas (open redirect) cuando el destino viaja por la URL o por un formulario.
  */
-const ALLOWED_PREFIXES = ["/c/", "/b/", "/tienda", "/avisos"];
+const ALLOWED_PREFIXES = ["/c/", "/b/", "/tienda", "/notificaciones"];
 
 export function safeReturnTo(raw: unknown, fallback: string | null = null): string | null {
   if (typeof raw !== "string") return fallback;

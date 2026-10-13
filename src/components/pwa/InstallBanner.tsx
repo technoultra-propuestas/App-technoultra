@@ -68,7 +68,7 @@ export function InstallBanner() {
         </span>
         <div className="flex min-w-0 flex-1 flex-col">
           <span className="text-[14.5px] font-extrabold leading-tight">Instalar TechnoUltra</span>
-          <span className="text-[12.5px] leading-snug text-ink-2">Ábrela desde tu pantalla de inicio y recibe avisos en tu dispositivo.</span>
+          <span className="text-[12.5px] leading-snug text-ink-2">Ábrela desde tu pantalla de inicio y recibe notificaciones en tu dispositivo.</span>
         </div>
         <button type="button" onClick={dismiss} aria-label="Ahora no" className="flex h-11 w-11 flex-none items-center justify-center text-muted">
           <IconXCircle width={20} height={20} />

@@ -8,7 +8,7 @@ import { clientLogin, staffLogin } from "../lib/actors.mjs";
 import { sleep } from "../lib/browser.mjs";
 import { psql } from "../lib/fixtures.mjs";
 
-export const title = "Instalación PWA, avisos del sistema operativo y firma del acta desde el ticket (cliente, técnico y SUPERADMIN)";
+export const title = "Instalación PWA, notificaciones del sistema operativo y firma del acta desde el ticket (cliente, técnico y SUPERADMIN)";
 
 const q = (sql) => psql(sql);
 const ANDROID = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36";
@@ -85,7 +85,7 @@ export async function run({ b, rep, state, save, base }) {
   await b.goto("/c/mas", 2500);
   rep.check("en «Más», una PWA instalada lo dice y no ofrece instalar", /Ya estás usando TechnoUltra instalada/.test(await b.text()));
   await sleep(8000);
-  rep.check("los avisos del dispositivo se ofrecen con un botón visible y el permiso del sistema NO se pide al cargar (sigue en «default»)", (await b.eval(`!!document.querySelector('aside[aria-label="Activar avisos del dispositivo"] button') && Notification.permission === 'default'`)));
+  rep.check("las notificaciones del dispositivo se ofrecen con un botón visible y el permiso del sistema NO se pide al cargar (sigue en «default»)", (await b.eval(`!!document.querySelector('aside[aria-label="Activar notificaciones del dispositivo"] button') && Notification.permission === 'default'`)));
   await reset();
 
   // ---------------------------------------------------------------- 2 · el ticket obliga a firmar el acta

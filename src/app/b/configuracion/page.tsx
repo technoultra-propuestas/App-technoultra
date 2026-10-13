@@ -21,7 +21,7 @@ const AREAS: Area[] = [
   },
   {
     title: "Notificaciones",
-    items: [{ href: "/avisos", title: "Avisos del panel", detail: "Notificaciones internas y su historial", icon: "bell" }],
+    items: [{ href: "/notificaciones", title: "Notificaciones del panel", detail: "Internas y su historial", icon: "bell" }],
   },
   {
     title: "Comercial y Shop",
@@ -51,12 +51,12 @@ const AREAS: Area[] = [
 /** Estado de las integraciones (solo «configurada / pendiente»; jamás se muestra ningún valor ni secreto). */
 const INTEGRATIONS: { label: string; detail: string; vars: string[] }[] = [
   { label: "Pagos en línea", detail: "Cobro de servicios y confirmación verificada", vars: ["MERCADOPAGO_ACCESS_TOKEN", "MERCADOPAGO_WEBHOOK_SECRET"] },
-  { label: "Correo", detail: "Verificación de cuenta y avisos", vars: ["RESEND_API_KEY"] },
+  { label: "Correo", detail: "Verificación de cuenta y notificaciones", vars: ["RESEND_API_KEY"] },
   { label: "Imágenes y evidencias", detail: "Almacenamiento de fotos del equipo", vars: ["CLOUDINARY_CLOUD_NAME", "CLOUDINARY_API_KEY", "CLOUDINARY_API_SECRET"] },
   { label: "Asistente con IA", detail: "Diagnóstico preliminar y respuestas", vars: ["OPENROUTER_API_KEY", "AI_MODEL"] },
   { label: "Monitoreo de errores", detail: "Errores del servidor y del navegador", vars: ["SENTRY_DSN"] },
   { label: "Catálogo de proveedor", detail: "Sincronización automática de productos", vars: ["EXCELENTER_CATALOG_CSV_URL"] },
-  { label: "Tareas programadas", detail: "Sincronización, conciliación y avisos", vars: ["CRON_SECRET"] },
+  { label: "Tareas programadas", detail: "Sincronización, conciliación y notificaciones", vars: ["CRON_SECRET"] },
 ];
 
 export default async function SettingsPage() {

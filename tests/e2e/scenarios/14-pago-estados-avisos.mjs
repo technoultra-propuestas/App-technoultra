@@ -1,10 +1,10 @@
-// Pago del diagnóstico (estados A–E que ve el cliente, siempre derivados de la base de datos) + centro de avisos por rol:
-// aviso de pago confirmado al cliente y al técnico responsable, abrir/leer, preferencias y tarjeta de avisos del dispositivo.
+// Pago del diagnóstico (estados A–E que ve el cliente, siempre derivados de la base de datos) + centro de notificaciones por rol:
+// aviso de pago confirmado al cliente y al técnico responsable, abrir/leer, preferencias y tarjeta de notificaciones del dispositivo.
 import { clientLogin, must, staffLogin } from "../lib/actors.mjs";
 import { sleep } from "../lib/browser.mjs";
 import { psql } from "../lib/fixtures.mjs";
 
-export const title = "Estados del pago del diagnóstico y centro de avisos por rol";
+export const title = "Estados del pago del diagnóstico y centro de notificaciones por rol";
 
 const q = (sql) => psql(sql);
 const noOverflow = (b) => b.eval("document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1");
@@ -70,18 +70,18 @@ export async function run({ b, rep, state, save }) {
   rep.check("D · el crédito del diagnóstico se aplica una sola vez", q(`select count(*) from diagnosis_credits where ticket_id = '${t}'`) === "1");
 
   // centro de avisos del cliente
-  await b.goto("/avisos", 2000);
+  await b.goto("/notificaciones", 2000);
   await must(b, /Recibimos tu pago/, 15000);
   txt = await b.text();
   rep.check("avisos del cliente: «¡Recibimos tu pago!» marcado como «Importante»", /Recibimos tu pago/.test(txt) && /Importante/i.test(txt));
-  rep.check("avisos: tarjeta discreta de avisos del dispositivo (no pide permiso al cargar) y preferencias", /Avisos en este dispositivo/.test(txt) && /Cómo quieres que te avisemos/.test(txt) && (await b.eval("Notification.permission")) === "default");
-  rep.check("avisos: el cliente no ve avisos del personal (tarea de diagnóstico, asignaciones)", !/Nuevo ticket asignado|Diagnóstico por completar|Ticket sin asignar/.test(txt));
+  rep.check("notificaciones: tarjeta discreta de notificaciones del dispositivo (no pide permiso al cargar) y preferencias", /Notificaciones en este dispositivo/.test(txt) && /Cómo quieres recibir tus notificaciones/.test(txt) && (await b.eval("Notification.permission")) === "default");
+  rep.check("notificaciones: el cliente no ve notificaciones del personal (tarea de diagnóstico, asignaciones)", !/Nuevo ticket asignado|Diagnóstico por completar|Ticket sin asignar/.test(txt));
   await b.clickText("Recibimos tu pago", "body");
   await sleep(3000);
   rep.check("abrir un aviso lleva al servicio y lo marca como leído", (await b.eval("location.pathname")).startsWith(`/c/tickets/${t}`) && q(`select count(*) from notifications where recipient_id = '${profile}' and type = 'payment.approved' and entity_id = '${t}' and read_at is not null`) === "1");
 
   // preferencias de correo
-  await b.goto("/avisos", 1800);
+  await b.goto("/notificaciones", 1800);
   await sleep(1200);
   await b.eval("(() => { const c = document.querySelector('input[name=email]'); if (c && c.checked) c.click(); })()");
   await b.submitIn("form:has(input[name=email])");
@@ -94,7 +94,7 @@ export async function run({ b, rep, state, save }) {
   state.tech.secret = r.secret;
   save();
   await b.viewport(1440, 900);
-  await b.goto("/avisos", 2000);
+  await b.goto("/notificaciones", 2000);
   txt = await b.text();
   rep.check("técnico: recibe «Pago confirmado» de su ticket y no avisos de administración", /Pago confirmado/.test(txt) && !/Nuevo pedido pagado|Ticket sin asignar|Transferencia por validar/.test(txt));
   rep.check("técnico: ningún otro técnico tiene avisos de ese ticket", q(`select count(*) from notifications n join profiles p on p.id = n.recipient_id where n.entity_id = '${t}' and p.role = 'technician' and p.id <> '${state.techId}'`) === "0");
@@ -102,7 +102,7 @@ export async function run({ b, rep, state, save }) {
   const o = await staffLogin(b, state.owner);
   state.owner.secret = o.secret;
   save();
-  await b.goto("/avisos", 2000);
+  await b.goto("/notificaciones", 2000);
   txt = await b.text();
   rep.check("SUPERADMIN: ve la nueva solicitud para asignar/coordinar", /Nueva solicitud/.test(txt));
   rep.check("sin errores de JavaScript", b.errors.length === 0, b.errors.slice(0, 2).join(" | "));

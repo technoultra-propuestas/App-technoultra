@@ -23,7 +23,7 @@ type Common = { items: NavItem[]; moreHref: string; moreAlso?: string[] };
 
 export function RailNav({ items, moreHref, home, accountHref, name, unread }: Common & { home: string; accountHref: string; name: string; unread: number }) {
   const path = usePathname();
-  const moreOn = !items.some((i) => isOn(path, i)) && path !== "/avisos";
+  const moreOn = !items.some((i) => isOn(path, i)) && path !== "/notificaciones";
   return (
     <aside className="fixed inset-y-0 left-0 z-30 hidden w-[84px] flex-col items-center bg-rail py-4 lg:flex">
       <Link href={home} aria-label="TechnoUltra — Inicio" className="press mb-3 flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-white">
@@ -38,10 +38,10 @@ export function RailNav({ items, moreHref, home, accountHref, name, unread }: Co
       </nav>
       <div className="flex flex-col items-center gap-2 pt-2">
         <Link
-          href="/avisos"
-          aria-label={unread > 0 ? `Avisos, ${unread} sin leer` : "Avisos"}
-          aria-current={path === "/avisos" ? "page" : undefined}
-          className={`press relative flex h-11 w-11 items-center justify-center rounded-[14px] text-white ${path === "/avisos" ? "bg-[#2A2A2A]" : "hover:bg-[#1F1F1F]"}`}
+          href="/notificaciones"
+          aria-label={unread > 0 ? `Notificaciones, ${unread} sin leer` : "Notificaciones"}
+          aria-current={path === "/notificaciones" ? "page" : undefined}
+          className={`press relative flex h-11 w-11 items-center justify-center rounded-[14px] text-white ${path === "/notificaciones" ? "bg-[#2A2A2A]" : "hover:bg-[#1F1F1F]"}`}
         >
           <NavIcon name="bell" width={22} height={22} />
           {unread > 0 ? <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-brand px-1 text-[11px] font-extrabold text-ink">{unread > 9 ? "9+" : unread}</span> : null}
@@ -68,7 +68,7 @@ function RailLink({ href, label, icon, on }: { href: string; label: string; icon
 export function BottomNav({ items, moreHref, moreAlso }: Common) {
   const path = usePathname();
   const all: NavItem[] = [...items, { href: moreHref, label: "Más", icon: "more", also: moreAlso }];
-  const moreOn = !items.some((i) => isOn(path, i)) && path !== "/avisos";
+  const moreOn = !items.some((i) => isOn(path, i)) && path !== "/notificaciones";
   return (
     <nav aria-label="Principal" className="pb-safe fixed inset-x-0 bottom-0 z-30 border-t border-line bg-white/95 backdrop-blur lg:hidden">
       <ul className="m-0 mx-auto flex max-w-[640px] list-none p-0">

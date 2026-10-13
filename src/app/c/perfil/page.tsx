@@ -13,7 +13,7 @@ export const metadata: Metadata = { title: "Mi perfil", robots: { index: false }
 type Rel<T> = T | T[] | null;
 const one = <T,>(v: Rel<T>): T | null => (Array.isArray(v) ? (v[0] ?? null) : v);
 
-/** Perfil del cliente en secciones: datos personales, avisos, direcciones, documentos aceptados (con versión y fecha) y privacidad. */
+/** Perfil del cliente en secciones: datos personales, notificaciones, direcciones, documentos aceptados (con versión y fecha) y privacidad. */
 export default async function ProfilePage() {
   const profile = await requireRole(["client"]);
   const supabase = await createClient();
@@ -68,7 +68,7 @@ export default async function ProfilePage() {
           </Panel>
         </div>
         <aside className="flex flex-col gap-5">
-          <Panel title="Avisos">
+          <Panel title="Notificaciones">
             <PreferencesForm emailEnabled={prefs?.email_enabled ?? true} />
           </Panel>
           <div className="rounded-card border border-line bg-white p-2 shadow-card">

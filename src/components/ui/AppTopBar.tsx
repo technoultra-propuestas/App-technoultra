@@ -11,8 +11,8 @@ export function AppTopBar({ home, unread }: { home: string; unread: number }) {
           <Wordmark size={19} />
         </Link>
         <Link
-          href="/avisos"
-          aria-label={unread > 0 ? `Avisos, ${unread} sin leer` : "Avisos"}
+          href="/notificaciones"
+          aria-label={unread > 0 ? `Notificaciones, ${unread} sin leer` : "Notificaciones"}
           className="press relative flex h-11 w-11 items-center justify-center rounded-[14px] bg-[#1F1F1F] text-white"
         >
           <NavIcon name="bell" width={20} height={20} />

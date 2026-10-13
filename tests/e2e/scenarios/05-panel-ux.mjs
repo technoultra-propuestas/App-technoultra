@@ -17,7 +17,7 @@ const PAGES = [
   ["agenda", "/b/agenda", /Agenda/],
   ["crm", "/b/crm", /Seguimiento/i],
   ["mas", "/b/mas", /Más/],
-  ["avisos", "/avisos", /Avisos/],
+  ["notificaciones", "/notificaciones", /Notificaciones/],
 ];
 
 const metrics = (b) =>

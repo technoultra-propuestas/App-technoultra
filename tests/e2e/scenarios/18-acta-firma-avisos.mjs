@@ -6,7 +6,7 @@ import { clientLogin, staffLogin } from "../lib/actors.mjs";
 import { sleep } from "../lib/browser.mjs";
 import { psql } from "../lib/fixtures.mjs";
 
-export const title = "Acta de recepción: generación, firma del cliente, PDF firmado, excepción del SUPERADMIN y avisos por rol";
+export const title = "Acta de recepción: generación, firma del cliente, PDF firmado, excepción del SUPERADMIN y notificaciones por rol";
 
 const q = (sql) => psql(sql);
 // Descarga el PDF con la sesión del navegador y cuenta sus páginas en Node (pdf-lib comprime los objetos: no se puede contar con texto).
@@ -58,7 +58,7 @@ export async function run({ b, rep, state, save }) {
 
   // ---------------------------------------------------------------- 3 · el cliente abre el aviso y firma
   await clientLogin(b, state.client);
-  await b.goto("/avisos", 2500);
+  await b.goto("/notificaciones", 2500);
   txt = await b.text();
   rep.check("el cliente ve «Firma el acta de recepción» en sus avisos y NO ve etiquetas de supervisión", /Firma el acta de recepción/.test(txt) && !/Supervisión/.test(txt));
   await b.clickText("Firma el acta de recepción", "body");
@@ -113,7 +113,7 @@ export async function run({ b, rep, state, save }) {
   rep.check("la excepción autorizada deja pasar a diagnóstico", status(t2) === "diagnosing");
   rep.check("la excepción queda registrada con motivo y autor, y en la auditoría", q(`select count(*) from ticket_exceptions where ticket_id = '${t2}' and authorized_by = '${state.ownerId}' and reason like 'Cliente sin acceso%'`) === "1" && Number(q(`select count(*) from audit_logs where entity_id = '${t2}' and action = 'ticket.exception_authorized'`)) >= 1);
   rep.check("el técnico asignado recibe el aviso de la excepción", q(`select count(*) from notifications where recipient_id = '${state.techId}' and type = 'ticket.exception' and entity_id = '${t2}'`) === "1");
-  await b.goto("/avisos?f=supervision", 2500);
+  await b.goto("/notificaciones?f=supervision", 2500);
   txt = await b.text();
   rep.check("el SUPERADMIN tiene el filtro «Supervisión» con los avisos de cliente y técnico", /Supervisión/.test(txt) && /Para cliente/.test(txt));
 

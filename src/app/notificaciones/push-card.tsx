@@ -14,9 +14,9 @@ function toKey(b64: string): Uint8Array<ArrayBuffer> {
 }
 
 /**
- * Activación DISCRETA de los avisos del dispositivo: el permiso del navegador solo se pide cuando la persona pulsa el botón (nunca al
+ * Activación DISCRETA de las notificaciones del dispositivo: el permiso del navegador solo se pide cuando la persona pulsa el botón (nunca al
  * cargar la página). Si el navegador no lo admite o el permiso está bloqueado, se explica con claridad y la app sigue funcionando igual:
- * los avisos siempre quedan en esta pantalla.
+ * las notificaciones siempre quedan en esta pantalla.
  */
 export function PushCard({ publicKey }: { publicKey: string | null }) {
   const [phase, setPhase] = useState<Phase>("checking");
@@ -72,7 +72,7 @@ export function PushCard({ publicKey }: { publicKey: string | null }) {
       setPhase("on");
     } catch {
       setPhase("off");
-      setMsg("No pudimos activar los avisos en este dispositivo. Inténtalo de nuevo en un momento.");
+      setMsg("No pudimos activar las notificaciones en este dispositivo. Inténtalo de nuevo en un momento.");
     }
   }
 
@@ -95,28 +95,28 @@ export function PushCard({ publicKey }: { publicKey: string | null }) {
 
   if (phase === "checking") return null;
   return (
-    <section aria-label="Avisos en este dispositivo" className="flex flex-col gap-2 rounded-card border border-line bg-white p-4 shadow-card">
-      <h2 className="m-0 text-[16px] font-extrabold">Avisos en este dispositivo</h2>
+    <section aria-label="Notificaciones en este dispositivo" className="flex flex-col gap-2 rounded-card border border-line bg-white p-4 shadow-card">
+      <h2 className="m-0 text-[16px] font-extrabold">Notificaciones en este dispositivo</h2>
       {phase === "unsupported" ? (
-        <p className="m-0 text-[14px] leading-snug text-muted">Este navegador no permite avisos del sistema (o aún no están habilitados). Tus avisos siempre aparecen aquí y, si lo permites, también en tu correo. En iPhone, instala primero TechnoUltra en tu pantalla de inicio.</p>
+        <p className="m-0 text-[14px] leading-snug text-muted">Este navegador no permite notificaciones del sistema (o aún no están habilitadas). Tus notificaciones siempre aparecen aquí y, si lo permites, también en tu correo. En iPhone, instala primero TechnoUltra en tu pantalla de inicio.</p>
       ) : null}
       {phase === "ios-install" ? (
-        <p className="m-0 text-[14px] leading-snug text-muted">En iPhone y iPad los avisos del dispositivo funcionan solo con TechnoUltra instalada: en Safari toca <strong>Compartir → Añadir a pantalla de inicio</strong>, ábrela desde allí y vuelve a esta pantalla. Mientras tanto, tus avisos siempre aparecen aquí.</p>
+        <p className="m-0 text-[14px] leading-snug text-muted">En iPhone y iPad las notificaciones del dispositivo funcionan solo con TechnoUltra instalada: en Safari toca <strong>Compartir → Añadir a pantalla de inicio</strong>, ábrela desde allí y vuelve a esta pantalla. Mientras tanto, tus notificaciones siempre aparecen aquí.</p>
       ) : null}
       {phase === "denied" ? (
-        <p className="m-0 text-[14px] leading-snug text-muted">Bloqueaste los avisos para este sitio. Si quieres recibirlos, permítelos en la configuración del navegador (candado junto a la dirección). Mientras tanto, los verás aquí.</p>
+        <p className="m-0 text-[14px] leading-snug text-muted">Bloqueaste las notificaciones para este sitio. Si quieres recibirlas, permítelas en la configuración del navegador (candado junto a la dirección). Mientras tanto, las verás aquí.</p>
       ) : null}
       {phase === "off" || phase === "busy" ? (
         <>
           <p className="m-0 text-[14px] leading-snug text-muted">Te avisaremos en este dispositivo de lo importante: pagos confirmados, diagnóstico listo, cotizaciones, equipo listo y acciones pendientes. No incluye montos ni datos personales, y puedes desactivarlo cuando quieras. Primero tu navegador te pedirá permiso.</p>
           <button type="button" onClick={enable} disabled={phase === "busy"} className="press min-h-12 w-full rounded-2xl bg-brand px-5 text-[15px] font-extrabold text-ink disabled:opacity-60">
-            {phase === "busy" ? "Activando…" : "Activar avisos en este dispositivo"}
+            {phase === "busy" ? "Activando…" : "Activar notificaciones en este dispositivo"}
           </button>
         </>
       ) : null}
       {phase === "on" ? (
         <>
-          <p className="m-0 text-[14px] font-semibold leading-snug text-ok">✓ Los avisos están activados en este dispositivo.</p>
+          <p className="m-0 text-[14px] font-semibold leading-snug text-ok">✓ Las notificaciones están activadas en este dispositivo.</p>
           <button type="button" onClick={disable} className="press min-h-11 w-fit text-[14px] font-extrabold text-ink underline decoration-brand underline-offset-[3px]">
             Desactivar en este dispositivo
           </button>

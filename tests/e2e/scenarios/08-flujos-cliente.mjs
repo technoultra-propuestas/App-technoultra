@@ -139,7 +139,7 @@ export async function run({ b, rep, state, save }) {
   await b.viewport(1440, 900);
   await b.goto("/c/perfil", 1500);
   t = await b.text();
-  rep.check("perfil: datos personales, documentos aceptados con versión y fecha, avisos y cerrar sesión", /Datos personales/.test(t) && /Documentos aceptados/.test(t) && /Versión \d+/.test(t) && /Avisos/.test(t) && /Cerrar sesión/.test(t));
+  rep.check("perfil: datos personales, documentos aceptados con versión y fecha, notificaciones y cerrar sesión", /Datos personales/.test(t) && /Documentos aceptados/.test(t) && /Versión \d+/.test(t) && /Notificaciones/.test(t) && /Cerrar sesión/.test(t));
   await b.goto("/c/ayuda", 1500);
   t = await b.text();
   rep.check("ayuda: asistente, WhatsApp, seguimiento público y documentos", /Pregúntale al asistente/.test(t) && /Escríbenos por WhatsApp/.test(t) && /Seguimiento de un servicio/.test(t) && /\+57 318 394 3465/.test(t));

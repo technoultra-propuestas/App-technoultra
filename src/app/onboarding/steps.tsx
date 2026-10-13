@@ -178,15 +178,15 @@ export function NotificationsStep() {
     <form action={action} className="flex flex-col gap-[18px]">
       <p className="m-0 text-base leading-relaxed text-ink-2">
         Te avisamos cuando tu equipo cambie de estado o tengas una cotización por aprobar. Siempre verás los
-        avisos dentro de la app.
+        notificaciones dentro de la app.
       </p>
       <input type="hidden" name="permission" value={result} />
-      {result === "granted" ? <Alert tone="ok">Avisos activados en este dispositivo.</Alert> : null}
+      {result === "granted" ? <Alert tone="ok">Notificaciones activadas en este dispositivo.</Alert> : null}
       {result === "denied" ? (
-        <Alert>Bloqueaste los avisos. Puedes activarlos después desde los ajustes del navegador.</Alert>
+        <Alert>Bloqueaste las notificaciones. Puedes activarlas después desde los ajustes del navegador.</Alert>
       ) : null}
       {result === "unsupported" || result === "error" ? (
-        <Alert>Este dispositivo no permite avisos del navegador. Los verás dentro de la app.</Alert>
+        <Alert>Este dispositivo no permite notificaciones del navegador. Las verás dentro de la app.</Alert>
       ) : null}
       {result === "default" ? (
         <button
@@ -195,7 +195,7 @@ export function NotificationsStep() {
           disabled={busy}
           className="min-h-[58px] rounded-2xl border-[1.5px] border-line-strong bg-white text-[17px] font-extrabold disabled:opacity-60"
         >
-          {busy ? "Esperando respuesta…" : "Activar avisos"}
+          {busy ? "Esperando respuesta…" : "Activar notificaciones"}
         </button>
       ) : null}
       {state.error ? <Alert>{state.error}</Alert> : null}
