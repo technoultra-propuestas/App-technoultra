@@ -9,10 +9,12 @@ const rpc = vi.fn();
 const deleted: string[] = [];
 const subsByUser: Record<string, { id: string; endpoint: string; p256dh: string; auth_key: string }[]> = {};
 const upserts: unknown[] = [];
+let notifTypes: { id: string; type: string }[] = [];
 const admin = {
   rpc: (...a: unknown[]) => rpc(...a),
   from: (table: string) => ({
     select: () => ({
+      in: async () => ({ data: table === "notifications" ? notifTypes : [] }),
       eq: (_c: string, v: string) => {
         const res = { data: table === "push_subscriptions" ? (subsByUser[v] ?? []) : { role: v === "staff1" ? "technician" : "client" }, count: (subsByUser[v] ?? []).length };
         return Object.assign(Promise.resolve(res), { maybeSingle: async () => res });
@@ -46,6 +48,7 @@ beforeEach(() => {
   deleted.length = 0;
   upserts.length = 0;
   for (const k of Object.keys(subsByUser)) delete subsByUser[k];
+  notifTypes = [];
   process.env.VAPID_PUBLIC_KEY = "B".repeat(87);
   process.env.VAPID_PRIVATE_KEY = "k".repeat(43);
   process.env.VAPID_SUBJECT = "mailto:studio@technoultra.com";
@@ -78,6 +81,47 @@ describe("envío push", () => {
     expect(payload.body).toBe("Abre TechnoUltra para ver los detalles.");
     expect(JSON.stringify(payload)).not.toMatch(/39\.900|Calle/);
     expect(rpc).toHaveBeenCalledWith("record_delivery", expect.objectContaining({ p_notification: "n1", p_channel: "push", p_status: "sent" }));
+  });
+
+  it("el aviso de firma pendiente lleva un texto fijo útil (qué hacer) y el del técnico/SUPERADMIN enlaza al ticket; ninguno trae datos personales", async () => {
+    subsByUser.u1 = [{ id: "s1", endpoint: "https://push.example/1", p256dh: "p", auth_key: "a" }];
+    subsByUser.staff1 = [{ id: "s2", endpoint: "https://push.example/2", p256dh: "p", auth_key: "a" }];
+    notifTypes = [{ id: "n1", type: "document.sign_pending" }, { id: "n2", type: "document.signed_staff" }];
+    rpc
+      .mockResolvedValueOnce({ data: [claimed({ title: "Firma el acta de recepción", entity_type: "document", entity_id: "d1" }), claimed({ notification_id: "n2", recipient_id: "staff1", title: "Firmada: acta de recepción TU-2026-00006", entity_type: "ticket", entity_id: "t9" })], error: null })
+      .mockResolvedValue({ data: null, error: null });
+    sendNotification.mockResolvedValue({});
+    await flushPushOutbox();
+    const [a, b] = sendNotification.mock.calls.map((c) => JSON.parse(c[1] as string));
+    expect(a).toMatchObject({ title: "Firma el acta de recepción", body: "Revisa y firma el acta de tu equipo.", url: "/c/documentos/d1", urgent: true, tag: "n1" });
+    expect(b).toMatchObject({ body: "El cliente firmó el acta. Toca para ver el ticket.", url: "/b/tickets/t9", tag: "n2" });
+    expect(JSON.stringify([a, b])).not.toMatch(/39\.900|Calle|@/);
+  });
+
+  it("con dos dispositivos, uno caducado (410) y otro vigente: se entrega por el vigente, se elimina el caducado y NO se cuenta como fallo", async () => {
+    subsByUser.u1 = [{ id: "dead", endpoint: "https://push.example/dead", p256dh: "p", auth_key: "a" }, { id: "live", endpoint: "https://push.example/live", p256dh: "p", auth_key: "a" }];
+    rpc.mockResolvedValueOnce({ data: [claimed()], error: null }).mockResolvedValue({ data: null, error: null });
+    sendNotification.mockImplementation(async (sub: { endpoint: string }) => {
+      if (sub.endpoint.endsWith("dead")) throw Object.assign(new Error("gone"), { statusCode: 410 });
+      return {};
+    });
+    const r = await flushPushOutbox();
+    expect(r).toMatchObject({ sent: 1, failed: 0, removed: 1 });
+    expect(deleted).toEqual(["dead"]);
+  });
+
+  it("con un acumulado de avisos antiguos, el envío vacía la cola por lotes: el aviso NUEVO no queda sin enviar", async () => {
+    subsByUser.u1 = [{ id: "s1", endpoint: "https://push.example/1", p256dh: "p", auth_key: "a" }];
+    rpc
+      .mockResolvedValueOnce({ data: [claimed({ notification_id: "viejo" })], error: null })
+      .mockResolvedValueOnce({ data: [], error: null }) // record_delivery del primero
+      .mockResolvedValueOnce({ data: [claimed({ notification_id: "nuevo", title: "Firmada: acta de recepción TU-1" })], error: null })
+      .mockResolvedValue({ data: [], error: null });
+    sendNotification.mockResolvedValue({});
+    const r = await flushPushOutbox(1);
+    expect(r.sent).toBe(2);
+    const tags = sendNotification.mock.calls.map((c) => JSON.parse(c[1] as string).tag);
+    expect(tags).toEqual(["viejo", "nuevo"]);
   });
 
   it("el personal recibe rutas del panel, no del cliente", async () => {

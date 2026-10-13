@@ -10,6 +10,10 @@ export type FlowFacts = {
   photosComplete: boolean;
   /** Acta de recepción FIRMADA por el cliente (o excepción autorizada). Opcional: los datos antiguos no lo traen. */
   receptionSigned?: boolean;
+  /** La versión vigente del acta existe y está pendiente de firma (cualquiera sea el estado del ticket: también tickets anteriores al control de firma). */
+  actaPending?: boolean;
+  /** El SUPERADMIN autorizó continuar sin la firma (queda auditado). */
+  actaException?: boolean;
   hasDiagnosis: boolean;
   diagnosisFinalized: boolean;
   quoteStatus: string | null; // draft | sent | clarification | approved | rejected | expired | null
@@ -26,12 +30,22 @@ export type FlowFacts = {
 export type StaffNext = {
   title: string;
   body: string;
+  /** Aviso secundario que NO sustituye la acción principal (p. ej. acta sin firmar en un ticket que ya está en diagnóstico). */
+  notice?: { title: string; body: string; anchor: string };
   /** Ancla de la sección donde se ejecuta la acción (la pantalla del ticket ya la contiene). */
   cta?: { label: string; anchor: string };
   waiting: boolean;
 };
 
 export function staffNextAction(f: FlowFacts): StaffNext {
+  const n = staffMain(f);
+  // Acta pendiente en un ticket que ya avanzó (histórico o acta nueva tras editar la recepción): se avisa sin contradecir la acción principal.
+  if (f.actaPending && !f.actaException && !["received", "cancelled", "delivered"].includes(f.status))
+    return { ...n, notice: { title: "El acta de recepción sigue sin firma del cliente", body: "Pídele que la firme desde su sesión o hazla firmar en este dispositivo. No la firmes tú por él.", anchor: "recepcion" } };
+  return n;
+}
+
+function staffMain(f: FlowFacts): StaffNext {
   const physical = f.modality !== "remote";
   switch (f.status) {
     case "cancelled":
@@ -93,7 +107,23 @@ export type ClientFacts = FlowFacts & {
   deliveryHref?: string;
 };
 
+/**
+ * Obligación PRIORITARIA del cliente: firmar el acta de recepción. La fuente de verdad es el estado persistido del acta (no un aviso antiguo):
+ * aplica en cualquier estado del ticket mientras la versión vigente esté pendiente y no exista una excepción autorizada.
+ */
+export function actaSignPrompt(f: Pick<ClientFacts, "status" | "actaPending" | "actaException" | "receptionDocId">): ClientNext | null {
+  if (!f.actaPending || f.actaException || !f.receptionDocId || ["cancelled", "delivered"].includes(f.status)) return null;
+  return {
+    title: "Debes firmar el acta de recepción",
+    body: "Revisa cómo recibimos tu equipo (fotos, accesorios y estado) antes de firmar. Tu firma queda asociada a esta versión exacta del documento.",
+    primary: { label: "Revisar y firmar acta", href: `/c/documentos/${f.receptionDocId}` },
+    tone: "action",
+  };
+}
+
 export function clientNextAction(f: ClientFacts): ClientNext {
+  const sign = actaSignPrompt(f);
+  if (sign) return sign;
   const base = `/c/tickets/${f.ticketId}`;
   if (f.status === "cancelled") return { title: "Servicio cancelado", body: "Este servicio fue cancelado.", tone: "done" };
   if (f.status === "delivered") return { title: "Servicio finalizado", body: "Tu equipo fue entregado y tu garantía ya está activa.", tone: "done" };

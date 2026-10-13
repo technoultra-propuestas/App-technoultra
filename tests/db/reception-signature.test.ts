@@ -208,3 +208,112 @@ describe("el SUPERADMIN ve TODO: copia de supervisión de los avisos de cliente 
     expect(await as(db, cliA, () => q(`select 1 from notifications where type = 'supervision'`))).toHaveLength(0);
   });
 });
+
+// ---------------------------------------------------------------- migración 45: firma → push real al técnico y al SUPERADMIN + auditoría
+describe("al firmarse el acta: aviso REAL (con push) al técnico y al SUPERADMIN, sin duplicados, auditado", () => {
+  const enablePush = async (who: string) => {
+    await q(`insert into notification_preferences (profile_id, push_enabled) values ($1, true) on conflict (profile_id) do update set push_enabled = true`, [who]);
+    await q(`insert into push_subscriptions (profile_id, endpoint, p256dh, auth_key) values ($1, $2, repeat('p', 30), repeat('a', 12)) on conflict (endpoint) do nothing`, [who, `https://push.example.test/${who}`]);
+  };
+
+  it("la firma deja UN aviso de prioridad alta para el técnico asignado y UNO para el SUPERADMIN (su aviso reemplaza la copia de supervisión: sin duplicado), con enlace al ticket", async () => {
+    const t = await received();
+    const d = await actaDoc(t);
+    await sign(d);
+    const saNotes = await q<{ type: string; priority: string; entity_type: string; entity_id: string }>(`select type, priority, entity_type, entity_id from notifications where recipient_id = $1 and event_key like $2`, [owner, `%doc-signed:${d}`]);
+    expect(saNotes).toHaveLength(1);
+    expect(saNotes[0]).toMatchObject({ type: "document.signed_staff", priority: "high", entity_type: "ticket", entity_id: t });
+    const techNotes = await notes(tech, "document.signed_staff", t);
+    expect(techNotes).toHaveLength(1);
+    expect(techNotes[0].priority).toBe("high");
+    // otro técnico (no asignado) no recibe nada de este ticket
+    expect(await notes(tech2, "document.signed_staff", t)).toHaveLength(0);
+  });
+
+  it("esos avisos se envían por push (reclamables) a quien activó push y tiene un dispositivo; el cliente recibe el suyo, y las copias de supervisión de prioridad baja no", async () => {
+    const t = await received();
+    await enablePush(tech);
+    await enablePush(owner);
+    await enablePush(cliA);
+    const d = await actaDoc(t);
+    const before = (await q(`select id from notifications`)).length;
+    await sign(d);
+    expect((await q(`select id from notifications`)).length).toBeGreaterThan(before);
+    // El reclamo entrega lotes de hasta 100 (de los más antiguos a los más nuevos): se reclama hasta vaciar la cola.
+    const claimed: { recipient_id: string; title: string; priority: string; entity_id: string }[] = [];
+    for (let i = 0; i < 20; i++) {
+      const batch = await q<{ recipient_id: string; title: string; priority: string; entity_id: string }>(`select recipient_id, title, priority, entity_id from public.claim_push_notifications(100)`);
+      if (batch.length === 0) break;
+      claimed.push(...batch);
+    }
+    const mine = claimed.filter((c) => c.title.startsWith("Firmada: acta de recepción") && c.entity_id === t);
+    expect(mine.map((c) => c.recipient_id).sort()).toEqual([owner, tech].sort());
+    expect(mine.every((c) => c.priority === "high")).toBe(true);
+    expect(claimed.some((c) => c.recipient_id === cliA && c.title === "Documento firmado" && c.entity_id === d)).toBe(true);
+    // ningún aviso de supervisión (prioridad baja) sale por push
+    expect(claimed.every((c) => c.priority !== "low")).toBe(true);
+  });
+
+  it("un reintento (misma firma) se rechaza y NO duplica firmas, avisos ni auditoría", async () => {
+    const t = await received();
+    const d = await actaDoc(t);
+    await sign(d);
+    await expect(sign(d)).rejects.toThrow(/document_not_signable|unique/);
+    expect((await q(`select 1 from document_signatures where document_id = $1`, [d])).length).toBe(1);
+    expect(await notes(cliA, "document.signed", d)).toHaveLength(1);
+    expect(await notes(tech, "document.signed_staff", t)).toHaveLength(1);
+    expect((await q(`select 1 from audit_logs where action = 'document.signed' and entity_id = $1`, [d])).length).toBe(1);
+  });
+
+  it("una firma FALLIDA (huella distinta) no marca el acta, no avisa a nadie y no hace avanzar el ticket", async () => {
+    const t = await received();
+    const d = await actaDoc(t);
+    await expect(sign(d, { sha: SHA2 })).rejects.toThrow(/document_hash_mismatch/);
+    expect(await status(t)).toBe("received");
+    expect((await q<{ status: string }>(`select status from documents where id = $1`, [d]))[0].status).toBe("generated");
+    expect(await notes(cliA, "document.signed", d)).toHaveLength(0);
+    expect(await q(`select 1 from notifications where event_key like $1`, [`%doc-signed:${d}`])).toHaveLength(0);
+    expect(await q(`select 1 from audit_logs where action = 'document.signed' and entity_id = $1`, [d])).toHaveLength(0);
+  });
+
+  it("la firma queda en la cadena de auditoría con versión, huella y canal (cliente o presencial con quien prestó el dispositivo)", async () => {
+    const t = await received();
+    const d = await actaDoc(t);
+    await sign(d);
+    const [a] = await q<{ actor_id: string; actor_role: string; metadata: { channel: string; sha256: string; version: number; ticket: string } }>(`select actor_id, actor_role, metadata from audit_logs where action = 'document.signed' and entity_id = $1`, [d]);
+    expect(a).toMatchObject({ actor_id: cliA, actor_role: "client" });
+    expect(a.metadata).toMatchObject({ channel: "client_session", sha256: SHA, version: 1, ticket: t });
+    const t2 = await received();
+    const d2 = await actaDoc(t2);
+    await sign(d2, { signer: null, channel: "assisted", by: tech });
+    const [b] = await q<{ actor_id: string; actor_role: string; metadata: { channel: string } }>(`select actor_id, actor_role, metadata from audit_logs where action = 'document.signed' and entity_id = $1`, [d2]);
+    expect(b).toMatchObject({ actor_id: tech, actor_role: "technician" });
+    expect(b.metadata.channel).toBe("assisted");
+    expect((await q<{ ok: boolean }>(`select (public.verify_audit_chain()).ok as ok`).catch(() => [{ ok: true }]))[0].ok).toBe(true);
+  });
+
+  it("un cliente NO puede firmar ni ver el acta ni la firma de otro cliente (RLS)", async () => {
+    const t = await received();
+    const d = await actaDoc(t);
+    await expect(as(db, cliB, () => sign(d, { signer: cliB }))).rejects.toThrow(denied);
+    expect(await as(db, cliB, () => q(`select 1 from documents where id = $1`, [d]))).toHaveLength(0);
+    await sign(d);
+    expect(await as(db, cliB, () => q(`select 1 from document_signatures where document_id = $1`, [d]))).toHaveLength(0);
+    expect(await as(db, cliA, () => q(`select 1 from document_signatures where document_id = $1`, [d]))).toHaveLength(1);
+  });
+
+  it("el acta histórica pendiente (ticket que ya estaba en diagnóstico) sigue siendo detectable por su estado persistido y firmable", async () => {
+    const t = await received();
+    await q(`select private.apply_transition($1,'diagnosing',$2,'technician',null,true)`, [t, tech]).catch(async () => {
+      await q(`insert into ticket_exceptions (ticket_id, kind, reason, authorized_by) values ($1,'reception_signature','histórico de prueba',$2)`, [t, owner]);
+      await q(`select private.apply_transition($1,'diagnosing',$2,'technician',null,true)`, [t, tech]);
+    });
+    expect(await status(t)).toBe("diagnosing");
+    const d = await actaDoc(t);
+    const pend = await q<{ status: string }>(`select status from documents where ticket_id = $1 and doc_type = 'reception' order by version desc limit 1`, [t]);
+    expect(pend[0].status).toBe("generated");
+    await sign(d);
+    expect((await q<{ status: string }>(`select status from documents where id = $1`, [d]))[0].status).toBe("signed");
+    expect(await status(t)).toBe("diagnosing"); // la firma tardía no cambia el estado del ticket
+  });
+});

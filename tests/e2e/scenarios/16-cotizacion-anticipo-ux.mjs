@@ -173,6 +173,6 @@ export async function run({ b, rep, state, save }) {
   await clientLogin(b, state.client);
   await b.goto("/c/mas", 2000);
   txt = await b.text();
-  rep.check("«Instalar TechnoUltra» visible en «Más», sin fingir una instalación", /Instalar TechnoUltra/.test(txt) && (/Instalar aplicación/.test(txt) || /Añadir a pantalla de inicio|menú ⋮|instalada/.test(txt)) && !/Instalando TechnoUltra/.test(txt));
+  rep.check("«Instalar TechnoUltra» visible en «Más», sin fingir una instalación", /Instalar TechnoUltra/.test(txt) && (/^Instalar$/m.test(txt) || /Añadir a pantalla de inicio|menú ⋮|instalada/.test(txt)) && !/Instalando TechnoUltra/.test(txt));
   rep.check("sin errores de JavaScript", b.errors.length === 0, b.errors.slice(0, 2).join(" | "));
 }

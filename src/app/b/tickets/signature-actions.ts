@@ -11,6 +11,7 @@ import { BUCKET, SIGNABLE } from "@/lib/documents/generate";
 import { decodePngDataUrl } from "@/lib/documents/signature";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { scheduleEmailFlush } from "@/lib/email/outbox";
 
 const sign = z.object({ documentId: z.string().uuid(), signature: z.string().max(400_000), accept: z.string().optional() });
 
@@ -65,7 +66,9 @@ export async function captureClientSignatureAction(_p: ActionState, fd: FormData
     return { ok: false, error: error.message.includes("document_hash_mismatch") ? "El documento cambió. Recarga la página." : "No pudimos registrar la firma." };
   }
   revalidatePath(`/b/tickets/${doc.ticket_id}`);
+  scheduleEmailFlush();
   revalidatePath("/b/tickets");
+  scheduleEmailFlush();
   return { ok: true, message: "Firma registrada. El acta quedó firmada por el cliente." };
 }
 
@@ -82,6 +85,8 @@ export async function authorizeReceptionExceptionAction(_p: ActionState, fd: For
     return { ok: false, error: m.includes("already_signed") ? "El acta ya está firmada." : m.includes("reception_missing") ? "Primero confirma la recepción." : m.includes("not_waiting") ? "El ticket ya no está esperando la recepción." : "No pudimos autorizar la excepción." };
   }
   revalidatePath(`/b/tickets/${parsed.data.ticketId}`);
+  scheduleEmailFlush();
   revalidatePath("/b/tickets");
+  scheduleEmailFlush();
   return { ok: true, message: "Excepción autorizada. El ticket pasó a diagnóstico." };
 }

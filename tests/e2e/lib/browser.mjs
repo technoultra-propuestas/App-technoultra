@@ -33,6 +33,7 @@ export class Browser {
     const ws = new WebSocket(targets.find((t) => t.type === "page").webSocketDebuggerUrl);
     await new Promise((r) => (ws.onopen = r));
     const b = new Browser(proc, ws, baseUrl);
+    b.port = port;
     await b.send("Page.enable");
     await b.send("Runtime.enable");
     await b.send("Network.enable");
@@ -48,8 +49,10 @@ export class Browser {
     this.id = 0;
     this.pending = new Map();
     this.errors = [];
+    this.handlers = new Map();
     ws.onmessage = (m) => {
       const d = JSON.parse(m.data);
+      if (d.method && this.handlers.has(d.method)) for (const fn of this.handlers.get(d.method)) fn(d.params);
       if (d.id && this.pending.has(d.id)) {
         this.pending.get(d.id)(d.result ?? d.error);
         this.pending.delete(d.id);
@@ -165,6 +168,27 @@ export class Browser {
     for (let i = 1; i <= 24; i++) await ev("mouseMoved", pt(i / 24));
     await ev("mouseReleased", pt(1));
     return true;
+  }
+  /** Escucha un evento del protocolo (p. ej. `ServiceWorker.workerRegistrationUpdated`). */
+  on(method, fn) {
+    this.handlers.set(method, [...(this.handlers.get(method) ?? []), fn]);
+  }
+  /** Concede permisos del navegador (p. ej. `notifications`) a un origen. Hay que recargar la página para que los vea. */
+  async grant(origin, permissions) {
+    const r = await this.send("Browser.grantPermissions", { permissions, origin });
+    return !r?.message;
+  }
+  /** Emula un dispositivo: agente de usuario, plataforma, pantalla táctil y modo de visualización (`standalone` = PWA instalada). */
+  async emulate({ ua, platform = "", touch = false, standalone = false }) {
+    await this.send("Emulation.setUserAgentOverride", { userAgent: ua, platform, acceptLanguage: "es-CO" });
+    await this.send("Emulation.setTouchEmulationEnabled", { enabled: touch, maxTouchPoints: touch ? 5 : 0 });
+    // `display-mode` no se puede emular por el protocolo: se reemplaza matchMedia en cada documento nuevo (solo para esa consulta).
+    if (this._standaloneScript) await this.send("Page.removeScriptToEvaluateOnNewDocument", { identifier: this._standaloneScript });
+    this._standaloneScript = null;
+    if (standalone) {
+      const src = "const mm = window.matchMedia.bind(window); window.matchMedia = (q) => /display-mode: *standalone/.test(q) ? { matches: true, media: q, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {} } : mm(q);";
+      this._standaloneScript = (await this.send("Page.addScriptToEvaluateOnNewDocument", { source: src })).identifier;
+    }
   }
   clearCookies() {
     return this.send("Network.clearBrowserCookies");

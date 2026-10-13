@@ -26,7 +26,7 @@ Canales: **App** = centro de avisos (siempre). **Correo** = según preferencia d
 | Pago cancelado por el cliente | «Tu pago se canceló» | — | — | alta |
 | Pedido de tienda pagado | «Recibimos tu pago» | — | «Nuevo pedido pagado» | alta |
 | Acta de recepción generada (`on_document_created`) | «Firma el acta de recepción» (enlace directo al documento) | — (ve el acta pendiente en el ticket) | copia de supervisión | alta |
-| Acta firmada (`on_document_signed`) | «Documento firmado» (confirmación) | «Firmada: acta de recepción»: ya puede diagnosticar | copia de supervisión | normal/alta |
+| Acta firmada (`on_document_signed`, migración 45) | «Documento firmado» (confirmación) | «Firmada: acta de recepción»: ya puede diagnosticar | **aviso propio** «Firmada: acta de recepción» (prioridad alta, con push; reemplaza la copia de supervisión) | normal/alta |
 | Excepción autorizada (sin firma del acta) | — | «Excepción autorizada» | «Excepción autorizada» + motivo (auditada) | alta |
 | Documento disponible (`notify_document_available`: diagnóstico, cotización, entrega, garantías) | «Nuevo documento: …» | — | copia de supervisión | normal |
 | Equipo recibido (acta de recepción) | «Recibimos tu equipo» | «Equipo recibido» (si no lo registró él) | — | normal |
@@ -91,3 +91,6 @@ La notificación del sistema lleva **título + cuerpo genérico («Abre TechnoUl
 - `tests/unit/push.test.ts` (9) y `tests/unit/payment-states.test.ts` (9): envío push (con y sin push, sin datos sensibles, limpieza de caducadas, fallo visible), ruta de suscripción (401/403/400, dueño por sesión), estados de pago A–E.
 - E2E `14-pago-estados-avisos` (20): estados de pago en el navegador (móvil), centro de avisos por rol, abrir/leer, preferencias.
 - **No probado de extremo a extremo**: la entrega real de una notificación push a un dispositivo físico (requiere un navegador con permiso y un servicio push real) y el envío real de correos con Resend en producción. Ver `PROGRESS.md`.
+
+## Envío inmediato y dispositivos (2026-10-13)
+Todas las acciones que generan avisos (firma del cliente, acta, firma presencial, excepción, pagos, cotización, diagnóstico, solicitud) llaman a `scheduleEmailFlush()`; como respaldo, los layouts con sesión programan el envío como mucho una vez cada 20 s por instancia (`scheduleFlushThrottled`). Detalle de causas, limitaciones de Android/iOS y qué sigue sin probarse en dispositivos reales: [`PWA-INSTALACION-Y-AVISOS.md`](PWA-INSTALACION-Y-AVISOS.md).

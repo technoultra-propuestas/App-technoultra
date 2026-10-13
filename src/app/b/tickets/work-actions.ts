@@ -7,9 +7,13 @@ import { zodToState, type ActionState } from "@/lib/auth/schemas";
 import { DIAGNOSTIC_COMPONENTS } from "@/lib/domain/reception";
 import { createClient } from "@/lib/supabase/server";
 import { updateOrInsert } from "@/lib/supabase/save";
+import { scheduleEmailFlush } from "@/lib/email/outbox";
 
 const uuid = z.string().uuid();
-const refresh = (id: string) => revalidatePath(`/b/tickets/${id}`);
+const refresh = (id: string) => {
+  revalidatePath(`/b/tickets/${id}`);
+  scheduleEmailFlush(); // los avisos (correo y push) salen enseguida, no al barrido diario
+};
 
 const diagSchema = z.object({
   ticketId: uuid,

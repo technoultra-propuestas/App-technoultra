@@ -5,7 +5,7 @@
  *  - Las navegaciones van siempre a la red; si falla, se muestra /offline.html.
  * La actualización es controlada: el SW nuevo espera hasta que la persona acepta "Actualizar" (mensaje SKIP_WAITING).
  */
-const VERSION = "tu-sw-v3";
+const VERSION = "tu-sw-v4";
 const STATIC_CACHE = `${VERSION}-static`;
 const OFFLINE_URL = "/offline.html";
 const PRECACHE = [OFFLINE_URL, "/offline.css", "/icons/icon-192.png"];
@@ -57,6 +57,16 @@ self.addEventListener("fetch", (event) => {
   // Todo lo demás (API, Server Actions, documentos, datos) va directo a la red y no se almacena.
 });
 
+// Solo rutas internas del propio sitio: «/ruta» sí; «//otro-dominio», «https://…» o cualquier otra cosa se convierte en «/».
+function internalPath(raw) {
+  if (typeof raw !== "string" || !raw.startsWith("/") || raw.startsWith("//") || raw.includes("\\")) return "/";
+  try {
+    return new URL(raw, self.location.origin).origin === self.location.origin ? raw : "/";
+  } catch {
+    return "/";
+  }
+}
+
 // ---- Notificaciones push (Web Push) ----
 // El servidor envía solo título, un cuerpo genérico y una ruta INTERNA: nunca montos, direcciones ni datos del servicio.
 self.addEventListener("push", (event) => {
@@ -67,7 +77,7 @@ self.addEventListener("push", (event) => {
     data = {};
   }
   const title = typeof data.title === "string" && data.title ? data.title.slice(0, 120) : "TechnoUltra";
-  const url = typeof data.url === "string" && data.url.startsWith("/") ? data.url : "/";
+  const url = internalPath(data.url);
   const tag = typeof data.tag === "string" ? data.tag : undefined;
   // Avisa a las ventanas abiertas (solo el tag, nada sensible) para que la app pueda sonar su timbre si la persona lo activó.
   const tell = self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((list) => list.forEach((c) => c.postMessage({ type: "PUSH_RECEIVED", tag })));
@@ -78,15 +88,37 @@ self.addEventListener("push", (event) => {
       badge: "/icons/icon-192.png",
       tag: typeof data.tag === "string" ? data.tag : undefined,
       requireInteraction: data.urgent === true,
+      // Acción visible «Abrir» (el toque en el cuerpo hace lo mismo). El sonido y la vibración NO se silencian desde aquí: los decide el sistema
+      // operativo según la configuración del teléfono (canal de notificaciones, modo concentración, volumen). `vibrate` es solo una sugerencia estándar.
+      actions: [{ action: "open", title: "Abrir" }],
+      vibrate: [180, 80, 180],
+      timestamp: Date.now(),
       data: { url },
     })]),
+  );
+});
+
+// Si el navegador renueva o invalida la suscripción, se vuelve a suscribir y se informa al servidor (con la sesión de la persona); si no hay
+// sesión, la app lo corrige al abrirse (PushBootstrap). Nunca se pide permiso desde aquí.
+self.addEventListener("pushsubscriptionchange", (event) => {
+  event.waitUntil(
+    (async () => {
+      try {
+        const key = event.oldSubscription && event.oldSubscription.options && event.oldSubscription.options.applicationServerKey;
+        if (!key) return;
+        const sub = await self.registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key });
+        await fetch("/api/push/subscribe", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(sub.toJSON()), credentials: "same-origin" });
+      } catch {
+        /* sin sesión o sin red: PushBootstrap lo repara en la próxima apertura */
+      }
+    })(),
   );
 });
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   const raw = event.notification.data && event.notification.data.url;
-  const target = new URL(typeof raw === "string" && raw.startsWith("/") ? raw : "/", self.location.origin).href;
+  const target = new URL(internalPath(raw), self.location.origin).href;
   event.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((list) => {
       for (const c of list) {

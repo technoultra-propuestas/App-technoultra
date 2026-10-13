@@ -6,6 +6,7 @@ import { assertRole } from "@/lib/auth/session";
 import { allow, TOO_MANY } from "@/lib/auth/rate-limit";
 import { type ActionState } from "@/lib/auth/schemas";
 import { createClient } from "@/lib/supabase/server";
+import { scheduleEmailFlush } from "@/lib/email/outbox";
 
 const schema = z.object({
   ticketId: z.string().uuid(),
@@ -34,6 +35,7 @@ export async function decideQuoteAction(_p: ActionState, fd: FormData): Promise<
   const { error } = await supabase.rpc("decide_quote", { p_quote: v.quoteId, p_decision: v.decision, p_message: v.message || undefined });
   if (error) return { ok: false, error: ERRORS.find(([re]) => re.test(error.message))?.[1] ?? "No pudimos registrar tu decisión. Inténtalo de nuevo." };
   revalidatePath(`/c/tickets/${v.ticketId}`);
+  scheduleEmailFlush();
   return {
     ok: true,
     message: v.decision === "approve" ? "¡Gracias! Registramos tu aprobación." : v.decision === "reject" ? "Registramos que rechazaste la cotización." : "Enviamos tu pregunta al técnico.",

@@ -7,6 +7,13 @@ export async function NextActionPanel({ ticketId }: { ticketId: string }) {
   if (!facts) return null;
   const n = staffNextAction(facts);
   return (
+    <div className="flex flex-col gap-3">
+    {n.notice ? (
+      <a href={`#${n.notice.anchor}`} role="status" className="flex flex-col gap-0.5 rounded-card border border-brand bg-[#FFF6E8] p-4 text-ink no-underline">
+        <span className="text-[15px] font-extrabold">{n.notice.title}</span>
+        <span className="text-[13.5px] leading-snug text-ink-2">{n.notice.body}</span>
+      </a>
+    ) : null}
     <section aria-label="Próxima acción" className={`flex flex-col gap-2 rounded-card p-5 ${n.waiting ? "border border-line bg-white" : "bg-ink text-white shadow-card"}`}>
       <span className={`text-[12px] font-extrabold uppercase tracking-[0.06em] ${n.waiting ? "text-muted" : "text-brand"}`}>{n.waiting ? "Ahora" : "Próxima acción"}</span>
       <h2 className="m-0 text-[20px] font-extrabold leading-tight">{n.title}</h2>
@@ -17,5 +24,6 @@ export async function NextActionPanel({ ticketId }: { ticketId: string }) {
         </a>
       ) : null}
     </section>
+    </div>
   );
 }

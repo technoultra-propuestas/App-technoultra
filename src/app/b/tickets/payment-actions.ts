@@ -6,6 +6,7 @@ import { assertRole } from "@/lib/auth/session";
 import { allow, TOO_MANY } from "@/lib/auth/rate-limit";
 import { PAYMENT_ERRORS } from "@/lib/payments/staff";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { scheduleEmailFlush } from "@/lib/email/outbox";
 
 export type PaymentResult = { ok: boolean; message: string };
 
@@ -45,6 +46,7 @@ export async function registerPaymentAction(_: PaymentResult | null, fd: FormDat
     return { ok: false, message: clean(error.code, error.message) };
   }
   revalidatePath(`/b/tickets/${p.data.ticketId}`);
+  scheduleEmailFlush();
   return { ok: true, message: p.data.method === "bank_transfer" ? "Transferencia registrada. Queda pendiente de validación." : "Pago registrado." };
 }
 
@@ -57,6 +59,7 @@ export async function confirmPaymentAction(fd: FormData): Promise<void> {
   const { error } = await createAdminClient().rpc("confirm_manual_payment", { p_actor: actor.id, p_payment: p.data.paymentId });
   if (error) console.error("payment.confirm", error.code, error.message);
   revalidatePath(`/b/tickets/${p.data.ticketId}`);
+  scheduleEmailFlush();
 }
 
 const cancelSchema = confirmSchema.extend({ reason: z.string().trim().min(3).max(200) });
@@ -68,4 +71,5 @@ export async function cancelPaymentAction(fd: FormData): Promise<void> {
   const { error } = await createAdminClient().rpc("cancel_pending_payment", { p_actor: actor.id, p_payment: p.data.paymentId, p_reason: p.data.reason });
   if (error) console.error("payment.cancel", error.code, error.message);
   revalidatePath(`/b/tickets/${p.data.ticketId}`);
+  scheduleEmailFlush();
 }

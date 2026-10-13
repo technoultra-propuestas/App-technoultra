@@ -1,6 +1,6 @@
 import { TextLink } from "@/components/ui/kit";
 import { Panel, StatusHero } from "@/components/ui/detail";
-import { clientNextAction } from "@/lib/domain/next-action";
+import { actaSignPrompt, clientNextAction } from "@/lib/domain/next-action";
 import { serviceStages } from "@/lib/domain/service-stages";
 import { effectiveStatus, ticketMessage } from "@/lib/domain/ticket-flow";
 import { ServiceTimeline } from "@/components/ui/service-flow";
@@ -70,9 +70,13 @@ export default async function TicketDetail({ params, searchParams }: { params: P
   const diagnosisDocId = (docs ?? []).find((d) => d.doc_type === "diagnosis")?.id ?? null;
   const recDoc = (docs ?? []).find((d) => d.doc_type === "reception") ?? null;
   const delDoc = (docs ?? []).find((d) => d.doc_type === "delivery") ?? null;
-  const signState = (d: { status: string } | null) => (d ? (d.status === "signed" ? "Firmada" : "Pendiente de firma") : "");
+  const actaPending = Boolean(recDoc && ["generated", "sent", "viewed"].includes(recDoc.status));
+  const actaException = Boolean(facts?.actaException);
+  const signState = (d: { status: string } | null, kind?: string) => (d ? (d.status === "signed" ? "Firmada" : kind === "reception" && actaException ? "Excepción autorizada" : "Pendiente de firma") : "");
+  // Obligación prioritaria: la fuente de verdad es el estado persistido del acta (no un aviso antiguo ni un estado del navegador).
+  const signPrompt = actaSignPrompt({ status: t.status, actaPending, actaException, receptionDocId: recDoc?.id ?? null });
   const extraDocs = [
-    ...(recDoc ? [{ id: recDoc.id, label: "Acta de recepción", state: signState(recDoc) }] : []),
+    ...(recDoc ? [{ id: recDoc.id, label: "Acta de recepción", state: signState(recDoc, "reception") }] : []),
     ...(delDoc ? [{ id: delDoc.id, label: "Acta de entrega", state: signState(delDoc) }] : []),
   ];
   const quoteDocId = (docs ?? []).find((d) => d.doc_type === "quote" && (!quote || d.quote_id === quote.id))?.id ?? null;
@@ -103,7 +107,7 @@ export default async function TicketDetail({ params, searchParams }: { params: P
   // La tarjeta de pago ya es la acción principal: no se repite en «Ahora estamos aquí» (diagnóstico por pagar o cotización aprobada sin pago).
   const quoteAwaitingPayment = quote?.status === "approved" && t.status === "awaiting_approval";
   const paymentIsPrimary = (!payConfirmed && (payValidating || diagnosisPayable)) || quoteAwaitingPayment;
-  const now = facts && !paymentIsPrimary
+  const now = facts && !signPrompt && !paymentIsPrimary
     ? clientNextAction({
         ...facts,
         // El estado de pago se recalcula aquí con lo que ve el cliente (RLS): el servidor ya lo confirmó o no.
@@ -147,6 +151,15 @@ export default async function TicketDetail({ params, searchParams }: { params: P
         message={t.cancelled_reason ? `${ticketMessage(view, t.modality)} ${t.cancelled_reason}` : ticketMessage(view, t.modality)}
         meta={`Solicitud creada el ${fmtDateTime(t.received_at)}`}
       />
+      {signPrompt ? (
+        <section aria-label="Acción obligatoria: firmar el acta" data-sign-prompt className="flex flex-col gap-2 rounded-card border-2 border-brand bg-[#FFF6E8] p-5">
+          <span className="w-fit rounded-full bg-brand px-3 py-1 text-[12px] font-extrabold uppercase tracking-[0.06em] text-ink">Pendiente de firma</span>
+          <h2 className="m-0 text-[20px] font-extrabold leading-tight">{signPrompt.title}</h2>
+          <p className="m-0 text-[15px] leading-snug text-ink-2">{signPrompt.body}</p>
+          <p className="m-0 text-[13px] font-semibold text-muted">Estado del acta: pendiente de firma. Puedes abrir el documento, leerlo completo y firmarlo con tu dedo.</p>
+          {signPrompt.primary ? <Link href={signPrompt.primary.href} className="press mt-1 flex min-h-[58px] w-full items-center justify-center rounded-2xl bg-brand px-5 text-[17px] font-extrabold text-ink no-underline">{signPrompt.primary.label}</Link> : null}
+        </section>
+      ) : null}
       {stages ? (
         <Card>
           <ServiceTimeline stages={stages} />

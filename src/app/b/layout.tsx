@@ -1,4 +1,5 @@
 import { DraftProvider } from "@/components/forms/FormDraft";
+import { PushBootstrap } from "@/components/pwa/PushBootstrap";
 import { StaffShell } from "@/components/ui/StaffShell";
 import { requireRole } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
@@ -11,6 +12,7 @@ export default async function StaffLayout({ children }: { children: React.ReactN
       <StaffShell name={profile.full_name} isAdmin={profile.role === "superadmin"} unread={unread ?? 0}>
         {children}
       </StaffShell>
+      <PushBootstrap profileId={profile.id} />
     </DraftProvider>
   );
 }

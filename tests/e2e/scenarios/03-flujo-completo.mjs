@@ -124,7 +124,7 @@ export async function run({ b, rep, state, save }) {
     // FIRMA del cliente desde SU sesión (el personal no firma por él).
     await clientLogin(b, state.client);
     await b.goto("/c/tickets/" + flow.ticketId);
-    rep.check("el cliente ve «Firma el acta de recepción» como acción principal", await b.waitText(/Firma el acta de recepción/, 15000));
+    rep.check("el cliente ve «Debes firmar el acta de recepción» como acción principal", await b.waitText(/Debes firmar el acta de recepción/i, 15000));
     await b.goto(`/c/documentos/${flow.actaId}`);
     await b.waitHydrated("canvas");
     rep.check("el cliente dibuja su firma con el puntero", await b.draw("canvas"));

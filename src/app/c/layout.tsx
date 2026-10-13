@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { DraftProvider } from "@/components/forms/FormDraft";
+import { PushBootstrap } from "@/components/pwa/PushBootstrap";
 import { ClientShell } from "@/components/ui/ClientShell";
 import { requireRole } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
@@ -20,6 +21,7 @@ export default async function ClientLayout({ children }: { children: React.React
       <ClientShell name={profile.full_name} unread={unread ?? 0}>
         {children}
       </ClientShell>
+      <PushBootstrap profileId={profile.id} />
     </DraftProvider>
   );
 }

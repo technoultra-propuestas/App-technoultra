@@ -6,24 +6,7 @@ import { useEffect, useState } from "react";
 export function PwaRegister() {
   const [waiting, setWaiting] = useState<ServiceWorker | null>(null);
 
-  // El navegador ofrece la instalación UNA vez y temprano: se guarda el evento para que «Instalar TechnoUltra» lo use cuando la persona lo pida.
-  useEffect(() => {
-    const onPrompt = (e: Event) => {
-      e.preventDefault();
-      (window as unknown as { __tuInstall?: Event }).__tuInstall = e;
-      window.dispatchEvent(new Event("tu:installable"));
-    };
-    const onInstalled = () => {
-      (window as unknown as { __tuInstall?: Event }).__tuInstall = undefined;
-      window.dispatchEvent(new Event("tu:installed"));
-    };
-    window.addEventListener("beforeinstallprompt", onPrompt);
-    window.addEventListener("appinstalled", onInstalled);
-    return () => {
-      window.removeEventListener("beforeinstallprompt", onPrompt);
-      window.removeEventListener("appinstalled", onInstalled);
-    };
-  }, []);
+  // El evento de instalación (`beforeinstallprompt`) lo captura un script temprano en <head> (layout.tsx): puede llegar antes de hidratar.
 
   useEffect(() => {
     if (process.env.NODE_ENV !== "production" || !("serviceWorker" in navigator)) return;

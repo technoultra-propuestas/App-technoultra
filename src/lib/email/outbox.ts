@@ -39,6 +39,18 @@ export async function flushEmailOutbox(limit = 25): Promise<{ sent: number; fail
   return { sent, failed, skipped };
 }
 
+let lastBackstop = 0;
+/**
+ * Respaldo: se invoca al renderizar las pantallas con sesión y programa el envío como mucho una vez cada 20 s por instancia. Existe para que un aviso
+ * cuya acción no disparó el envío no espere al barrido diario (plan Hobby de Vercel). El reclamo en base de datos evita duplicados.
+ */
+export function scheduleFlushThrottled(limit = 10) {
+  const now = Date.now();
+  if (now - lastBackstop < 20_000) return;
+  lastBackstop = now;
+  scheduleEmailFlush(limit);
+}
+
 /** Programa el envío (correo y push) DESPUÉS de responder al usuario (no bloquea la acción). */
 export function scheduleEmailFlush(limit = 10) {
   try {

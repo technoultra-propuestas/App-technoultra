@@ -11,6 +11,7 @@ import { BUCKET, SIGNABLE } from "@/lib/documents/generate";
 import { decodePngDataUrl } from "@/lib/documents/signature";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { scheduleEmailFlush } from "@/lib/email/outbox";
 
 const schema = z.object({ documentId: z.string().uuid(), signature: z.string().max(400_000), accept: z.string().optional() });
 
@@ -33,9 +34,13 @@ export async function signDocumentAction(_p: ActionState, fd: FormData): Promise
   const { data: doc } = await supabase.from("documents").select("id, code, version, doc_type, status, sha256, customer_id, customers(full_name)").eq("id", parsed.data.documentId).maybeSingle();
   if (!doc) return { ok: false, error: "Documento no encontrado." };
   if (!(SIGNABLE as string[]).includes(doc.doc_type)) return { ok: false, error: "Este documento no requiere firma." };
-  if (!["generated", "sent", "viewed"].includes(doc.status)) return { ok: false, error: "Este documento ya no se puede firmar." };
 
   const admin = createAdminClient();
+  // Idempotencia: un reintento (doble toque, red lenta, formulario reenviado) NO crea otra firma ni otros avisos; se responde con el estado real.
+  const { data: prior } = await admin.from("document_signatures").select("id").eq("document_id", doc.id).eq("signer_profile_id", profile.id).maybeSingle();
+  if (prior) return { ok: true, message: "Ya firmaste este documento. No se registró una firma adicional." };
+  if (!["generated", "sent", "viewed"].includes(doc.status)) return { ok: false, error: "Este documento ya no se puede firmar." };
+
   const path = `signatures/${doc.id}/${profile.id}.png`;
   const up = await admin.storage.from(BUCKET).upload(path, png, { contentType: "image/png", upsert: false });
   if (up.error) return { ok: false, error: "No pudimos guardar tu firma. Inténtalo de nuevo." };
@@ -58,7 +63,9 @@ export async function signDocumentAction(_p: ActionState, fd: FormData): Promise
     return { ok: false, error: error.message.includes("document_hash_mismatch") ? "El documento cambió. Recarga la página." : "No pudimos registrar tu firma." };
   }
   revalidatePath(`/c/documentos/${doc.id}`);
+  scheduleEmailFlush();
   revalidatePath("/c/documentos");
+  scheduleEmailFlush();
   return { ok: true, message: "Documento firmado. Guardamos tu firma y la huella del documento." };
 }
 
@@ -68,4 +75,5 @@ export async function rejectDocumentAction(fd: FormData): Promise<void> {
   if (!id.success) return;
   await (await createClient()).rpc("reject_document", { p_doc: id.data });
   revalidatePath(`/c/documentos/${id.data}`);
+  scheduleEmailFlush();
 }

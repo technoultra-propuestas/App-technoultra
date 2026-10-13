@@ -7,6 +7,7 @@ import { zodToState, type ActionState } from "@/lib/auth/schemas";
 import { generateTicketDocument } from "@/lib/documents/generate";
 import { loadProposal } from "@/lib/quotes/load";
 import { createClient } from "@/lib/supabase/server";
+import { scheduleEmailFlush } from "@/lib/email/outbox";
 
 const uuid = z.string().uuid();
 
@@ -66,6 +67,7 @@ export async function applyProposalAction(_p: ActionState, fd: FormData): Promis
     added++;
   }
   revalidatePath(`/b/tickets/${parsed.data.ticketId}`);
+  scheduleEmailFlush();
   return { ok: true, message: added ? `Propuesta aplicada: ${added} ${added === 1 ? "servicio agregado" : "servicios agregados"}. Revísala y envíala.` : "Esos servicios ya estaban en la cotización." };
 }
 
@@ -82,6 +84,8 @@ export async function finalizeDiagnosisAction(_p: ActionState, fd: FormData): Pr
   if (error) return { ok: false, error: /diagnosis_missing/.test(error.message) ? "Primero guarda el diagnóstico." : "No pudimos finalizar el diagnóstico." };
   const doc = await generateTicketDocument("diagnosis", id.data, actor.id);
   revalidatePath(`/b/tickets/${id.data}`);
+  scheduleEmailFlush();
   revalidatePath(`/c/tickets/${id.data}`);
+  scheduleEmailFlush();
   return doc.ok ? { ok: true, message: "Diagnóstico finalizado. El cliente ya puede verlo." } : { ok: true, message: "Diagnóstico finalizado, pero no se pudo generar el PDF. Genéralo desde Documentos." };
 }

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
+import { headers } from "next/headers";
 import { connection } from "next/server";
 import { PwaRegister } from "@/components/pwa/PwaRegister";
 import "./globals.css";
@@ -50,8 +51,19 @@ export const viewport: Viewport = {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   // CSP con nonce por petición ⇒ todas las rutas se renderizan en servidor (un HTML estático no puede llevar nonce).
   await connection();
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
   return (
     <html lang="es-CO" className={manrope.variable}>
+      <head>
+        {/* Captura TEMPRANA del aviso de instalación: el navegador lo emite una sola vez y puede llegar antes de que React hidrate. */}
+        <script
+          nonce={nonce}
+          dangerouslySetInnerHTML={{
+            __html:
+              "window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window.__tuInstall=e;window.dispatchEvent(new Event('tu:installable'))});window.addEventListener('appinstalled',function(){window.__tuInstall=undefined;window.__tuInstalled=true;window.dispatchEvent(new Event('tu:installed'))});",
+          }}
+        />
+      </head>
       <body>
         <a href="#contenido" className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[100] focus:rounded-[12px] focus:bg-ink focus:px-4 focus:py-3 focus:font-extrabold focus:text-white">
           Saltar al contenido

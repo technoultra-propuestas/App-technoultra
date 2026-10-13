@@ -2,6 +2,7 @@ import "server-only";
 import { receptionPhotoStatus } from "@/lib/domain/reception";
 import type { FlowFacts } from "@/lib/domain/next-action";
 import { staffPaymentView, type StaffPaymentRow } from "@/lib/payments/staff";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 /** Hechos del ticket verificados en el servidor (RLS del usuario). Los usan la «Próxima acción» del personal y la del cliente. */
@@ -22,7 +23,9 @@ export async function loadFlowFacts(ticketId: string): Promise<FlowFacts | null>
   const { count: qitems } = quote ? await supabase.from("quote_items").select("id", { count: "exact", head: true }).eq("quote_id", quote.id) : { count: 0 };
   const [{ data: actaDoc }, { count: exceptions }] = await Promise.all([
     supabase.from("documents").select("status").eq("ticket_id", ticketId).eq("doc_type", "reception").order("version", { ascending: false }).limit(1).maybeSingle(),
-    supabase.from("ticket_exceptions").select("id", { count: "exact", head: true }).eq("ticket_id", ticketId).eq("kind", "reception_signature"),
+    // El cliente no puede leer `ticket_exceptions` (RLS solo para personal): se consulta en servidor, solo el conteo, y únicamente de un ticket que
+    // ya pasó la comprobación de acceso de la primera consulta (RLS del usuario).
+    createAdminClient().from("ticket_exceptions").select("id", { count: "exact", head: true }).eq("ticket_id", ticketId).eq("kind", "reception_signature"),
   ]);
   const { data: pays } = await supabase.from("payments").select("id, status, provider, method, amount, reference, note, approved_at, created_at, voucher_evidence_id, purpose").eq("ticket_id", ticketId);
   const isDiag = Boolean(svc?.is_diagnostic_fee);
@@ -34,6 +37,8 @@ export async function loadFlowFacts(ticketId: string): Promise<FlowFacts | null>
     hasReception: (receptions ?? 0) > 0,
     photosComplete: receptionPhotoStatus((ev ?? []).map((e) => e.slot)).complete,
     receptionSigned: actaDoc?.status === "signed" || (exceptions ?? 0) > 0,
+    actaPending: ["generated", "sent", "viewed"].includes(actaDoc?.status ?? ""),
+    actaException: (exceptions ?? 0) > 0,
     hasDiagnosis: Boolean(diag),
     diagnosisFinalized: Boolean(diag?.finalized_at),
     quoteStatus: quote?.status ?? null,

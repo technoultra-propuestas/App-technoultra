@@ -8,6 +8,7 @@ import { assertRole } from "@/lib/auth/session";
 import { zodToState, type ActionState } from "@/lib/auth/schemas";
 import { ACCESSORIES, DAMAGES, receptionPhotoStatus } from "@/lib/domain/reception";
 import { createClient } from "@/lib/supabase/server";
+import { scheduleEmailFlush } from "@/lib/email/outbox";
 
 const schema = z.object({
   ticketId: z.string().uuid(),
@@ -61,7 +62,9 @@ export async function saveReceptionAction(_p: ActionState, fd: FormData): Promis
   if (changed && !acta.ok) console.error("reception.acta", v.ticketId);
   const advanced = await advanceAfterReception(v.ticketId, actor.id);
   revalidatePath(`/b/tickets/${v.ticketId}`);
+  scheduleEmailFlush();
   revalidatePath("/b/tickets");
+  scheduleEmailFlush();
   const base = existing ? "Recepción actualizada." : "Recepción confirmada.";
   const next = !acta.ok ? " No pudimos generar el acta: usa «Generar acta» para reintentar." : advanced ? " El ticket pasó a «En diagnóstico»." : changed ? " El acta quedó lista para que el cliente la firme." : "";
   return { ok: true, message: base + next };

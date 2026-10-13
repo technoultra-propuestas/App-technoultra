@@ -8,6 +8,7 @@ import { friendlyRequestError, requestSchema, toPreferredAt } from "@/lib/domain
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { z } from "zod";
+import { scheduleEmailFlush } from "@/lib/email/outbox";
 
 /**
  * Crea la solicitud. La cobertura geográfica, la coherencia servicio/modalidad y la propiedad de equipo y dirección
@@ -69,5 +70,6 @@ export async function createRequestAction(_p: ActionState, fd: FormData): Promis
   if (tErr && !/service_not_technical/.test(tErr.message)) console.error("request.auto_ticket", tErr.code);
   // El diagnóstico preliminar de IA viaja con el ticket (el técnico lo ve y lo valida), igual que cuando el personal recibía la solicitud a mano.
   if (ticketId) await createAdminClient().from("ai_diagnostics").update({ ticket_id: ticketId }).eq("service_request_id", data.id).is("ticket_id", null);
+  scheduleEmailFlush();
   redirect(`/c/solicitar/listo?c=${encodeURIComponent(data.code)}${ticketId ? `&t=${ticketId}` : ""}`);
 }
