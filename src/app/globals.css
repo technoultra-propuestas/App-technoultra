@@ -112,3 +112,16 @@ a {
 .enter {
   animation: tu-fade-up 240ms ease-out both;
 }
+
+/* Login: luz naranja que «late» tras el formulario y modelo que flota (se anulan con prefers-reduced-motion). */
+@keyframes tu-heart {
+  0%, 100% { transform: scale(0.94); opacity: 0.4; }
+  14% { transform: scale(1.06); opacity: 0.8; }
+  28% { transform: scale(0.98); opacity: 0.52; }
+  42% { transform: scale(1.1); opacity: 0.9; }
+  70% { transform: scale(0.95); opacity: 0.42; }
+}
+@keyframes tu-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
