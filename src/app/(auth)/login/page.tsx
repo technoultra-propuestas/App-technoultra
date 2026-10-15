@@ -108,7 +108,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
       </div>
 
       {/* Modelo: flota y queda encima de la diagonal (solo escritorio ancho) */}
-      <div aria-hidden className="pointer-events-none absolute bottom-[100px] left-[5vw] z-[5] hidden aspect-[1100/951] h-[min(74vh,50vw)] xl:block">
+      <div aria-hidden className="pointer-events-none absolute bottom-[100px] left-[calc(65vw_-_1.157*min(74vh,50vw))] z-[5] hidden aspect-[1100/951] h-[min(74vh,50vw)] xl:block">
         <Image src="/login/modelo.webp" alt="" width={1100} height={951} priority sizes="(min-width:1280px) 1000px, 1px" className="h-full w-full animate-[tu-float_6s_ease-in-out_infinite] object-contain" />
       </div>
 
