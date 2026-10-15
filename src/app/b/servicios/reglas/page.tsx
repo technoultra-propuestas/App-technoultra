@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Card, PageTitle } from "@/components/ui/layout";
 import { requireRole } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
+import { BackLink } from "@/components/ui/kit";
 
 export const metadata: Metadata = { title: "Reglas de precios y fuentes", robots: { index: false } };
 
@@ -16,6 +17,7 @@ export default async function PricingRulesPage() {
   ]);
   return (
     <section className="mx-auto flex w-full max-w-[760px] flex-col gap-6">
+      <BackLink href="/b/servicios">Volver a servicios</BackLink>
       <PageTitle title="Reglas de precios y fuentes" subtitle="Referencia del tarifario cargado. Son recomendaciones: el negocio decide cuáles aplicar." />
       <Card>
         <h2 className="m-0 mb-3 text-[19px] font-extrabold">Reglas</h2>

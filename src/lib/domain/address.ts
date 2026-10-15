@@ -7,6 +7,7 @@ export const addressSchema = z.object({
   label: z.string().trim().max(40).optional(),
   line1: z.string().trim().min(3, "Escribe tu dirección.").max(160),
   neighborhood: z.string().trim().max(100).optional(),
+  notes: z.string().trim().max(200).optional(),
   dane: z.string().regex(/^[0-9]{5}$|^other$/, "Elige tu ciudad."),
   otherCity: z.string().trim().max(80).optional(),
   otherDept: z.string().trim().max(80).optional(),

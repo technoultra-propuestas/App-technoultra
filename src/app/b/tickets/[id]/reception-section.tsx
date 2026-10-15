@@ -95,7 +95,7 @@ export async function ReceptionSection({ ticketId, problem, open, role, customer
             </span>
           </div>
           {acta ? (
-            <a href={`/documentos/${acta.id}`} target="_blank" rel="noreferrer" className="w-fit text-[14px] font-extrabold underline decoration-brand underline-offset-[3px]">
+            <a href={`/b/documentos/${acta.id}?from=${encodeURIComponent(`/b/tickets/${ticketId}`)}`} className="w-fit text-[14px] font-extrabold underline decoration-brand underline-offset-[3px]">
               {acta.status === "signed" ? "Abrir acta firmada (PDF)" : "Revisar acta (PDF)"} · v{acta.version}
             </a>
           ) : (

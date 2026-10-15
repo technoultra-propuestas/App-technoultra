@@ -60,11 +60,11 @@ export function ServiceForm({
   const v = values ?? {};
   const mods = v.allowed_modalities ?? ["store", "pickup", "home"];
   return (
-    <form action={action} className="flex flex-col gap-[18px]" noValidate>
+    <form action={action} className="flex flex-col gap-[18px] lg:grid lg:grid-cols-2 lg:gap-x-6 lg:gap-y-5" noValidate>
       {editing ? <input type="hidden" name="id" value={v.id} /> : null}
       <Field label="Nombre" name="name" defaultValue={v.name} required error={state.fieldErrors?.name} />
       <Field label="Slug (URL)" name="slug" defaultValue={v.slug} hint="Opcional: se genera del nombre." />
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 lg:col-span-2">
         <Select label="Tipo" name="kind" defaultValue={v.kind ?? "technical"}>
           <option value="technical">Servicio técnico</option>
           <option value="digital">Solución digital</option>
@@ -87,8 +87,8 @@ export function ServiceForm({
         ))}
       </Select>
       <Field label="Descripción corta" name="shortDescription" defaultValue={v.short_description ?? ""} />
-      <Textarea label="Descripción" name="description" defaultValue={v.description ?? ""} />
-      <div className="grid grid-cols-3 gap-3">
+      <div className="lg:col-span-2"><Textarea label="Descripción" name="description" defaultValue={v.description ?? ""} /></div>
+      <div className="grid grid-cols-3 gap-3 lg:col-span-2">
         <Select label="Precio" name="priceMode" defaultValue={v.price_mode ?? "fixed"}>
           <option value="fixed">Fijo</option>
           <option value="from">Desde</option>
@@ -97,19 +97,19 @@ export function ServiceForm({
         <Field label="Valor base (COP)" name="basePrice" inputMode="numeric" defaultValue={v.base_price ?? ""} error={state.fieldErrors?.basePrice} />
         <Field label="Unidad" name="priceUnit" defaultValue={v.price_unit ?? ""} placeholder="/mes" />
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 lg:col-span-2">
         <Field label="Etiqueta del tipo de precio" name="priceTypeLabel" defaultValue={v.price_type_label ?? ""} hint='Ej.: "Por punto", "Mano de obra".' />
         <Field label="Tiempo estimado" name="estimatedTime" defaultValue={v.estimated_time ?? ""} placeholder="1 a 2 h" />
       </div>
-      <Textarea label="Incluye en el valor" name="includesText" defaultValue={v.includes_text ?? ""} />
-      <Textarea label="No incluye / adicionales" name="excludesText" defaultValue={v.excludes_text ?? ""} />
-      <Textarea label="Tratamiento del valor total" name="priceTreatment" defaultValue={v.price_treatment ?? ""} />
-      <div className="grid grid-cols-2 gap-3">
+      <div className="lg:col-span-2"><Textarea label="Incluye en el valor" name="includesText" defaultValue={v.includes_text ?? ""} /></div>
+      <div className="lg:col-span-2"><Textarea label="No incluye / adicionales" name="excludesText" defaultValue={v.excludes_text ?? ""} /></div>
+      <div className="lg:col-span-2"><Textarea label="Tratamiento del valor total" name="priceTreatment" defaultValue={v.price_treatment ?? ""} /></div>
+      <div className="grid grid-cols-2 gap-3 lg:col-span-2">
         <Field label="Modalidad (texto comercial)" name="modalityLabel" defaultValue={v.modality_label ?? ""} />
         <Field label="Orden en el catálogo" name="sortOrder" inputMode="numeric" defaultValue={v.sort_order ?? ""} />
       </div>
       <Field label="Duración (minutos)" name="durationMinutes" inputMode="numeric" defaultValue={v.duration_minutes ?? ""} />
-      <fieldset className="flex flex-col gap-2 border-0 p-0">
+      <fieldset className="flex flex-col gap-2 border-0 p-0 lg:col-span-2">
         <legend className="mb-2 text-[15px] font-bold">Modalidades disponibles</legend>
         {(["store", "pickup", "home", "remote"] as const).map((m) => (
           <label key={m} className="flex items-center gap-3 text-[15px] font-semibold">
@@ -119,7 +119,7 @@ export function ServiceForm({
         ))}
         {state.fieldErrors?.modalities ? <span className="text-[13px] font-bold text-[#9A2B1E]">{state.fieldErrors.modalities}</span> : null}
       </fieldset>
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-2 lg:col-span-2">
         <Check name="partsExtra" label="El repuesto se cotiza aparte (+ repuesto)" checked={v.parts_extra ?? false} />
         <Check name="isDiagnosticFee" label="Es un diagnóstico (su valor se abona a la reparación si se aprueba)" checked={v.is_diagnostic_fee ?? false} />
         <Check name="requiresEquipment" label="Requiere un equipo registrado" checked={v.requires_equipment ?? true} />
@@ -127,7 +127,7 @@ export function ServiceForm({
         <Check name="requiresQuote" label="Requiere cotización y aprobación" checked={v.requires_quote ?? true} />
         <Check name="isActive" label="Visible para los clientes" checked={v.is_active ?? true} />
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 lg:col-span-2">
         <Field label="Garantía (días)" name="warrantyDays" inputMode="numeric" defaultValue={v.default_warranty_days ?? 0} />
         <Select label="Tipo de garantía" name="warrantyKind" defaultValue={v.default_warranty_kind ?? "labor"}>
           <option value="labor">Mano de obra</option>
@@ -136,9 +136,11 @@ export function ServiceForm({
       </div>
       <Field label="Título SEO" name="seoTitle" defaultValue={v.seo_title ?? ""} hint="Máximo 70 caracteres." />
       <Field label="Descripción SEO" name="seoDescription" defaultValue={v.seo_description ?? ""} hint="Máximo 170 caracteres." />
-      {state.error && !state.fieldErrors ? <Alert>{state.error}</Alert> : null}
-      {state.ok && state.message ? <Alert tone="ok">{state.message}</Alert> : null}
-      <SubmitButton pendingText="Guardando…">{editing ? "Guardar cambios" : "Crear servicio"}</SubmitButton>
+      <div className="flex flex-col gap-3 lg:col-span-2">
+        {state.error && !state.fieldErrors ? <Alert>{state.error}</Alert> : null}
+        {state.ok && state.message ? <Alert tone="ok">{state.message}</Alert> : null}
+        <SubmitButton pendingText="Guardando…">{editing ? "Guardar cambios" : "Crear servicio"}</SubmitButton>
+      </div>
     </form>
   );
 }

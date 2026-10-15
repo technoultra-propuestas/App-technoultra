@@ -28,6 +28,9 @@ const norm = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCa
 export default async function StaffTicketsPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const profile = await requireRole(["technician", "superadmin"]);
   const sp = await searchParams;
+  // Dirección de esta lista CON sus filtros: la ficha del ticket la usa para «Volver a tickets» sin perder la búsqueda ni la pestaña.
+  const listQs = new URLSearchParams(Object.entries(sp).filter((e): e is [string, string] => typeof e[1] === "string" && e[1] !== "")).toString();
+  const listPath = `/b/tickets${listQs ? `?${listQs}` : ""}`;
   const f = FILTERS.some(([k]) => k === sp.estado) ? (sp.estado as string) : "open";
   const q = (sp.q ?? "").trim().slice(0, 80);
   const supabase = await createClient();
@@ -96,7 +99,7 @@ export default async function StaffTicketsPage({ searchParams }: { searchParams:
             const e = one(t.equipment as Rel<{ brand: string; model: string }>);
             return (
               <li key={t.id}>
-                <Link href={`/b/tickets/${t.id}`} className="press grid min-h-[72px] items-center gap-x-4 gap-y-1 rounded-card border border-line bg-white px-5 py-3.5 text-ink no-underline shadow-card md:grid-cols-[minmax(150px,0.9fr)_minmax(0,1.2fr)_minmax(0,1.4fr)_auto]">
+                <Link href={`/b/tickets/${t.id}?from=${encodeURIComponent(listPath)}`} className="press grid min-h-[72px] items-center gap-x-4 gap-y-1 rounded-card border border-line bg-white px-5 py-3.5 text-ink no-underline shadow-card md:grid-cols-[minmax(150px,0.9fr)_minmax(0,1.2fr)_minmax(0,1.4fr)_auto]">
                   <span className="flex flex-col">
                     <span className="text-[15px] font-extrabold">{t.code}</span>
                     <span className="text-[13px] font-semibold text-muted">{fmtDate(t.created_at)}</span>

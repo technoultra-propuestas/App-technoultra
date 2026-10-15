@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Panel } from "@/components/ui/detail";
-import { ListRow } from "@/components/ui/kit";
+import { ListRow, BackLink } from "@/components/ui/kit";
 import { WHATSAPP_DISPLAY } from "@/lib/catalog/config";
 import { whatsappUrl } from "@/lib/catalog/whatsapp";
 import { requireRole } from "@/lib/auth/session";
@@ -35,6 +35,7 @@ export default async function HelpPage() {
   const help = whatsappUrl("Hola TechnoUltra 👋 Necesito ayuda con mi cuenta o mi servicio.");
   return (
     <section className="flex flex-col gap-5">
+      <BackLink href="/c/mas">Volver a Más</BackLink>
       <div>
         <h1 className="m-0 text-[28px] font-extrabold tracking-[-0.025em] lg:text-[30px]">Ayuda</h1>
         <div className="mt-2 h-1 w-10 rounded-sm bg-brand" />

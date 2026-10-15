@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Card, EmptyState, PageTitle } from "@/components/ui/layout";
-import { SearchField } from "@/components/ui/kit";
+import { SearchField, BackLink } from "@/components/ui/kit";
 import { requireRole } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { anonymizeCustomerAction } from "./actions";
@@ -24,6 +24,7 @@ export default async function PrivacyPage({ searchParams }: { searchParams: Prom
   }
   return (
     <section className="mx-auto flex w-full max-w-[680px] flex-col gap-6">
+      <BackLink href="/b/configuracion">Volver a ajustes</BackLink>
       <PageTitle
         title="Privacidad y datos personales"
         subtitle="Atiende solicitudes de supresión (Ley 1581). Se borran los datos de contacto; el historial de servicios, pagos y documentos se conserva sin datos personales por obligación legal."

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Panel } from "@/components/ui/detail";
-import { StatCard } from "@/components/ui/kit";
+import { StatCard, BackLink } from "@/components/ui/kit";
 import { Card, money, PageTitle } from "@/components/ui/layout";
 import { requireRole } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
@@ -21,6 +21,7 @@ export default async function CoveragePage() {
   const active = (data ?? []).filter((a) => a.is_active).length;
   return (
     <section className="flex flex-col gap-6">
+      <BackLink href="/b/configuracion">Volver a ajustes</BackLink>
       <PageTitle
         title="Cobertura presencial"
         subtitle="Los servicios en tienda, con recogida o a domicilio solo se pueden agendar en estos municipios. El soporte remoto es nacional y no depende de esta lista."

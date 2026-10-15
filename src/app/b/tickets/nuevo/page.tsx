@@ -3,6 +3,7 @@ import { PageTitle } from "@/components/ui/layout";
 import { requireRole } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { WalkinForm } from "./walkin-form";
+import { BackLink } from "@/components/ui/kit";
 
 export const metadata: Metadata = { title: "Nuevo ticket", robots: { index: false } };
 
@@ -17,7 +18,8 @@ export default async function NewTicketPage() {
     supabase.from("services").select("id, name").eq("is_active", true).eq("kind", "technical").order("name"),
   ]);
   return (
-    <section className="mx-auto flex w-full max-w-[600px] flex-col gap-6">
+    <section className="mx-auto flex w-full max-w-[600px] flex-col gap-6 lg:max-w-[980px]">
+      <BackLink href="/b/tickets">Volver a tickets</BackLink>
       <PageTitle title="Nuevo ticket de mostrador" subtitle="Para clientes que llegan al local o llaman. El ticket nace en «Solicitud recibida» y queda asignado a ti; al registrar la recepción del equipo pasa a «Equipo recibido»." />
       <WalkinForm
         canSearch={isAdmin}

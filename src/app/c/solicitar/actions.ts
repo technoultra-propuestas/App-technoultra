@@ -8,6 +8,8 @@ import { friendlyRequestError, requestSchema, toPreferredAt } from "@/lib/domain
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { z } from "zod";
+import { deliverySnapshot } from "@/lib/domain/delivery";
+import { loadZones } from "@/lib/tickets/zone";
 import { scheduleEmailFlush } from "@/lib/email/outbox";
 
 /**
@@ -60,6 +62,20 @@ export async function createRequestAction(_p: ActionState, fd: FormData): Promis
     .single();
   const { data, error } = created;
   if (error || !data) return { ok: false, error: friendlyRequestError(error?.message) };
+  // Domicilio/recogida: se registra en la solicitud el valor ESTIMADO calculado aquí (servidor) con la tarifa vigente de la zona de la dirección.
+  // Es informativo: el cobro lo fija la cotización (concepto aparte) y nunca se toma un valor enviado por el navegador.
+  if (!dup && (v.modality === "home" || v.modality === "pickup") && v.addressId) {
+    const { data: addr } = await supabase.from("addresses").select("dane_code, city_name").eq("id", v.addressId).maybeSingle();
+    if (addr) {
+      const zone = (await loadZones(supabase, [addr.dane_code], [v.modality])).get(addr.dane_code);
+      if (zone) {
+        const admin = createAdminClient();
+        const { data: cur } = await admin.from("service_requests").select("service_snapshot").eq("id", data.id).maybeSingle();
+        const base = (cur?.service_snapshot as Record<string, unknown> | null) ?? {};
+        await admin.from("service_requests").update({ service_snapshot: { ...base, delivery: deliverySnapshot(v.modality, { ...zone, city: addr.city_name }) } }).eq("id", data.id);
+      }
+    }
+  }
   // Vincula el diagnóstico preliminar (si lo hubo) a la solicitud, solo si pertenece a este cliente.
   const aiId = z.string().uuid().safeParse(fd.get("aiId"));
   if (aiId.success) {

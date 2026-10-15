@@ -20,7 +20,7 @@ export function WalkinForm({ customers, equipment, services, canSearch }: Props)
   const [equipmentId, setEquipmentId] = useState("");
   const eq = equipment.filter((e) => e.customer_id === customerId);
   return (
-    <form action={action} className="flex flex-col gap-[18px]" noValidate>
+    <form action={action} className="flex flex-col gap-[18px] lg:grid lg:grid-cols-2 lg:gap-x-8 lg:gap-y-6" noValidate>
       <FormDraft id="ticket-mostrador" />
       <fieldset className="flex flex-col gap-3 border-0 p-0">
         <legend className="mb-2 text-[17px] font-extrabold">Cliente</legend>
@@ -74,7 +74,7 @@ export function WalkinForm({ customers, equipment, services, canSearch }: Props)
         ) : null}
       </fieldset>
 
-      <fieldset className="flex flex-col gap-3 border-0 p-0">
+      <fieldset className="flex flex-col gap-3 border-0 p-0 lg:col-span-2">
         <legend className="mb-2 text-[17px] font-extrabold">Servicio</legend>
         <Select label="Servicio solicitado" name="serviceId" defaultValue="">
           <option value="">Por definir en el diagnóstico</option>
@@ -93,8 +93,10 @@ export function WalkinForm({ customers, equipment, services, canSearch }: Props)
         </Select>
         <Textarea label="Problema que reporta el cliente" name="problem" required error={state.fieldErrors?.problem} />
       </fieldset>
+      <div className="flex flex-col gap-3 lg:col-span-2">
       {state.error && !state.fieldErrors ? <Alert>{state.error}</Alert> : null}
       <SubmitButton pendingText="Creando ticket…">Crear ticket y continuar a la recepción</SubmitButton>
+      </div>
     </form>
   );
 }

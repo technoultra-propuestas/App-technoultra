@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Panel } from "@/components/ui/detail";
 import { fmtDateTime } from "@/components/ui/layout";
-import { SegmentTabs } from "@/components/ui/kit";
+import { SegmentTabs, BackLink } from "@/components/ui/kit";
 import { requireRole } from "@/lib/auth/session";
 import { DEFAULT_SHOP_SETTINGS } from "@/lib/shop/settings";
 import { createClient } from "@/lib/supabase/server";
@@ -32,6 +32,7 @@ export default async function ShopAdminPage() {
   const live = (b:{ is_active: boolean; starts_at: string | null; ends_at: string | null }) => b.is_active && (!b.starts_at || new Date(b.starts_at).getTime() <= now) && (!b.ends_at || new Date(b.ends_at).getTime() > now);
   return (
     <section className="flex flex-col gap-5">
+      <BackLink href="/b/configuracion">Volver a ajustes</BackLink>
       <h1 className="m-0 text-[30px] font-extrabold tracking-[-0.025em]">Shop</h1>
       <SegmentTabs label="Secciones de la tienda" items={STORE_TABS} active="shop" />
       <p className="m-0 max-w-[760px] text-[14px] leading-normal text-muted">Todo lo que ve el público en <strong>/tienda</strong> se administra aquí. La identidad (tipografía, colores y estilo) la fija el sistema de diseño de TechnoUltra: aquí eliges entre los estilos permitidos.</p>

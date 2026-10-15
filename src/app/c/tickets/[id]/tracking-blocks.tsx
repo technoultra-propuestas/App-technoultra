@@ -3,6 +3,7 @@ import { Accordion, AccordionRow } from "@/components/ui/accordion";
 import { IconAlert, IconCard, IconCheck, IconClock, IconDoc, IconGear, IconLaptop, IconPackage, IconShieldCheck, IconTool } from "@/components/ui/icons";
 import { fmtDateTime, MODALITY_LABEL, money, statusLabel } from "@/components/ui/layout";
 import { equipmentWhere } from "@/lib/domain/ticket-flow";
+import { clientDocHref } from "@/lib/navigation";
 
 /**
  * Bloques INFERIORES del seguimiento del cliente. La línea de tiempo superior (ServiceTimeline) NO se toca: estos bloques tienen
@@ -95,7 +96,7 @@ export function ServiceProgress({ f }: { f: ProgressFacts }) {
             what={f.diagnosisAt ? "El técnico terminó la revisión de tu equipo." : f.status === "diagnosing" ? "Un técnico está revisando tu equipo." : "La revisión empieza cuando recibamos tu equipo."}
             at={when(f.diagnosisAt)}
             todo={f.diagnosisAt ? "Puedes leer el informe cuando quieras." : null}
-            link={f.diagnosisDocId ? { href: `/c/documentos/${f.diagnosisDocId}`, label: "Ver diagnóstico" } : null}
+            link={f.diagnosisDocId ? { href: clientDocHref(f.diagnosisDocId, f.ticketId), label: "Ver diagnóstico" } : null}
           />
         </AccordionRow>
         <AccordionRow
@@ -134,7 +135,7 @@ export function ServiceProgress({ f }: { f: ProgressFacts }) {
 }
 
 /** «Resumen del servicio»: plegado por defecto. */
-export function ServiceSummary({ code, requestAt, modality, statusText, deliveredAt, balanceDue, warrantyUntil, diagnosisDocId, quoteDocId, extraDocs = [] }: { code: string; requestAt: string; modality: string; statusText: string; deliveredAt: string | null; balanceDue: number; warrantyUntil: string | null; diagnosisDocId: string | null; quoteDocId: string | null; extraDocs?: { id: string; label: string; state: string }[] }) {
+export function ServiceSummary({ ticketId, code, requestAt, modality, statusText, deliveredAt, balanceDue, warrantyUntil, diagnosisDocId, quoteDocId, extraDocs = [] }: { ticketId: string; code: string; requestAt: string; modality: string; statusText: string; deliveredAt: string | null; balanceDue: number; warrantyUntil: string | null; diagnosisDocId: string | null; quoteDocId: string | null; extraDocs?: { id: string; label: string; state: string }[] }) {
   const rows: { icon: React.ReactNode; k: string; v: string }[] = [
     { icon: <IconDoc width={16} height={16} />, k: "Servicio n.º", v: code },
     { icon: <IconClock width={16} height={16} />, k: "Solicitud", v: fmtDateTime(requestAt) },
@@ -157,12 +158,12 @@ export function ServiceSummary({ code, requestAt, modality, statusText, delivere
       </dl>
       <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[14px] font-extrabold">
         {extraDocs.map((d) => (
-          <Link key={d.id} href={`/c/documentos/${d.id}`} className="flex min-h-11 items-center gap-1.5 underline decoration-brand underline-offset-[3px]">
+          <Link key={d.id} href={clientDocHref(d.id, ticketId)} className="flex min-h-11 items-center gap-1.5 underline decoration-brand underline-offset-[3px]">
             {d.label} <span className={`rounded-full px-2 py-0.5 text-[11px] no-underline ${d.state === "Firmada" ? "bg-ok-soft text-ok" : "bg-[#FBF1D9] text-[#6E4B00]"}`}>{d.state}</span>
           </Link>
         ))}
-        {diagnosisDocId ? <Link href={`/c/documentos/${diagnosisDocId}`} className="flex min-h-11 items-center underline decoration-brand underline-offset-[3px]">Informe de diagnóstico</Link> : null}
-        {quoteDocId ? <Link href={`/c/documentos/${quoteDocId}`} className="flex min-h-11 items-center underline decoration-brand underline-offset-[3px]">Cotización (PDF)</Link> : null}
+        {diagnosisDocId ? <Link href={clientDocHref(diagnosisDocId, ticketId)} className="flex min-h-11 items-center underline decoration-brand underline-offset-[3px]">Informe de diagnóstico</Link> : null}
+        {quoteDocId ? <Link href={clientDocHref(quoteDocId, ticketId)} className="flex min-h-11 items-center underline decoration-brand underline-offset-[3px]">Cotización (PDF)</Link> : null}
         <Link href="/c/documentos" className="flex min-h-11 items-center underline decoration-brand underline-offset-[3px]">Todos mis documentos</Link>
       </div>
     </Accordion>

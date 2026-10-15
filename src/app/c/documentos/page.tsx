@@ -42,7 +42,7 @@ export default async function ClientDocumentsPage({ searchParams }: { searchPara
             const s = STATUS[d.status] ?? { label: d.status, cls: "bg-[#EDEDEA] text-ink-2" };
             return (
               <li key={d.id}>
-                <ListRow href={`/c/documentos/${d.id}`} title={`${d.title} · v${d.version}`} detail={`${d.code} · ${fmtDate(d.created_at)}`} icon="quote" tone={d.status === "signed" ? "ok" : ["generated", "sent", "viewed"].includes(d.status) ? "warn" : "neutral"} trailing={<span className={`flex-none rounded-full px-3 py-1 text-[12px] font-extrabold ${s.cls}`}>{s.label}</span>} />
+                <ListRow href={`/c/documentos/${d.id}?from=${encodeURIComponent(`/c/documentos${ver ? `?ver=${ver}` : ""}`)}`} title={`${d.title} · v${d.version}`} detail={`${d.code} · ${fmtDate(d.created_at)}`} icon="quote" tone={d.status === "signed" ? "ok" : ["generated", "sent", "viewed"].includes(d.status) ? "warn" : "neutral"} trailing={<span className={`flex-none rounded-full px-3 py-1 text-[12px] font-extrabold ${s.cls}`}>{s.label}</span>} />
               </li>
             );
           })}

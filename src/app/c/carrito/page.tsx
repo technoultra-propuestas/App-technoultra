@@ -3,6 +3,7 @@ import { PageTitle } from "@/components/ui/layout";
 import { requireRole } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { CartView } from "./cart-view";
+import { BackLink } from "@/components/ui/kit";
 
 export const metadata: Metadata = { title: "Carrito", robots: { index: false } };
 
@@ -16,6 +17,7 @@ export default async function CartPage() {
   const fee = new Map((coverage ?? []).map((c) => [c.dane_code, Number(c.home_fee)]));
   return (
     <section className="mx-auto flex w-full max-w-[640px] flex-col gap-6">
+      <BackLink href="/c/tienda">Volver a la tienda</BackLink>
       <PageTitle title="Tu carrito" subtitle="Los precios finales los confirma el servidor al crear el pedido." />
       <CartView addresses={(addresses ?? []).map((a) => ({ id: a.id, label: `${a.label} · ${a.line1}, ${a.city_name}`, covered: fee.has(a.dane_code), fee: fee.get(a.dane_code) ?? 0 }))} />
     </section>

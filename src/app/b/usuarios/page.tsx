@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Avatar } from "@/components/ui/kit";
+import { Avatar, BackLink } from "@/components/ui/kit";
 import { PageTitle } from "@/components/ui/layout";
 import { requireRole } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
@@ -24,8 +24,9 @@ export default async function UsersPage() {
 
   return (
     <section className="flex flex-col gap-6">
+      <BackLink href="/b/configuracion">Volver a ajustes</BackLink>
       <PageTitle title="Usuarios del equipo" subtitle="Técnicos y administradores se crean aquí. No existe registro público para el equipo." />
-      <div className="grid gap-6 md:grid-cols-[1fr_380px]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 md:grid-cols-[minmax(0,1fr)_380px]">
         <ul className="m-0 flex list-none flex-col gap-2 p-0">
           {rows.map((u) => (
             <li

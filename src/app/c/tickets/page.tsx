@@ -68,7 +68,7 @@ export default async function TicketsPage() {
           <h2 className="m-0 text-[18px] font-extrabold">Tus servicios</h2>
           <Card className="flex flex-col p-2">
             {t.map((x) => (
-              <ListRow key={x.id} href={`/c/tickets/${x.id}`} icon="ticket" title={x.code} detail={`${x.problem} · ${fmtDate(x.created_at)}`} trailing={<StatusBadge status={x.status} />} />
+              <ListRow key={x.id} href={`/c/tickets/${x.id}?from=${encodeURIComponent("/c/tickets")}`} icon="ticket" title={x.code} detail={`${x.problem} · ${fmtDate(x.created_at)}`} trailing={<StatusBadge status={x.status} />} />
             ))}
           </Card>
         </div>

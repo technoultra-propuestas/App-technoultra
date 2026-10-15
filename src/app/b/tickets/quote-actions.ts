@@ -9,6 +9,7 @@ import { scheduleEmailFlush } from "@/lib/email/outbox";
 import { statusLabel } from "@/components/ui/layout";
 import { reportActionError } from "@/lib/observability";
 import { createClient } from "@/lib/supabase/server";
+import { deliveryBlocksSend, deliveryNotice, ensureQuoteDelivery } from "@/lib/tickets/quote-delivery";
 
 const QUOTE_ERRORS: [RegExp, string][] = [
   [/forbidden|42501|row-level security/, "No tienes permiso para esta acción."],
@@ -46,10 +47,12 @@ export async function createQuoteAction(_p: ActionState, fd: FormData): Promise<
   const supabase = await createClient();
   const { data: t } = await supabase.from("tickets").select("customer_id").eq("id", ticketId.data).maybeSingle();
   if (!t) return { ok: false, error: "Ticket no encontrado." };
-  const { error } = await supabase.from("quotes").insert({ ticket_id: ticketId.data, customer_id: t.customer_id });
-  if (error) return { ok: false, error: friendly(error.message) };
+  const { data: created, error } = await supabase.from("quotes").insert({ ticket_id: ticketId.data, customer_id: t.customer_id }).select("id").single();
+  if (error || !created) return { ok: false, error: friendly(error?.message) };
+  // Ticket a domicilio: el domicilio entra solo como concepto aparte (valor calculado por el servidor desde la cobertura de la dirección).
+  const delivery = await ensureQuoteDelivery(supabase, created.id, ticketId.data);
   refresh(ticketId.data);
-  return { ok: true, message: "Cotización creada." };
+  return { ok: true, message: ["Cotización creada.", deliveryNotice(delivery)].filter(Boolean).join(" ") };
 }
 
 const itemSchema = z
@@ -125,6 +128,10 @@ async function run(fd: FormData, fn: "send_quote" | "record_in_person_approval" 
   const p = act.safeParse(Object.fromEntries(fd.entries()));
   if (!p.success) return { ok: false, error: "Datos no válidos." };
   const supabase = await createClient();
+  if (fn === "send_quote") {
+    const blocked = await deliveryBlocksSend(supabase, p.data.quoteId, p.data.ticketId, fd.get("waiveDelivery") === "on");
+    if (blocked) return { ok: false, error: blocked };
+  }
   const { error } =
     fn === "answer_quote_question"
       ? await supabase.rpc(fn, { p_quote: p.data.quoteId, p_message: p.data.message ?? "" })
@@ -182,8 +189,13 @@ export async function setDeliveryAction(fd: FormData): Promise<void> {
   const p = deliverySchema.safeParse(Object.fromEntries(fd.entries()));
   if (!p.success) return;
   const supabase = await createClient();
-  const { error } = await supabase.rpc("set_quote_delivery", { p_quote: p.data.quoteId, p_apply: p.data.apply === "true" });
-  if (error) console.error("quote.delivery", error.code, friendly(error.message));
+  if (p.data.apply === "true") {
+    const d = await ensureQuoteDelivery(supabase, p.data.quoteId, p.data.ticketId);
+    if (d.state !== "applied" && d.state !== "not_applicable") console.warn(JSON.stringify({ event: "quote_delivery", state: d.state }));
+  } else {
+    const { error } = await supabase.rpc("set_quote_delivery", { p_quote: p.data.quoteId, p_apply: false });
+    if (error) console.error("quote.delivery", error.code, friendly(error.message));
+  }
   refresh(p.data.ticketId);
 }
 
@@ -214,6 +226,7 @@ export async function addShopProductToQuoteAction(_p: ShopAddResult | null, fd: 
     const { data: created, error } = await supabase.from("quotes").insert({ ticket_id: ticketId, customer_id: t.customer_id }).select("id, status").single();
     if (error || !created) return { ok: false, message: friendly(error?.message), productId };
     quote = created;
+    await ensureQuoteDelivery(supabase, created.id, ticketId); // ticket a domicilio: domicilio como concepto aparte
   }
   if (quote.status !== "draft") return { ok: false, message: "La cotización ya fue enviada al cliente. Para incluir el producto, crea una nueva versión desde la cotización.", productId };
   const { data: existing } = await supabase.from("quote_items").select("id, qty").eq("quote_id", quote.id).eq("product_id", productId).maybeSingle();

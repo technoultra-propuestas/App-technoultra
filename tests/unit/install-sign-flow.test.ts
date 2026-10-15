@@ -53,7 +53,7 @@ const client = (o: Partial<ClientFacts> = {}): ClientFacts => ({ ...flow(), tick
 describe("la firma del acta es la obligación prioritaria del cliente (estado persistido, no un aviso)", () => {
   it("acta pendiente: «Debes firmar el acta de recepción» + botón «Revisar y firmar acta» que abre ESE documento", () => {
     const p = actaSignPrompt(client({ actaPending: true }));
-    expect(p).toMatchObject({ title: "Debes firmar el acta de recepción", tone: "action", primary: { label: "Revisar y firmar acta", href: "/c/documentos/d1" } });
+    expect(p).toMatchObject({ title: "Debes firmar el acta de recepción", tone: "action", primary: { label: "Revisar y firmar acta", href: "/c/documentos/d1?from=%2Fc%2Ftickets%2Ft1" } });
   });
   it("se muestra en CUALQUIER estado del ticket (también un ticket histórico ya en diagnóstico o en servicio), salvo cancelado o entregado", () => {
     for (const status of ["received", "diagnosing", "awaiting_approval", "in_service", "testing", "ready"]) expect(actaSignPrompt(client({ status, actaPending: true }))).not.toBeNull();
@@ -92,5 +92,29 @@ describe("«Próxima acción» del personal con el acta pendiente", () => {
     expect(staffNextAction(flow({ status: "diagnosing", actaPending: false, receptionSigned: true })).notice).toBeUndefined();
     expect(staffNextAction(flow({ status: "diagnosing", actaPending: true, actaException: true, receptionSigned: true })).notice).toBeUndefined();
     expect(staffNextAction(flow({ status: "delivered", actaPending: true })).notice).toBeUndefined();
+  });
+});
+
+import { backLabel, backTarget, clientDocHref } from "@/lib/navigation";
+
+describe("navegación: siempre hay una salida clara y segura", () => {
+  const fb = { href: "/c/documentos", label: "Volver a mis documentos" };
+  it("regresa al contexto real desde el que se abrió (ticket, cotización, lista) con su texto", () => {
+    expect(backTarget("/c/tickets/abc", fb)).toEqual({ href: "/c/tickets/abc", label: "Volver a mi servicio" });
+    expect(backTarget("/c/tickets/abc/cotizacion", fb)).toEqual({ href: "/c/tickets/abc/cotizacion", label: "Volver a la cotización" });
+    expect(backTarget("/b/tickets/abc", fb).label).toBe("Volver al ticket");
+    expect(backTarget("/c/documentos", fb).label).toBe("Volver a mis documentos");
+    expect(backLabel("/c")).toBe("Volver al inicio");
+    expect(backLabel("/c/tickets/abc?pago=ok")).toBe("Volver a mi servicio");
+  });
+  it("sin contexto (enlace directo o pestaña nueva) usa el destino por defecto: no depende del historial del navegador", () => {
+    expect(backTarget(undefined, fb)).toEqual(fb);
+    expect(backTarget("", fb)).toEqual(fb);
+  });
+  it("rechaza destinos peligrosos (redirección abierta): otro dominio, doble barra, esquemas, rutas fuera de la app", () => {
+    for (const bad of ["https://evil.example/x", "//evil.example/x", "javascript:alert(1)", "/\evil", "/api/secreto", "/login", "/c/../etc"]) expect(backTarget(bad, fb)).toEqual(fb);
+  });
+  it("el enlace a un documento desde un ticket conserva el origen codificado", () => {
+    expect(clientDocHref("d1", "t9")).toBe("/c/documentos/d1?from=%2Fc%2Ftickets%2Ft9");
   });
 });

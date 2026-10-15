@@ -40,6 +40,7 @@ export async function addAddressAction(_p: ActionState, fd: FormData): Promise<A
       label: v.label || "Casa",
       line1: v.line1,
       neighborhood: v.neighborhood || null,
+      notes: v.notes || null,
       city_name: place.city_name,
       department: place.department,
       dane_code: place.dane_code,

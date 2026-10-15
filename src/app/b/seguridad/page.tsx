@@ -4,6 +4,7 @@ import { requireRole } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { revokeOtherSessionsAction } from "./actions";
 import { ChangePasswordForm } from "./forms";
+import { BackLink } from "@/components/ui/kit";
 
 export const metadata: Metadata = { title: "Seguridad de la cuenta", robots: { index: false } };
 
@@ -14,9 +15,14 @@ export default async function SecurityPage() {
   const { data: factors } = await supabase.auth.mfa.listFactors();
   const totp = (factors?.totp ?? []).filter((f) => f.status === "verified");
   return (
-    <section className="mx-auto flex w-full max-w-[640px] flex-col gap-6">
+    <section className="mx-auto flex w-full max-w-[640px] flex-col gap-6 lg:grid lg:max-w-[1040px] lg:grid-cols-2 lg:items-start lg:gap-x-6">
+      <div className="lg:col-span-2">
+        <BackLink href="/b/configuracion">Volver a ajustes</BackLink>
+      </div>
+      <div className="lg:col-span-2">
       <PageTitle title="Seguridad de la cuenta" subtitle={`${profile.email} · ${profile.role === "superadmin" ? "Superadmin" : "Técnico"}`} />
-      <Card className="flex flex-col gap-2">
+      </div>
+      <Card className="flex flex-col gap-2 lg:col-start-1 lg:row-start-3">
         <h2 className="m-0 text-[19px] font-extrabold">Verificación en dos pasos</h2>
         {totp.length ? (
           <ul className="m-0 flex list-none flex-col gap-1 p-0 text-[14px] font-semibold">
@@ -31,12 +37,12 @@ export default async function SecurityPage() {
         )}
         <p className="m-0 text-[13px] text-muted">Si pierdes tu teléfono, un administrador puede restablecer tu verificación desde Usuarios.</p>
       </Card>
-      <Card className="flex flex-col gap-3">
+      <Card className="flex flex-col gap-3 lg:col-start-2 lg:row-span-2 lg:row-start-3">
         <h2 className="m-0 text-[19px] font-extrabold">Cambiar contraseña</h2>
         <p className="m-0 text-[14px] text-ink-2">Por seguridad pedimos tu contraseña actual y un código de tu autenticador. Al terminar se cierran tus otras sesiones.</p>
         <ChangePasswordForm />
       </Card>
-      <Card className="flex flex-col gap-3">
+      <Card className="flex flex-col gap-3 lg:col-start-1 lg:row-start-4">
         <h2 className="m-0 text-[19px] font-extrabold">Sesiones</h2>
         <p className="m-0 text-[14px] text-ink-2">Cierra tu sesión en otros dispositivos si crees que alguien más pudo entrar.</p>
         <form action={revokeOtherSessionsAction}>

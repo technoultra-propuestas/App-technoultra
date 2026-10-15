@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { z } from "zod";
-import { TextLink } from "@/components/ui/kit";
+import { BackLink } from "@/components/ui/kit";
 import { InfoList, Panel, StatusHero, Timeline } from "@/components/ui/detail";
 import { Card, EQUIPMENT_LABEL, fmtDateTime, MODALITY_LABEL, statusLabel } from "@/components/ui/layout";
 import { requireRole } from "@/lib/auth/session";
@@ -17,13 +17,16 @@ import { QuoteSection } from "./quote-section";
 import { ReceptionSection } from "./reception-section";
 import { WorkSection } from "./work-section";
 import { DocumentsSection } from "./documents-section";
+import { backTarget } from "@/lib/navigation";
 
 export const metadata: Metadata = { title: "Ticket", robots: { index: false } };
 
-export default async function StaffTicketPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function StaffTicketPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ from?: string }> }) {
   const me = await requireRole(["technician", "superadmin"]);
   const id = z.string().uuid().safeParse((await params).id);
   if (!id.success) notFound();
+  // Regreso al contexto real (la lista con sus filtros u otra pantalla de la app); sin contexto, a la lista de tickets.
+  const back = backTarget((await searchParams).from, { href: "/b/tickets", label: "Volver a tickets" });
   const supabase = await createClient();
   // RLS: un técnico no asignado recibe 0 filas → 404.
   const { data: t } = await supabase
@@ -61,7 +64,7 @@ export default async function StaffTicketPage({ params }: { params: Promise<{ id
   return (
     <section className="grid gap-6 md:grid-cols-[1fr_380px]">
       <div className="flex flex-col gap-6">
-        <TextLink href="/b/tickets" className="w-fit">← Tickets</TextLink>
+        <BackLink href={back.href}>{back.label}</BackLink>
         <StatusHero code={t.code} subtitle={`${svc?.name ?? "Servicio"} · ${MODALITY_LABEL[t.modality]}`} status={effectiveStatus(t.status, (receptionCount ?? 0) > 0, t.modality)} message={t.problem} meta={<>Solicitud creada el {fmtDateTime(t.received_at)}{t.cancelled_reason ? ` · Cancelación: ${t.cancelled_reason}` : ""}</>} />
         <NextActionPanel ticketId={t.id} />
         <div className="grid gap-4 sm:grid-cols-2">

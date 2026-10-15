@@ -26,7 +26,7 @@ export async function DocumentsSection({ ticketId, status }: { ticketId: string;
         {docs.map((d) => (
           <li key={d.id} className="flex items-center justify-between gap-3 text-[14px]">
             <div className="min-w-0">
-              <a href={`/documentos/${d.id}`} target="_blank" rel="noreferrer" className="font-extrabold text-ink underline decoration-brand underline-offset-[3px]">
+              <a href={`/b/documentos/${d.id}?from=${encodeURIComponent(`/b/tickets/${ticketId}`)}`} className="font-extrabold text-ink underline decoration-brand underline-offset-[3px]">
                 {d.title} · v{d.version}
               </a>
               <div className="text-[12px] text-muted">

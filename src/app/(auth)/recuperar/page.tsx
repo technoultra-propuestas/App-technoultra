@@ -9,7 +9,7 @@ export default function RecoverPage() {
     <AuthShell
       title="Recupera tu contraseña"
       back="/login"
-      subtitle="Te enviamos un código por correo para crear una nueva."
+      subtitle="Te enviamos un enlace por correo para crear una nueva."
     >
       <RecoverForm />
     </AuthShell>

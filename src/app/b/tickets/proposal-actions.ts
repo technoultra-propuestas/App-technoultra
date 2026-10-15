@@ -8,6 +8,7 @@ import { generateTicketDocument } from "@/lib/documents/generate";
 import { loadProposal } from "@/lib/quotes/load";
 import { createClient } from "@/lib/supabase/server";
 import { scheduleEmailFlush } from "@/lib/email/outbox";
+import { ensureQuoteDelivery } from "@/lib/tickets/quote-delivery";
 
 const uuid = z.string().uuid();
 
@@ -39,6 +40,7 @@ export async function applyProposalAction(_p: ActionState, fd: FormData): Promis
     const { data: q, error } = await supabase.from("quotes").insert({ ticket_id: parsed.data.ticketId, customer_id: t.customer_id }).select("id").single();
     if (error || !q) return { ok: false, error: "No pudimos crear la cotización." };
     quoteId = q.id;
+    await ensureQuoteDelivery(supabase, q.id, parsed.data.ticketId); // ticket a domicilio: domicilio como concepto aparte
   }
   const { data: items } = await supabase.from("quote_items").select("service_id").eq("quote_id", quoteId);
   const have = new Set((items ?? []).map((i) => i.service_id));

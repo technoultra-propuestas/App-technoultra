@@ -6,6 +6,8 @@ vi.mock("@/lib/supabase/server", () => ({ createClient: async () => ({ rpc }) })
 vi.mock("@/lib/auth/session", () => ({ assertRole: async () => ({ id: "staff-1", role: "technician" }) }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/lib/email/outbox", () => ({ scheduleEmailFlush: vi.fn() }));
+// El domicilio de la cotización tiene sus propias pruebas (quote-delivery.test.ts): aquí el ticket no es a domicilio.
+vi.mock("@/lib/tickets/quote-delivery", () => ({ deliveryBlocksSend: async () => null, deliveryNotice: () => null, ensureQuoteDelivery: async () => ({ state: "not_applicable" }) }));
 
 import { sendQuoteAction } from "@/app/b/tickets/quote-actions";
 

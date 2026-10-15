@@ -10,7 +10,6 @@ import { initialState } from "@/lib/auth/schemas";
 import {
   requestPasswordResetAction,
   resendEmailAction,
-  signInAction,
   signUpAction,
   updatePasswordAction,
 } from "./actions";
@@ -27,52 +26,6 @@ export function GoogleButton({ next }: { next?: string }) {
       <GoogleG />
       Continuar con Google
     </a>
-  );
-}
-
-export function LoginForm({
-  next,
-  notice,
-}: {
-  next?: string;
-  notice?: string;
-}) {
-  const [state, action] = useActionState(signInAction, initialState);
-  return (
-    <form action={action} className="flex flex-col gap-5" noValidate>
-      {/* Solo se recuerda el correo; la contraseña nunca se guarda (FormDraft la excluye por tipo). */}
-      <FormDraft id="login" />
-      {next ? <input type="hidden" name="next" value={next} /> : null}
-      {notice ? <Alert>{notice}</Alert> : null}
-      <Field
-        label="Correo"
-        name="email"
-        type="email"
-        inputMode="email"
-        autoComplete="username"
-        required
-        error={state.fieldErrors?.email}
-      />
-      <Field
-        label="Contraseña"
-        name="password"
-        type="password"
-        autoComplete="current-password"
-        required
-        error={state.fieldErrors?.password}
-      />
-      <Link
-        href="/recuperar"
-        className="flex min-h-11 w-fit items-center text-[15px] font-bold underline decoration-brand underline-offset-[3px]"
-      >
-        ¿Olvidaste tu contraseña?
-      </Link>
-      {state.error && !state.fieldErrors ? <Alert>{state.error}</Alert> : null}
-      <SubmitButton pendingText="Entrando…">Entrar</SubmitButton>
-      <Link href="/gestion/login" className="flex min-h-11 w-fit items-center text-[13px] font-semibold text-muted underline decoration-line-strong underline-offset-[3px]">
-        ¿Eres del equipo? Acceso de personal
-      </Link>
-    </form>
   );
 }
 
@@ -209,7 +162,7 @@ export function RecoverForm() {
         error={state.fieldErrors?.email}
       />
       {state.error && !state.fieldErrors ? <Alert>{state.error}</Alert> : null}
-      <SubmitButton pendingText="Enviando…">Enviar código</SubmitButton>
+      <SubmitButton pendingText="Enviando…">Enviar enlace</SubmitButton>
     </form>
   );
 }

@@ -149,3 +149,15 @@ Migraciones 38–40 aplicadas al remoto verificado (agosikmonvjujxzokdlc), despl
 - **Causas raíz** (ver `docs/PWA-INSTALACION-Y-AVISOS.md`): 0 dispositivos suscritos a push en producción; el envío solo se disparaba tras algunas acciones; el SUPERADMIN no recibía push de la firma; la obligación de firma solo se mostraba en «Recibido» (tickets históricos avanzados antes del control quedaban sin aviso).
 - **Cambios:** instalación con `prompt()` en un clic y pasos de Safari visibles; `PushPrompt`/`PushBootstrap` (permiso solo con un toque, reparación silenciosa de la suscripción); `sw.js` v4 (acción «Abrir», re-suscripción, rutas solo internas — se corrigió `//dominio`); envío inmediato en todas las acciones; ticket del cliente con «Debes firmar el acta de recepción» + «Revisar y firmar acta» bajo la cabecera (la línea de tiempo no se tocó); firma idempotente; «Próxima acción» del personal con aviso adicional; **migración 45** (aviso real al SUPERADMIN al firmarse + auditoría detallada de la firma) — preparada y probada en local, SIN aplicar a producción.
 - **Pruebas:** `install-sign-flow.test.ts`, `sw-push.test.ts`, `push.test.ts` ampliada, 7 pruebas de BD nuevas (migración 45), E2E 20.
+
+## Escritorio, local/domicilio con tarifa, equipos y direcciones nuevos, y navegación (2026-10-13)
+- Detalle, causas raíz y hallazgos en `docs/ESCRITORIO-DOMICILIO-NAVEGACION.md`. **Sin migraciones.**
+- Solicitud con selector local/domicilio (la no disponible se explica), valor del domicilio por zona antes de enviar, equipos y direcciones nuevos desde el mismo formulario (sin duplicados), domicilio como concepto aparte en la cotización calculado por el servidor, visor de documentos con «Volver» y diseño de escritorio de dos columnas (móvil intacto).
+- Pruebas: `delivery`, `quote-delivery`, `inline-actions` y navegación (unitarias) y E2E 21 (recorridos A–E).
+
+## 2026-10-15 — Nueva pantalla de inicio de sesión de clientes (/login)
+- Diseño de dos paneles en escritorio (marca + mascota a la izquierda, tarjeta de acceso centrada en su panel a la derecha) y hoja inferior en móvil; logo real de la app (`/logo-technoultra.png` + `Wordmark`), sin «Continuar con Facebook» (no está configurado).
+- Campos con ícono, ojito para ver/ocultar contraseña (`aria-pressed`), aviso de bloqueo de mayúsculas, «Recordarme» (solo guarda el CORREO en este dispositivo; la contraseña nunca) y «¿Eres del equipo? Acceso de personal» discreto.
+- Seguridad sin cambios en servidor (ya cumplía): límite de intentos por IP y correo, error genérico, anti-enumeración, `safeNext`, cuentas del equipo bloqueadas en esta puerta. Recuperación: ahora dice «enlace» (no «código»), que es lo que envía Supabase.
+- Archivos: `src/app/(auth)/login/{page,login-form}.tsx`, `public/login/mascota-v2.webp` (recorte de la ilustración aprobada), `forms.tsx`, `recuperar/page.tsx`.
+- Pendiente: E2E 01/08/11 (login y contraste AA) cuando Docker esté estable.

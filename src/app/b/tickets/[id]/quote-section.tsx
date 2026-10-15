@@ -154,6 +154,11 @@ export async function QuoteSection({ ticketId, canQuote, ticketOpen }: { ticketI
                 Aplicar
               </button>
             </form>
+            {tk?.modality === "home" && Number(quote.delivery_fee) === 0 ? (
+              <p role="status" className="m-0 w-full rounded-[12px] bg-[#FFF6E8] p-3 text-[13px] font-bold text-ink">
+                Servicio a domicilio sin domicilio en la cotización. Usa «Agregar domicilio»; si la zona no tiene tarifa, configúrala en Cobertura. No se cobra nada que no esté aquí.
+              </p>
+            ) : null}
             {homeLike ? (
               <form action={setDeliveryAction}>
                 <input type="hidden" name="ticketId" value={ticketId} />
@@ -183,7 +188,7 @@ export async function QuoteSection({ ticketId, canQuote, ticketOpen }: { ticketI
             </div>
           </details>
           {tk?.status === "diagnosing" ? (
-            <QuoteActionForm ticketId={ticketId} quoteId={quote.id} kind="send" label="Enviar al cliente" />
+            <QuoteActionForm ticketId={ticketId} quoteId={quote.id} kind="send" label="Enviar al cliente" waiveDeliveryOption={tk?.modality === "home" && Number(quote.delivery_fee) === 0} />
           ) : (
             <div className="flex flex-col gap-2">
               <button type="button" disabled aria-describedby="send-why" className="min-h-[58px] rounded-2xl bg-brand text-[17px] font-extrabold text-ink opacity-50">

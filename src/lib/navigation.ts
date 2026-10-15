@@ -29,3 +29,30 @@ export function withParam(path: string, key: string, value: string): string {
   u.searchParams.set(key, value);
   return u.pathname + u.search;
 }
+
+/** Texto de la flecha «volver» según el destino real (ticket, cotización, lista…). */
+export function backLabel(path: string): string {
+  const p = path.split("?")[0];
+  if (/^\/c\/tickets\/[^/]+\/cotizacion$/.test(p)) return "Volver a la cotización";
+  if (/^\/c\/tickets\/[^/]+$/.test(p)) return "Volver a mi servicio";
+  if (p === "/c/tickets") return "Volver a mis servicios";
+  if (/^\/c\/documentos\/[^/]+$/.test(p)) return "Volver al documento";
+  if (p === "/c/documentos") return "Volver a mis documentos";
+  if (/^\/b\/tickets\/[^/]+$/.test(p)) return "Volver al ticket";
+  if (p === "/b/tickets") return "Volver a tickets";
+  if (p === "/notificaciones") return "Volver a notificaciones";
+  if (p === "/c" || p === "/b") return "Volver al inicio";
+  return "Volver";
+}
+
+/**
+ * Destino de la flecha «volver»: el contexto real desde el que se abrió la pantalla (`?from=`, ruta interna validada) y, si no hay (enlace directo,
+ * pestaña nueva), un destino por defecto fiable. No depende de `history.back()`: sirve aunque no exista una página anterior.
+ */
+export function backTarget(from: unknown, fallback: { href: string; label: string }): { href: string; label: string } {
+  const safe = safeReturnTo(from);
+  return safe ? { href: safe, label: backLabel(safe) } : fallback;
+}
+
+/** Enlace a la ficha de un documento abierto DESDE un ticket del cliente: la flecha «volver» regresa a ese ticket. */
+export const clientDocHref = (docId: string, fromTicketId: string): string => `/c/documentos/${docId}?from=${encodeURIComponent(`/c/tickets/${fromTicketId}`)}`;

@@ -92,7 +92,7 @@ export default async function StaffHome() {
         <StatCard icon="crm" value={tasks.length} label="Seguimientos para hoy" href="/b/crm" />
       </div>
 
-      <div className="grid items-start gap-5 lg:grid-cols-[1.35fr_1fr]">
+      <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
         <Section title="Requieren acción">
           {rows.length === 0 ? <p className="m-0 py-3 text-[15px] text-muted">Todo al día: no hay tickets ni seguimientos que requieran acción ahora.</p> : <ul className="m-0 flex list-none flex-col divide-y divide-line p-0">{rows.map((r, i) => <li key={i}>{r}</li>)}</ul>}
         </Section>

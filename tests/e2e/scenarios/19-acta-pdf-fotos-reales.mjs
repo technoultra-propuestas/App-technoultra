@@ -128,6 +128,6 @@ for slot, c in cols.items():
   rep.check("la constancia incluye firmante, canal, huella SHA-256 de la versión exacta y la declaración aceptada", /Constancia de firma electr/.test(p2.text) && p2.text.replace(/\s+/g, "").includes(sha) && /sesi[oó]n autenticada/.test(p2.text) && p2.text.includes(code) && /confirmo que le[ií] y acepto/.test(p2.text), sha.slice(0, 16));
   rep.check("las 4 fotos del PDF firmado siguen siendo las mismas (integridad del contenido firmado)", JSON.stringify(p2.images.slice(0, 4).map((i) => i.rgb)) === JSON.stringify(p1.images.map((i) => i.rgb)));
   await b.goto("/c/documentos", 2500);
-  rep.check("el acta firmada está disponible en «Documentos» del cliente y enlaza a su PDF", /Acta de recepci/.test(await b.text()) && (await b.eval(`!!document.querySelector('a[href="/c/documentos/${acta}"]')`)));
+  rep.check("el acta firmada está disponible en «Documentos» del cliente y enlaza a su PDF", /Acta de recepci/.test(await b.text()) && (await b.eval(`!!document.querySelector('a[href^="/c/documentos/${acta}"]')`)));
   rep.check("la huella del documento no cambió al firmar", q(`select (document_sha256 = (select sha256 from documents where id = '${acta}')) from document_signatures where document_id = '${acta}'`) === "t");
 }

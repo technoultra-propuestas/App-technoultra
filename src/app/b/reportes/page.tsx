@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ChipRow, FilterChip, StatCard } from "@/components/ui/kit";
+import { ChipRow, FilterChip, StatCard, BackLink } from "@/components/ui/kit";
 import { Panel } from "@/components/ui/detail";
 import { Card, money, PageTitle, statusLabel } from "@/components/ui/layout";
 import { requireRole } from "@/lib/auth/session";
@@ -49,6 +49,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
     : [];
   return (
     <section className="flex flex-col gap-6">
+      <BackLink href="/b/configuracion">Volver a ajustes</BackLink>
       <PageTitle title="Reportes" subtitle={`Del ${from} al ${to}. Solo datos agregados, sin información personal.`} />
       <ChipRow label="Periodo">
         {[7, 30, 90, 365].map((d) => (

@@ -121,6 +121,16 @@ export function Section({ title, action, children }: { title: string; action?: R
   );
 }
 
+/** Flecha «volver» consistente: lleva SIEMPRE a un destino real (el contexto desde el que se abrió la pantalla o uno por defecto), no al historial del navegador. */
+export function BackLink({ href, children }: { href: string; children: ReactNode }) {
+  return (
+    <Link href={href} className="press inline-flex min-h-11 w-fit items-center gap-1.5 text-[14px] font-extrabold text-ink no-underline hover:underline">
+      <span aria-hidden className="text-[20px] leading-none">←</span>
+      {children}
+    </Link>
+  );
+}
+
 /** Botón-enlace secundario compacto (p. ej. «Ver agenda»). */
 export function TextLink(props: ComponentProps<typeof Link>) {
   return <Link {...props} className={`press inline-flex min-h-11 items-center text-[14px] font-extrabold text-ink underline decoration-brand underline-offset-[3px] ${props.className ?? ""}`} />;

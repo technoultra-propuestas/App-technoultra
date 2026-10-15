@@ -3,7 +3,7 @@
  * lo necesita para reconstruir stacks). Los estilos en línea de atributos (style="...") se permiten vía style-src-attr
  * porque React/Next los emiten; no ejecutan código.
  */
-export function buildCsp(nonce: string, opts: { isDev: boolean; supabaseUrl: string; sentryDsn?: string }): string {
+export function buildCsp(nonce: string, opts: { isDev: boolean; supabaseUrl: string; sentryDsn?: string; /** Solo para /documentos/*: el visor de la app (mismo sitio) puede incrustar el PDF. */ embeddableBySelf?: boolean }): string {
   const supabaseHost = new URL(opts.supabaseUrl).host;
   // El navegador envía errores a Sentry: solo se permite el host exacto del DSN del proyecto (no comodines).
   let sentryHost: string | null = null;
@@ -45,7 +45,7 @@ export function buildCsp(nonce: string, opts: { isDev: boolean; supabaseUrl: str
     "object-src": ["'none'"],
     "base-uri": ["'self'"],
     "form-action": ["'self'"],
-    "frame-ancestors": ["'none'"],
+    "frame-ancestors": [opts.embeddableBySelf ? "'self'" : "'none'"],
   };
   const parts = Object.entries(directives).map(([k, v]) => `${k} ${v.join(" ")}`);
   if (!opts.isDev) parts.push("upgrade-insecure-requests");

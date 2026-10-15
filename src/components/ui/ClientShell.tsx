@@ -17,7 +17,7 @@ export function ClientShell({ children, name, unread, wide = false }: { children
     <div className="min-h-screen-dvh lg:pl-[84px]">
       <RailNav items={ITEMS} moreHref="/c/mas" home="/c" accountHref="/c/perfil" name={name} unread={unread} />
       <AppTopBar home="/c" unread={unread} />
-      <div id="contenido" tabIndex={-1} className={`enter mx-auto ${wide ? "max-w-[1280px]" : "max-w-[1040px]"} px-5 pb-28 pt-6 outline-none lg:px-9 lg:pb-12 lg:pt-8`}>
+      <div id="contenido" tabIndex={-1} className={`enter mx-auto ${wide ? "max-w-[1280px]" : "max-w-[1180px]"} px-5 pb-28 pt-6 outline-none lg:px-9 lg:pb-12 lg:pt-8`}>
         {children}
       </div>
       <InstallBanner />

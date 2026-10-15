@@ -1,4 +1,4 @@
-import { TextLink } from "@/components/ui/kit";
+import { BackLink } from "@/components/ui/kit";
 import { Panel, StatusHero } from "@/components/ui/detail";
 import { actaSignPrompt, clientNextAction } from "@/lib/domain/next-action";
 import { serviceStages } from "@/lib/domain/service-stages";
@@ -19,16 +19,19 @@ import { Card, fmtDateTime, money, MODALITY_LABEL, statusLabel } from "@/compone
 import { requireRole } from "@/lib/auth/session";
 import { loadFlowFacts } from "@/lib/tickets/facts";
 import { createClient } from "@/lib/supabase/server";
+import { backTarget, clientDocHref } from "@/lib/navigation";
 
 export const metadata: Metadata = { title: "Servicio", robots: { index: false } };
 
-export default async function TicketDetail({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ pago?: string }> }) {
+export default async function TicketDetail({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ pago?: string; from?: string }> }) {
   await requireRole(["client"]);
   const id = z
     .string()
     .uuid()
     .safeParse((await params).id);
   if (!id.success) notFound();
+  // Regreso al contexto real (inicio o la lista de tickets); sin contexto, a la lista.
+  const back = backTarget((await searchParams).from, { href: "/c/tickets", label: "Volver a mis servicios" });
   const supabase = await createClient();
   // RLS: solo el dueño obtiene la fila. Cambiar el id en la URL devuelve 404 (IDOR bloqueado).
   const { data: t } = await supabase
@@ -74,7 +77,7 @@ export default async function TicketDetail({ params, searchParams }: { params: P
   const actaException = Boolean(facts?.actaException);
   const signState = (d: { status: string } | null, kind?: string) => (d ? (d.status === "signed" ? "Firmada" : kind === "reception" && actaException ? "Excepción autorizada" : "Pendiente de firma") : "");
   // Obligación prioritaria: la fuente de verdad es el estado persistido del acta (no un aviso antiguo ni un estado del navegador).
-  const signPrompt = actaSignPrompt({ status: t.status, actaPending, actaException, receptionDocId: recDoc?.id ?? null });
+  const signPrompt = actaSignPrompt({ ticketId: t.id, status: t.status, actaPending, actaException, receptionDocId: recDoc?.id ?? null });
   const extraDocs = [
     ...(recDoc ? [{ id: recDoc.id, label: "Acta de recepción", state: signState(recDoc, "reception") }] : []),
     ...(delDoc ? [{ id: delDoc.id, label: "Acta de entrega", state: signState(delDoc) }] : []),
@@ -142,7 +145,7 @@ export default async function TicketDetail({ params, searchParams }: { params: P
 
   return (
     <section className="mx-auto flex w-full max-w-[1040px] flex-col gap-6">
-      <TextLink href="/c/tickets" className="w-fit">← Mis tickets</TextLink>
+      <BackLink href={back.href}>{back.label}</BackLink>
       <StatusHero
         code={t.code}
         device
@@ -207,7 +210,7 @@ export default async function TicketDetail({ params, searchParams }: { params: P
           <h2 className="m-0 text-[17px] font-extrabold">Diagnóstico técnico</h2>
           <p className="m-0 text-[15px] leading-normal text-ink-2">Ya tenemos listo el diagnóstico de tu equipo.</p>
           {diagnosisDocId ? (
-            <Link href={`/c/documentos/${diagnosisDocId}`} className="press flex min-h-12 w-full items-center justify-center rounded-2xl border-[1.5px] border-line-strong bg-white px-5 text-[15px] font-extrabold text-ink no-underline">Ver diagnóstico</Link>
+            <Link href={clientDocHref(diagnosisDocId, t.id)} className="press flex min-h-12 w-full items-center justify-center rounded-2xl border-[1.5px] border-line-strong bg-white px-5 text-[15px] font-extrabold text-ink no-underline">Ver diagnóstico</Link>
           ) : (
             <p className="m-0 text-[14px] text-muted">{diag0.summary}</p>
           )}
@@ -245,7 +248,7 @@ export default async function TicketDetail({ params, searchParams }: { params: P
           ticketId: t.id,
         }}
       />
-      <ServiceSummary code={t.code} requestAt={t.received_at} modality={t.modality} statusText={statusLabel(t.status)} deliveredAt={t.delivered_at} balanceDue={balanceDue} warrantyUntil={warrantyUntil} diagnosisDocId={diagnosisDocId} quoteDocId={quoteDocId} extraDocs={extraDocs} />
+      <ServiceSummary ticketId={t.id} code={t.code} requestAt={t.received_at} modality={t.modality} statusText={statusLabel(t.status)} deliveredAt={t.delivered_at} balanceDue={balanceDue} warrantyUntil={warrantyUntil} diagnosisDocId={diagnosisDocId} quoteDocId={quoteDocId} extraDocs={extraDocs} />
       <Panel title="Lo que nos contaste">
         <p className="m-0 text-[15px] leading-normal text-ink-2">{t.problem}</p>
       </Panel>

@@ -21,6 +21,8 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       { source: "/:path*", headers: securityHeaders },
+      // El PDF de un documento solo puede mostrarse incrustado en el visor de la propia app (mismo sitio); en cualquier otro sitio sigue prohibido.
+      { source: "/documentos/:path*", headers: [{ key: "X-Frame-Options", value: "SAMEORIGIN" }] },
       // El manifiesto es público y casi estático: se cachea una hora (y se sirve vencido hasta 1 día mientras se revalida) para no repetir la petición en cada carga.
       { source: "/manifest.webmanifest", headers: [{ key: "Cache-Control", value: "public, max-age=3600, stale-while-revalidate=86400" }] },
       // El service worker nunca se cachea para que las actualizaciones lleguen y se controlen desde la app.

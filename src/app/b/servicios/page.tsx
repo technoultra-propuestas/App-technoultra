@@ -87,7 +87,7 @@ export default async function ServicesAdminPage({ searchParams }: { searchParams
       <p className="m-0 text-[13px] font-semibold text-muted">
         {total} servicio(s) · <Link href="/b/servicios/reglas">Reglas de precios y fuentes</Link>
       </p>
-      <div className="grid gap-6 md:grid-cols-[1fr_340px]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 md:grid-cols-[minmax(0,1fr)_340px]">
         {list.length === 0 ? (
           <EmptyState title="No hay servicios con ese filtro" text="Cambia la búsqueda o crea uno nuevo." action={<LinkButton href="/b/servicios/nuevo">Nuevo servicio</LinkButton>} />
         ) : (

@@ -162,7 +162,7 @@ describe("estados · «Ahora estamos aquí» del cliente", () => {
     expect(val.title).toBe("Estamos validando tu pago");
   });
   it("diagnóstico listo → «Ver diagnóstico»; cotización → «Ver cotización»; listo → «Coordinar entrega»", () => {
-    expect(clientNextAction(cf({ status: "diagnosing", diagnosisFinalized: true, diagnosisDocId: "d1" })).primary).toEqual({ label: "Ver diagnóstico", href: "/c/documentos/d1" });
+    expect(clientNextAction(cf({ status: "diagnosing", diagnosisFinalized: true, diagnosisDocId: "d1" })).primary).toEqual({ label: "Ver diagnóstico", href: "/c/documentos/d1?from=%2Fc%2Ftickets%2Ft1" });
     expect(clientNextAction(cf({ status: "diagnosing" })).title).toBe("Tu equipo está en diagnóstico");
     const q = clientNextAction(cf({ status: "awaiting_approval", quoteStatus: "sent", quoteDocId: "q1" }));
     expect(q.primary).toEqual({ label: "Ver cotización", href: "/c/tickets/t1/cotizacion" });

@@ -6,6 +6,7 @@ import { Card, PageTitle } from "@/components/ui/layout";
 import { requireRole } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { DeleteServiceForm, ServiceForm } from "../service-form";
+import { BackLink } from "@/components/ui/kit";
 
 export const metadata: Metadata = { title: "Editar servicio", robots: { index: false } };
 
@@ -22,7 +23,8 @@ export default async function EditServicePage({ params }: { params: Promise<{ id
   ]);
   if (!svc) notFound();
   return (
-    <section className="mx-auto flex w-full max-w-[600px] flex-col gap-6">
+    <section className="mx-auto flex w-full max-w-[600px] flex-col gap-6 lg:max-w-[1040px]">
+      <BackLink href="/b/servicios">Volver a servicios</BackLink>
       <PageTitle title={svc.name} />
       <ServiceForm values={svc} categories={cats ?? []} subcategories={subs ?? []} />
       <Card>

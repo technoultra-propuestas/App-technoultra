@@ -101,6 +101,7 @@ export function QuoteActionForm({
   label,
   variant = "primary",
   withMessage = false,
+  waiveDeliveryOption = false,
 }: {
   ticketId: string;
   quoteId: string;
@@ -108,6 +109,8 @@ export function QuoteActionForm({
   label: string;
   variant?: "primary" | "dark";
   withMessage?: boolean;
+  /** Ticket a domicilio sin domicilio en la cotización: enviarla así exige marcar la cortesía de forma explícita (el servidor lo exige). */
+  waiveDeliveryOption?: boolean;
 }) {
   const fn = { send: sendQuoteAction, inperson: inPersonApprovalAction, answer: answerQuoteAction, revise: reviseQuoteAction }[kind];
   const [state, action] = useActionState(fn, initialState);
@@ -116,6 +119,12 @@ export function QuoteActionForm({
       <input type="hidden" name="ticketId" value={ticketId} />
       <input type="hidden" name="quoteId" value={quoteId} />
       {withMessage ? <Textarea label="Respuesta" name="message" required /> : null}
+      {waiveDeliveryOption ? (
+        <label className="flex items-start gap-3 text-[13.5px] font-semibold leading-snug">
+          <input type="checkbox" name="waiveDelivery" className="mt-0.5 h-5 w-5 flex-none accent-[#FF8A00]" />
+          Enviar sin cobrar domicilio (cortesía)
+        </label>
+      ) : null}
       <Result state={state} />
       <SubmitButton variant={variant} pendingText="Procesando…">
         {label}

@@ -111,12 +111,12 @@ export type ClientFacts = FlowFacts & {
  * Obligación PRIORITARIA del cliente: firmar el acta de recepción. La fuente de verdad es el estado persistido del acta (no un aviso antiguo):
  * aplica en cualquier estado del ticket mientras la versión vigente esté pendiente y no exista una excepción autorizada.
  */
-export function actaSignPrompt(f: Pick<ClientFacts, "status" | "actaPending" | "actaException" | "receptionDocId">): ClientNext | null {
+export function actaSignPrompt(f: Pick<ClientFacts, "ticketId" | "status" | "actaPending" | "actaException" | "receptionDocId">): ClientNext | null {
   if (!f.actaPending || f.actaException || !f.receptionDocId || ["cancelled", "delivered"].includes(f.status)) return null;
   return {
     title: "Debes firmar el acta de recepción",
     body: "Revisa cómo recibimos tu equipo (fotos, accesorios y estado) antes de firmar. Tu firma queda asociada a esta versión exacta del documento.",
-    primary: { label: "Revisar y firmar acta", href: `/c/documentos/${f.receptionDocId}` },
+    primary: { label: "Revisar y firmar acta", href: `/c/documentos/${f.receptionDocId}?from=${encodeURIComponent(`/c/tickets/${f.ticketId}`)}` },
     tone: "action",
   };
 }
@@ -136,19 +136,19 @@ export function clientNextAction(f: ClientFacts): ClientNext {
         const how = f.modality === "pickup" ? "Nuestro equipo coordinará contigo la recogida del equipo en la dirección indicada." : f.modality === "home" ? "Nuestro técnico se pondrá en contacto contigo para coordinar la visita." : "Puedes entregar el equipo en el punto acordado.";
         return { title: "Pendiente de recibir tu equipo", body: `Cuando recibamos tu equipo podremos iniciar el diagnóstico. ${how}`, tone: "wait" };
       }
-      if (f.receptionDocId && !f.receptionSigned) return { title: "Firma el acta de recepción", body: "Revisa cómo recibimos tu equipo (fotos, accesorios y estado) y fírmala con el dedo. Sin tu firma no iniciamos el diagnóstico.", primary: { label: "Revisar y firmar", href: `/c/documentos/${f.receptionDocId}` }, tone: "action" };
+      if (f.receptionDocId && !f.receptionSigned) return { title: "Firma el acta de recepción", body: "Revisa cómo recibimos tu equipo (fotos, accesorios y estado) y fírmala con el dedo. Sin tu firma no iniciamos el diagnóstico.", primary: { label: "Revisar y firmar", href: `/c/documentos/${f.receptionDocId}?from=${encodeURIComponent(`/c/tickets/${f.ticketId}`)}` }, tone: "action" };
       if (!f.receptionDocId) return { title: "Ya tenemos tu equipo", body: "Estamos preparando el acta de recepción para que la firmes.", tone: "wait" };
       return { title: "Ya tenemos tu equipo", body: "Pronto empieza la revisión.", tone: "wait" };
     }
     case "diagnosing":
       return f.diagnosisFinalized && f.diagnosisDocId
-        ? { title: "Diagnóstico listo", body: "Ya tenemos el resultado de la revisión de tu equipo.", primary: { label: "Ver diagnóstico", href: `/c/documentos/${f.diagnosisDocId}` }, tone: "action" }
+        ? { title: "Diagnóstico listo", body: "Ya tenemos el resultado de la revisión de tu equipo.", primary: { label: "Ver diagnóstico", href: `/c/documentos/${f.diagnosisDocId}?from=${encodeURIComponent(`/c/tickets/${f.ticketId}`)}` }, tone: "action" }
         : { title: "Tu equipo está en diagnóstico", body: "Estamos revisándolo para identificar la causa del problema.", tone: "wait" };
     case "awaiting_approval":
       if (f.quoteStatus === "approved")
         return { title: "Elige cómo pagar", body: "Aprobaste la cotización. Paga el anticipo del 50 % o el total con 5 % de descuento para que podamos comenzar tu servicio.", primary: { label: "Elegir cómo pagar", href: "#pago" }, tone: "action" };
       return f.quoteDocId || f.quoteStatus
-        ? { title: "Tenemos una propuesta para ti", body: "Incluye reparación, mano de obra y repuestos. No hacemos ningún trabajo sin tu aprobación.", primary: { label: "Ver cotización", href: `${base}/cotizacion` }, secondary: f.diagnosisDocId ? { label: "Ver diagnóstico", href: `/c/documentos/${f.diagnosisDocId}` } : undefined, tone: "action" }
+        ? { title: "Tenemos una propuesta para ti", body: "Incluye reparación, mano de obra y repuestos. No hacemos ningún trabajo sin tu aprobación.", primary: { label: "Ver cotización", href: `${base}/cotizacion` }, secondary: f.diagnosisDocId ? { label: "Ver diagnóstico", href: `/c/documentos/${f.diagnosisDocId}?from=${encodeURIComponent(`/c/tickets/${f.ticketId}`)}` } : undefined, tone: "action" }
         : { title: "Estamos preparando tu cotización", body: "Te avisaremos apenas esté lista.", tone: "wait" };
     case "awaiting_part":
       return { title: "Esperando un repuesto", body: "Aprobaste la cotización. Continuamos cuando llegue el repuesto.", tone: "wait" };

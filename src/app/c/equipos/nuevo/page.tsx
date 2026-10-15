@@ -12,14 +12,16 @@ export default async function NewEquipmentPage({ searchParams }: { searchParams:
   // Si se llegó desde una solicitud de servicio, al guardar se vuelve a ella con el equipo seleccionado.
   const returnTo = safeReturnTo((await searchParams).returnTo);
   return (
-    <section className="mx-auto flex w-full max-w-[520px] flex-col gap-6">
+    <section className="mx-auto flex w-full max-w-[520px] flex-col gap-6 lg:max-w-[860px]">
       {returnTo ? (
         <Link href={returnTo} className="inline-flex min-h-11 w-fit items-center text-[14px] font-extrabold text-ink underline decoration-brand underline-offset-[3px]">
           ← Volver a mi solicitud
         </Link>
       ) : null}
       <PageTitle title="Agregar equipo" subtitle={returnTo ? "Al guardarlo volverás a tu solicitud con este equipo ya seleccionado." : undefined} />
-      <EquipmentForm returnTo={returnTo} />
+      <div className="lg:rounded-card lg:border lg:border-line lg:bg-white lg:p-6 lg:shadow-card">
+        <EquipmentForm returnTo={returnTo} wide />
+      </div>
     </section>
   );
 }

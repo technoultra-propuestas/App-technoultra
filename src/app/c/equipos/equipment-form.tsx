@@ -19,14 +19,14 @@ type Values = {
   notes?: string | null;
 };
 
-export function EquipmentForm({ values, returnTo }: { values?: Values; returnTo?: string | null }) {
+export function EquipmentForm({ values, returnTo, wide = false }: { values?: Values; returnTo?: string | null; /** Escritorio: dos columnas (solo en la pantalla de alta; en el panel de edición se queda en una). */ wide?: boolean }) {
   const editing = Boolean(values?.id);
   const [state, action] = useActionState(
     editing ? updateEquipmentAction : createEquipmentAction,
     initialState,
   );
   return (
-    <form action={action} className="flex flex-col gap-[18px]" noValidate>
+    <form action={action} className={`flex flex-col gap-[18px] ${wide ? "lg:grid lg:grid-cols-2 lg:gap-x-6 lg:gap-y-5" : ""}`} noValidate>
       {editing ? null : <FormDraft id="equipo-nuevo" />}
       {editing ? <input type="hidden" name="id" value={values?.id} /> : null}
       {/* Destino de retorno (ruta interna ya validada en el servidor; la acción la valida de nuevo). */}
@@ -80,10 +80,14 @@ export function EquipmentForm({ values, returnTo }: { values?: Values; returnTo?
         defaultValue={values?.year ?? ""}
         error={state.fieldErrors?.year}
       />
-      <Textarea label="Observaciones (opcional)" name="notes" defaultValue={values?.notes ?? ""} />
-      {state.error && !state.fieldErrors ? <Alert>{state.error}</Alert> : null}
-      {state.ok && state.message ? <Alert tone="ok">{state.message}</Alert> : null}
-      <SubmitButton pendingText="Guardando…">{editing ? "Guardar cambios" : "Guardar equipo"}</SubmitButton>
+      <div className={wide ? "lg:col-span-2" : ""}>
+        <Textarea label="Observaciones (opcional)" name="notes" defaultValue={values?.notes ?? ""} />
+      </div>
+      <div className={`flex flex-col gap-3 ${wide ? "lg:col-span-2" : ""}`}>
+        {state.error && !state.fieldErrors ? <Alert>{state.error}</Alert> : null}
+        {state.ok && state.message ? <Alert tone="ok">{state.message}</Alert> : null}
+        <SubmitButton pendingText="Guardando…">{editing ? "Guardar cambios" : "Guardar equipo"}</SubmitButton>
+      </div>
     </form>
   );
 }

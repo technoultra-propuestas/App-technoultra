@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Avatar, ListRow } from "@/components/ui/kit";
+import { Avatar, ListRow, BackLink } from "@/components/ui/kit";
 import { Panel } from "@/components/ui/detail";
 import { fmtDate } from "@/components/ui/layout";
 import { SignOutRow } from "@/components/ui/SignOut";
@@ -25,6 +25,7 @@ export default async function ProfilePage() {
   const name = customer?.full_name ?? profile.full_name;
   return (
     <section className="flex flex-col gap-5">
+      <BackLink href="/c/mas">Volver a Más</BackLink>
       <header className="flex items-center gap-4">
         <Avatar name={name} size={56} />
         <div className="min-w-0">

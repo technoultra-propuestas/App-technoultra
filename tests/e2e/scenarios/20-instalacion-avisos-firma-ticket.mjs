@@ -96,7 +96,7 @@ export async function run({ b, rep, state, save, base }) {
   await b.goto(`/c/tickets/${t}`, 2500);
   const sp = await b.eval(`(() => { const s = document.querySelector('[data-sign-prompt]'); if (!s) return null; const r = s.getBoundingClientRect(); const a = [...s.querySelectorAll('a')].find((x) => /Revisar y firmar acta/.test(x.innerText)); return { text: s.innerText, href: a?.getAttribute('href'), top: r.top, h: innerHeight }; })()`);
   rep.check("el ticket muestra «Debes firmar el acta de recepción», con el estado del acta, ARRIBA (a la vista sin desplazarse)", sp && /Debes firmar el acta de recepción/i.test(sp.text) && /Pendiente de firma/i.test(sp.text) && sp.top < sp.h / 1.5, `top=${Math.round(sp?.top)} de ${sp?.h}`);
-  rep.check("el botón «Revisar y firmar acta» apunta al acta CORRECTA de este ticket", sp?.href === `/c/documentos/${a1}`, sp?.href);
+  rep.check("el botón «Revisar y firmar acta» apunta al acta CORRECTA de este ticket", (sp?.href ?? "").split("?")[0] === `/c/documentos/${a1}` && /from=%2Fc%2Ftickets%2F/.test(sp?.href ?? ""), sp?.href);
   rep.check("«Próxima acción» no contradice la obligación (no hay otra instrucción principal compitiendo)", await b.eval(`!document.querySelector('section[aria-label="Ahora estamos aquí"]')`));
 
   // suscripciones de PRUEBA para el técnico, el SUPERADMIN y el cliente (endpoints que no existen: se comprueba que el envío se dispara y se registra)
@@ -107,7 +107,7 @@ export async function run({ b, rep, state, save, base }) {
 
   await b.clickText("Revisar y firmar acta", "body");
   const dest = await b.waitPath((p) => p.startsWith("/c/documentos/"), 15000);
-  rep.check("al pulsarlo abre el acta correcta", dest === `/c/documentos/${a1}`, dest);
+  rep.check("al pulsarlo abre el acta correcta", dest.split("?")[0] === `/c/documentos/${a1}`, dest);
   await b.waitHydrated("canvas");
   // firma FALLIDA: sin trazo el servidor la rechaza; el acta y el ticket no cambian y nadie recibe «firmada»
   await b.check("accept");

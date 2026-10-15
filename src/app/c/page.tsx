@@ -35,7 +35,7 @@ export default async function ClientHome() {
   const active = tickets.data ?? [];
   const rows = [
     ...(unpaid.data ?? []).map((q) => (
-      <ListRow key={`q-${q.id}`} href={`/c/tickets/${q.ticket_id}`} title="Paga tu cotización aprobada" detail={`${q.code} · ${money(q.total)}`} icon="quote" tone="warn" />
+      <ListRow key={`q-${q.id}`} href={`/c/tickets/${q.ticket_id}?from=${encodeURIComponent("/c")}`} title="Paga tu cotización aprobada" detail={`${q.code} · ${money(q.total)}`} icon="quote" tone="warn" />
     )),
     ...active
       .filter((t) => STEP[t.status])
@@ -44,7 +44,7 @@ export default async function ClientHome() {
         const e = one(t.equipment as Rel<{ brand: string; model: string }>);
         const s = one(t.services as Rel<{ name: string }>);
         const s0 = STEP[t.status];
-        return <ListRow key={t.id} href={`/c/tickets/${t.id}`} title={s0.title} icon={s0.icon} tone={s0.tone} detail={[t.code, s?.name, e ? `${e.brand} ${e.model}` : null].filter(Boolean).join(" · ")} />;
+        return <ListRow key={t.id} href={`/c/tickets/${t.id}?from=${encodeURIComponent("/c")}`} title={s0.title} icon={s0.icon} tone={s0.tone} detail={[t.code, s?.name, e ? `${e.brand} ${e.model}` : null].filter(Boolean).join(" · ")} />;
       }),
   ];
   const first = profile.full_name.split(" ")[0] || "bienvenido";

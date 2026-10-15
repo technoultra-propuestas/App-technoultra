@@ -8,6 +8,7 @@ import { linkInstallationAction, unlinkInstallationAction } from "../actions";
 import { InfoList, Panel } from "@/components/ui/detail";
 import { money } from "@/components/ui/layout";
 import { ProductForm, SourceProductForm, StockForm } from "../forms";
+import { BackLink } from "@/components/ui/kit";
 
 export const metadata: Metadata = { title: "Producto", robots: { index: false } };
 
@@ -31,6 +32,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
   const linked = new Set((links ?? []).map((l) => l.service_id));
   return (
     <section className="grid gap-6 md:grid-cols-[1fr_380px]">
+      <BackLink href="/b/tienda">Volver a productos</BackLink>
       <div className="flex flex-col gap-6">
         <PageTitle title={p.name} />
         {isSource ? (

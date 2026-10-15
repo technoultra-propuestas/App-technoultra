@@ -14,7 +14,7 @@ const json = (status: number, error: string) => NextResponse.json({ error }, { s
  * Si el documento está FIRMADO, se añade al final la «Constancia de firma electrónica» (firma, firmante, fecha, canal y huella); los bytes del
  * original no cambian ni su huella (`X-Document-SHA256` es la del original firmado).
  */
-export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
+export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const id = z.string().uuid().safeParse((await ctx.params).id);
   if (!id.success) return json(404, "No encontrado");
   const profile = await getProfile();
@@ -61,7 +61,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
   return new NextResponse(Buffer.from(bytes), {
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `inline; filename="${doc.code}-v${doc.version}${signed ? "-firmado" : ""}.pdf"`,
+      "Content-Disposition": `${req.nextUrl.searchParams.get("descargar") === "1" ? "attachment" : "inline"}; filename="${doc.code}-v${doc.version}${signed ? "-firmado" : ""}.pdf"`,
       "Cache-Control": "private, no-store",
       "X-Content-Type-Options": "nosniff",
       "X-Document-SHA256": doc.sha256,

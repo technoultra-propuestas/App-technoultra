@@ -13,6 +13,7 @@ export async function signUpClient(b, mail, { email, password, fullName }) {
   const since = Date.now();
   await b.clearCookies();
   await b.goto("/registro");
+  await b.waitHydrated("form [name=email]", 60000); // sin esto, el primer formulario tras arrancar el servidor puede enviarse antes de hidratar
   await b.fill("fullName", fullName);
   await b.fill("email", email);
   await b.fill("password", password);
@@ -54,6 +55,7 @@ export async function completeOnboarding(b, { phone = "3" + String(Math.floor(Ma
 export async function clientLogin(b, { email, password }) {
   await b.clearCookies();
   await b.goto("/login");
+  await b.waitHydrated("form [name=email]", 60000);
   await b.fill("email", email);
   await b.fill("password", password);
   await b.click("form button[type=submit]");
@@ -75,6 +77,7 @@ export async function freshWindow(secret) {
 export async function staffLogin(b, { email, password, secret }) {
   await b.clearCookies();
   await b.goto("/gestion/login");
+  await b.waitHydrated("form [name=email]", 60000);
   await b.fill("email", email);
   await b.fill("password", password);
   await b.click("form button[type=submit]");

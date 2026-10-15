@@ -8,6 +8,7 @@ import { requireRole } from "@/lib/auth/session";
 import { derivePaymentUi, PAYMENT_MESSAGE, type DbPaymentStatus } from "@/lib/payments/state";
 import { createClient } from "@/lib/supabase/server";
 import { cancelOrderAction, startPaymentAction } from "../actions";
+import { BackLink } from "@/components/ui/kit";
 
 export const metadata: Metadata = { title: "Pedido", robots: { index: false } };
 
@@ -40,6 +41,7 @@ export default async function OrderDetailPage({ params, searchParams }: { params
   // La confirmación de pago SIEMPRE sale de la base de datos (webhook verificado); ?pago= solo muestra un aviso informativo.
   return (
     <section className="mx-auto flex w-full max-w-[640px] flex-col gap-6">
+      <BackLink href="/c/pedidos">Volver a mis pedidos</BackLink>
       <ClearCartOnMount />
       <PageTitle title={o.code} subtitle={`${o.delivery_method === "delivery" ? "Entrega a domicilio" : "Recoger en el local"} · ${fmtDateTime(o.created_at)}`} />
       {sp.pago && NOTICE[sp.pago] ? <Alert tone={sp.pago === "exito" ? "ok" : "error"}>{NOTICE[sp.pago]}</Alert> : null}

@@ -37,6 +37,7 @@ export function AddressForm({ cities, returnTo }: { cities: { dane_code: string;
         error={state.fieldErrors?.line1}
       />
       <Field label="Barrio (opcional)" name="neighborhood" />
+      <Field label="Indicaciones de acceso (opcional)" name="notes" hint="Torre, apartamento, portería, referencias para llegar." />
       {state.error && !state.fieldErrors ? <Alert>{state.error}</Alert> : null}
       {state.ok && state.message ? <Alert tone="ok">{state.message}</Alert> : null}
       <SubmitButton pendingText="Guardando…">Guardar dirección</SubmitButton>

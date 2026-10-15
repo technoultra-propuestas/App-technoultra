@@ -52,23 +52,15 @@ export async function run({ b, rep, state, save }) {
   // ---------------------------------------------------------------- solicitud → crear equipo → volver con el equipo seleccionado
   psql(`update equipment set deleted_at = now() where customer_id = '${customer}'`);
   await b.goto(`/c/solicitar/${svcSlug}`, 2500);
-  rep.check("sin equipos: avisa que hay que registrar uno y ofrece «Agregar equipo»", /Primero registra tu equipo/.test(await b.text()) && /Agregar equipo/.test(await b.text()));
+  rep.check("sin equipos: el formulario ofrece registrar uno nuevo ahí mismo (sin salir de la solicitud)", /Registrar uno nuevo/.test(await b.text()) && (await b.eval(`!!document.querySelector('[data-inline-form=equipo]')`)));
   await b.fill("problem", "Se calienta demasiado y se apaga solo después de unos minutos de uso.");
   await sleep(900);
-  await b.clickText("Agregar equipo", "#contenido");
-  await b.waitPath((p) => p.startsWith("/c/equipos/nuevo"), 10000);
-  await must(b, /Marca/, 15000); // la navegación del cliente cambia la URL antes de pintar el formulario
-  await sleep(800);
-  const nuevo = await b.path();
-  rep.check("«Agregar equipo» lleva con el destino de retorno de la solicitud", nuevo.includes("returnTo=") && decodeURIComponent(nuevo).includes(`/c/solicitar/${svcSlug}`), nuevo);
-  await b.fill("brand", "Acer");
-  await b.fill("model", "5021");
-  await b.clickText("Guardar equipo", "#contenido");
-  const back = await b.waitPath((p) => p.startsWith("/c/solicitar/") && p.includes("equipo="), 20000);
-  if (!back.includes("equipo=")) console.log("   [diag equipo]", (await b.text()).replace(/\s+/g, " ").slice(0, 600), "| JS:", b.errors.slice(0, 3).join(" | "));
-  rep.check("al guardar el equipo se vuelve automáticamente a la solicitud", back.startsWith(`/c/solicitar/${svcSlug}`), back);
+  await b.waitHydrated("[name=eq_brand]");
+  await b.fill("eq_brand", "Acer");
+  await b.fill("eq_model", "5021");
+  rep.check("el equipo se registra desde la misma pantalla y la ruta NO cambia", (await b.clickText("Guardar equipo y seleccionarlo", "#contenido")) && (await b.path()).startsWith(`/c/solicitar/${svcSlug}`));
+  await sleep(2500);
   const newEq = psql(`select id from equipment where customer_id = '${customer}' and deleted_at is null and brand = 'Acer' and model = '5021'`);
-  await sleep(1200);
   rep.check("el equipo recién creado queda seleccionado", newEq !== "" && (await b.eval(`document.querySelector('select[name=equipmentId]')?.value ?? ''`)) === newEq, newEq);
   rep.check("lo que ya se había escrito en la solicitud sigue ahí", (await b.eval(`document.querySelector('textarea[name=problem]')?.value ?? ''`)).startsWith("Se calienta demasiado"));
   // Actualizar la página no pierde lo escrito (memoria del formulario).

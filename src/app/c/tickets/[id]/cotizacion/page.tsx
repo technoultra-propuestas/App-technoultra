@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { z } from "zod";
-import { TextLink } from "@/components/ui/kit";
+import { BackLink } from "@/components/ui/kit";
 import { fmtDate, fmtDateTime, money, MODALITY_LABEL } from "@/components/ui/layout";
 import { requireRole } from "@/lib/auth/session";
 import { quoteBreakdown } from "@/lib/domain/pricing";
@@ -52,9 +52,11 @@ export default async function QuoteViewerPage({ params }: { params: Promise<{ id
   const why = creditExplanation(Number(quote.diagnosis_credit));
 
   return (
-    <section className="mx-auto flex w-full max-w-[640px] flex-col gap-4">
-      <TextLink href={`/c/tickets/${t.id}`} className="w-fit">← Volver a mi servicio</TextLink>
-      <header className="flex flex-col gap-2 rounded-card bg-ink p-5 text-white shadow-card">
+    <section className="mx-auto flex w-full max-w-[640px] flex-col gap-4 lg:grid lg:max-w-[1040px] lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:gap-x-6">
+      <div className="lg:col-span-2">
+        <BackLink href={`/c/tickets/${t.id}`}>Volver a mi servicio</BackLink>
+      </div>
+      <header className="flex flex-col gap-2 rounded-card bg-ink p-5 text-white shadow-card lg:col-span-2">
         <span className="text-[12px] font-extrabold uppercase tracking-[0.05em] text-[#B9B9B4]">Cotización · versión {quote.version}</span>
         <h1 className="m-0 text-[26px] font-extrabold leading-none tracking-[-0.02em] text-brand">{quote.code}</h1>
         <p className="m-0 text-[14px] font-semibold text-[#D6D6D2]">{eq ? `${eq.brand} ${eq.model} · ` : ""}{MODALITY_LABEL[t.modality]} · Servicio {t.code}</p>
@@ -62,12 +64,12 @@ export default async function QuoteViewerPage({ params }: { params: Promise<{ id
       </header>
 
       {doc ? (
-        <a href={`/documentos/${doc.id}`} target="_blank" rel="noreferrer" className="press flex min-h-12 items-center justify-center gap-2 rounded-2xl border-[1.5px] border-line-strong bg-white px-4 text-[15px] font-extrabold text-ink no-underline">
+        <a href={`/c/documentos/${doc.id}/ver?from=${encodeURIComponent(`/c/tickets/${t.id}/cotizacion`)}`} className="press flex min-h-12 items-center justify-center gap-2 rounded-2xl border-[1.5px] lg:col-start-2 lg:row-start-3 border-line-strong bg-white px-4 text-[15px] font-extrabold text-ink no-underline">
           Ver cotización en PDF
         </a>
       ) : null}
 
-      <article aria-label={`Cotización ${quote.code}`} className="flex flex-col gap-5 rounded-card border border-line bg-white p-5 shadow-card">
+      <article aria-label={`Cotización ${quote.code}`} className="flex flex-col gap-5 rounded-card border border-line bg-white p-5 shadow-card lg:col-start-1 lg:row-span-3 lg:row-start-3">
         {groupQuoteItems(items ?? []).map((g) => (
           <section key={g.concept} aria-label={g.label} className="flex flex-col gap-2">
             <div className="flex items-baseline justify-between border-b border-line pb-1 text-[12.5px] font-extrabold uppercase tracking-[0.05em] text-muted">
@@ -107,7 +109,7 @@ export default async function QuoteViewerPage({ params }: { params: Promise<{ id
       </article>
 
       {(events ?? []).length > 0 ? (
-        <section aria-label="Preguntas sobre la cotización" className="flex flex-col gap-2 rounded-card border border-line bg-white p-4">
+        <section aria-label="Preguntas sobre la cotización" className="flex flex-col gap-2 rounded-card border border-line bg-white p-4 lg:col-start-1 lg:row-start-6">
           <h2 className="m-0 text-[15px] font-extrabold">Tus preguntas</h2>
           {(events ?? []).map((e) => (
             <p key={e.id} className={`m-0 rounded-[12px] p-3 text-[14.5px] ${e.event_type === "question" ? "bg-paper" : "bg-[#FFF0DD]"}`}>
@@ -119,15 +121,15 @@ export default async function QuoteViewerPage({ params }: { params: Promise<{ id
       ) : null}
 
       {open ? (
-        <div className="sticky bottom-[92px] z-20 -mx-1 rounded-card border border-line bg-paper/95 p-3 shadow-card backdrop-blur lg:bottom-4">
+        <div className="sticky bottom-[92px] z-20 -mx-1 rounded-card border border-line bg-paper/95 p-3 shadow-card backdrop-blur lg:bottom-auto lg:top-6 lg:col-start-2 lg:row-start-4 lg:mx-0">
           <QuoteDecision ticketId={t.id} quoteId={quote.id} total={money(quote.total)} />
         </div>
       ) : quote.status === "approved" ? (
-        <div id="pago">
+        <div id="pago" className="lg:col-start-2 lg:row-start-4">
           <QuotePayPanel ticketId={t.id} quoteId={quote.id} />
         </div>
       ) : (
-        <p className="m-0 text-center text-[14px] font-bold text-muted">{quote.status === "rejected" ? "Rechazaste esta cotización." : "Esta cotización ya no está vigente."}</p>
+        <p className="m-0 text-center text-[14px] font-bold text-muted lg:col-start-2 lg:row-start-4">{quote.status === "rejected" ? "Rechazaste esta cotización." : "Esta cotización ya no está vigente."}</p>
       )}
     </section>
   );
