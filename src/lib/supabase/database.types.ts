@@ -4015,6 +4015,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      admin_purge_user: { Args: { p_actor: string; p_confirm_email: string; p_target: string }; Returns: Json }
       admin_report: { Args: { p_from: string; p_to: string }; Returns: Json }
       admin_set_user_active: {
         Args: { p_active: boolean; p_actor: string; p_user_id: string }

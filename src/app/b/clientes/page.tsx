@@ -5,6 +5,7 @@ import { Avatar, SearchField } from "@/components/ui/kit";
 import { NavIcon } from "@/components/ui/icons";
 import { requireRole } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
+import { PurgeUserButton } from "../usuarios/purge-button";
 
 export const metadata: Metadata = { title: "Clientes", robots: { index: false } };
 
@@ -12,13 +13,13 @@ const norm = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCa
 const total = (v: unknown) => (Array.isArray(v) ? Number((v[0] as { count?: number } | undefined)?.count ?? 0) : 0);
 
 export default async function StaffCustomersPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
-  await requireRole(["technician", "superadmin"]);
+  const me = await requireRole(["technician", "superadmin"]);
   const q = ((await searchParams).q ?? "").trim().slice(0, 80);
   const supabase = await createClient();
   // RLS decide qué clientes ve cada rol (el técnico solo los de sus tickets); aquí no se filtra por rol.
   const { data } = await supabase
     .from("customers")
-    .select("id, full_name, phone, email, equipment(count), tickets(count)")
+    .select("id, profile_id, full_name, phone, email, equipment(count), tickets(count)")
     .is("deleted_at", null)
     .order("full_name")
     .limit(500);
@@ -38,7 +39,7 @@ export default async function StaffCustomersPage({ searchParams }: { searchParam
             const eq = total(c.equipment);
             const tk = total(c.tickets);
             return (
-              <li key={c.id}>
+              <li key={c.id} className="flex flex-col gap-2">
                 <Link href={`/b/tickets?estado=all&q=${encodeURIComponent(c.full_name)}`} className="press flex min-h-[84px] items-center gap-3.5 rounded-card border border-line bg-white p-4 text-ink no-underline shadow-card">
                   <Avatar name={c.full_name} size={46} />
                   <span className="flex min-w-0 flex-1 flex-col">
@@ -49,6 +50,7 @@ export default async function StaffCustomersPage({ searchParams }: { searchParam
                   </span>
                   <NavIcon name="chevron" width={18} height={18} aria-hidden className="flex-none" />
                 </Link>
+                {me.role === "superadmin" && c.profile_id ? <PurgeUserButton userId={c.profile_id} email={c.email ?? ""} name={c.full_name} /> : null}
               </li>
             );
           })}

@@ -90,3 +90,26 @@ export function signedThumbUrl(publicId: string): string {
   const sig = createHash("sha1").update(`${tx}/${path}${CLOUDINARY_API_SECRET}`).digest("base64url").slice(0, 8);
   return `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/authenticated/s--${sig}--/${tx}/${path}`;
 }
+
+/** Borra activos privados (mejor esfuerzo; se usa al eliminar una cuenta). Prueba como imagen y como video; nunca lanza. */
+export async function destroyAssets(publicIds: string[]): Promise<{ requested: number }> {
+  const ids = [...new Set(publicIds.filter(Boolean))];
+  if (ids.length === 0) return { requested: 0 };
+  try {
+    const { CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET } = serverEnv.cloudinary();
+    const auth = Buffer.from(`${CLOUDINARY_API_KEY}:${CLOUDINARY_API_SECRET}`).toString("base64");
+    for (const rt of ["image", "video"] as const) {
+      for (let i = 0; i < ids.length; i += 100) {
+        const qs = ids.slice(i, i + 100).map((id) => `public_ids[]=${encodeURIComponent(id)}`).join("&");
+        await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/resources/${rt}/authenticated?${qs}`, {
+          method: "DELETE",
+          headers: { Authorization: `Basic ${auth}` },
+          signal: AbortSignal.timeout(15_000),
+        }).catch(() => undefined);
+      }
+    }
+  } catch {
+    /* sin credenciales o sin red: los archivos quedan huérfanos pero la cuenta ya se borró; la lista queda en el archivo de la copia */
+  }
+  return { requested: ids.length };
+}

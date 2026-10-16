@@ -4,6 +4,7 @@ import { PageTitle } from "@/components/ui/layout";
 import { requireRole } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { InviteStaffForm } from "./invite-form";
+import { PurgeUserButton } from "./purge-button";
 import { resetStaffMfaAction, setUserActiveAction } from "./actions";
 
 export const metadata: Metadata = { title: "Usuarios del equipo", robots: { index: false } };
@@ -59,6 +60,7 @@ export default async function UsersPage() {
                     {u.is_active ? "Desactivar" : "Activar"}
                   </button>
                 </form>
+                <PurgeUserButton userId={u.id} email={u.email} name={u.full_name || u.email} />
                 </div>
               ) : null}
             </li>
