@@ -167,15 +167,17 @@ export function AddressStep({ cities, art }: { cities: { dane_code: string; city
           </Alert>
         </>
       ) : null}
-      <Field
-        label="Dirección"
-        name="line1"
-        autoComplete="street-address"
-        placeholder="Ej. Calle 5 # 12 - 34"
-        required
-        error={state.fieldErrors?.line1}
-      />
-      <Field label="Barrio (opcional)" name="neighborhood" placeholder="Ej. San Fernando" />
+      <div className="grid gap-[18px] lg:grid-cols-2 lg:gap-4">
+        <Field
+          label="Dirección"
+          name="line1"
+          autoComplete="street-address"
+          placeholder="Ej. Calle 5 # 12 - 34"
+          required
+          error={state.fieldErrors?.line1}
+        />
+        <Field label="Barrio (opcional)" name="neighborhood" placeholder="Ej. San Fernando" />
+      </div>
       {state.error && !state.fieldErrors ? <Alert>{state.error}</Alert> : null}
       <div className="my-auto lg:hidden">{art}</div>
       <Actions>
@@ -208,8 +210,10 @@ export function EquipmentStep({ art }: { art?: ReactNode }) {
           <Chevron />
         </span>
       </label>
-      <Field label="Marca" name="brand" placeholder="Ej. HP, Dell, Lenovo" required error={state.fieldErrors?.brand} />
-      <Field label="Modelo" name="model" placeholder="Ej. Pavilion 15" required error={state.fieldErrors?.model} />
+      <div className="grid gap-[18px] lg:grid-cols-2 lg:gap-4">
+        <Field label="Marca" name="brand" placeholder="Ej. HP, Dell, Lenovo" required error={state.fieldErrors?.brand} />
+        <Field label="Modelo" name="model" placeholder="Ej. Pavilion 15" required error={state.fieldErrors?.model} />
+      </div>
       <Field label="Serial (opcional)" name="serial" placeholder="Ej. ABC123456" hint="Lo encuentras en una etiqueta del equipo." />
       {state.error && !state.fieldErrors ? <Alert>{state.error}</Alert> : null}
       <div className="my-auto lg:hidden">{art}</div>

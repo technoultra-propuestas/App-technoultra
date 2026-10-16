@@ -110,19 +110,29 @@ export function CheckEmailPanel({ email, mode }: { email: string; mode: "signup"
     };
   }, [mode, router]);
   return (
-    <div className="flex flex-col gap-[18px]">
-      <div className="flex items-start gap-4 rounded-2xl bg-[#FFF0DD] p-4">
-        <span aria-hidden className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] bg-brand">
-          <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#000" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center gap-4 rounded-2xl bg-[#FFF3E4] p-4">
+        <span aria-hidden className="flex h-[60px] w-[60px] shrink-0 items-center justify-center rounded-[16px] bg-brand shadow-[0_8px_18px_-10px_rgba(255,138,0,.9)]">
+          <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <rect x="3" y="5" width="18" height="14" rx="3" />
             <path d="m4 7 8 6 8-6" />
           </svg>
         </span>
-        <p className="m-0 text-[15px] leading-snug font-semibold text-ink-2">
-          Abre el correo y haz clic en el enlace. Hazlo desde este mismo navegador para que volvamos aquí automáticamente.
+        <p className="m-0 text-[14.5px] leading-snug text-ink-2">
+          <strong className="font-extrabold text-ink">Abre el correo y haz clic en el enlace.</strong>
+          <br />
+          Hazlo desde este mismo navegador para que volvamos aquí automáticamente.
         </p>
       </div>
-      <p className="m-0 text-[14px] leading-snug text-muted">¿No encuentras el correo? Revisa <strong>Spam</strong> o <strong>Promociones</strong>. El enlace tiene vigencia limitada.</p>
+      <p className="m-0 flex items-start gap-3 text-[13.5px] leading-snug text-muted">
+        <svg aria-hidden viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="mt-0.5 shrink-0">
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 11v5M12 8h.01" />
+        </svg>
+        <span>
+          ¿No encuentras el correo? Revisa <strong className="text-ink-2">Spam</strong> o <strong className="text-ink-2">Promociones</strong>. El enlace tiene vigencia limitada.
+        </span>
+      </p>
       <form action={resend} onSubmit={() => setCooldown(RESEND_COOLDOWN_S)} className="flex flex-col gap-2">
         <input type="hidden" name="email" value={email} />
         <input type="hidden" name="mode" value={mode} />
@@ -131,17 +141,39 @@ export function CheckEmailPanel({ email, mode }: { email: string; mode: "signup"
         <button
           type="submit"
           disabled={cooldown > 0}
-          className="min-h-[58px] rounded-2xl border-[1.5px] border-line-strong bg-white text-[16px] font-extrabold text-ink transition-opacity duration-200 disabled:opacity-60"
+          className="flex min-h-[56px] items-center justify-center gap-3 rounded-2xl border border-line bg-[#F4F4F2] text-[15.5px] font-bold text-ink-2 transition-colors duration-200 enabled:bg-white enabled:text-ink enabled:hover:border-brand"
         >
+          {cooldown > 0 ? (
+            <svg aria-hidden viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#FF8A00" strokeWidth="2.6" strokeLinecap="round" className="motion-safe:animate-spin">
+              <path d="M12 3a9 9 0 1 0 9 9" />
+            </svg>
+          ) : null}
           {cooldown > 0 ? `Reenviar correo en ${cooldown} s` : "Reenviar correo"}
         </button>
       </form>
-      <div className="flex flex-col gap-1 text-[15px]">
-        <Link href="/login" className={`${linkCls} flex min-h-11 items-center`}>
-          Ya confirmé mi correo · Iniciar sesión
+      <div aria-hidden className="flex items-center gap-3 text-[13px] font-semibold text-muted">
+        <span className="h-px flex-1 bg-line-strong" /> o <span className="h-px flex-1 bg-line-strong" />
+      </div>
+      <div className="grid grid-cols-1 gap-x-4 gap-y-1 text-[14.5px] sm:grid-cols-2">
+        <Link href="/login" className="flex min-h-12 items-center justify-between gap-2 font-extrabold text-ink no-underline">
+          <span className="flex items-center gap-2.5">
+            <svg aria-hidden viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#FF8A00" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+              <rect x="4" y="4" width="16" height="16" rx="4" />
+              <path d="m8.5 12.5 2.5 2.5 4.5-5" />
+            </svg>
+            Ya confirmé mi correo
+          </span>
+          <span aria-hidden className="text-brand">→</span>
         </Link>
-        <Link href={mode === "recovery" ? "/recuperar" : "/registro"} className={`${linkCls} flex min-h-11 items-center`}>
-          Usar otro correo
+        <Link href={mode === "recovery" ? "/recuperar" : "/registro"} className="flex min-h-12 items-center justify-between gap-2 font-extrabold text-ink no-underline">
+          <span className="flex items-center gap-2.5">
+            <svg aria-hidden viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#FF8A00" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+              <rect x="3" y="5" width="18" height="14" rx="3" />
+              <path d="m4 7 8 6 8-6" />
+            </svg>
+            Usar otro correo
+          </span>
+          <span aria-hidden className="text-brand">→</span>
         </Link>
       </div>
     </div>

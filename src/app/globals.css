@@ -125,3 +125,17 @@ a {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-12px); }
 }
+
+/* Onboarding (solo escritorio ≥1024 px; el móvil no cambia): entrada escalonada, ilustración que aparece y barra que se llena. */
+@keyframes tu-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes tu-art-in { from { opacity: 0; transform: translateX(24px) scale(.96); } to { opacity: 1; transform: none; } }
+@keyframes tu-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@media (min-width: 1024px) {
+  .tu-stagger > * { animation: tu-rise .55s cubic-bezier(.2,.7,.2,1) both; }
+  .tu-stagger > *:nth-child(2) { animation-delay: .05s; }
+  .tu-stagger > *:nth-child(3) { animation-delay: .1s; }
+  .tu-stagger > *:nth-child(4) { animation-delay: .15s; }
+  .tu-stagger > *:nth-child(5) { animation-delay: .2s; }
+  .tu-stagger > *:nth-child(6) { animation-delay: .25s; }
+  .tu-art-in { animation: tu-art-in .7s cubic-bezier(.2,.7,.2,1) .1s both; }
+}
