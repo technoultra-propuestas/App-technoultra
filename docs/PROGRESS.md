@@ -161,3 +161,9 @@ Migraciones 38–40 aplicadas al remoto verificado (agosikmonvjujxzokdlc), despl
 - Seguridad sin cambios en servidor (ya cumplía): límite de intentos por IP y correo, error genérico, anti-enumeración, `safeNext`, cuentas del equipo bloqueadas en esta puerta. Recuperación: ahora dice «enlace» (no «código»), que es lo que envía Supabase.
 - Archivos: `src/app/(auth)/login/{page,login-form}.tsx`, `public/login/mascota-v2.webp` (recorte de la ilustración aprobada), `forms.tsx`, `recuperar/page.tsx`.
 - Pendiente: E2E 01/08/11 (login y contraste AA) cuando Docker esté estable.
+
+## 2026-10-16 — Onboarding con nueva apariencia (solo presentación)
+- Los 6 pasos, acciones de servidor y orden NO cambian (`actions.ts` intacto; el paso lo fija el servidor). Ilustraciones por paso en `public/onboarding/onboarding-{1..6}.png` servidas con `next/image`; la referencia de las seis pantallas quedó en `design/uploads/`.
+- Mapeo por contenido (orden real del flujo): 1 bienvenida→modelo, 2 celular→teléfono, 3 dirección→mapa, 4 equipo→portátil, 5 notificaciones→campana, 6 documentos→documento.
+- «← Atrás» y «Continuar» en una fila; «Atrás» sigue siendo otro formulario (atributo `form`) para no borrar lo escrito. «Omitir» arriba solo en el equipo (misma acción que «Lo hago después»). Prefijo +57 con bandera visual (el servidor sigue normalizando el celular). Escritorio: ilustración grande a la derecha.
+- Prueba: E2E 01 (6 pasos por la interfaz) OK; omitir equipo y «Atrás» verificados.

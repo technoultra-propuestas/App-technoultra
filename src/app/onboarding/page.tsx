@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { DraftProvider } from "@/components/forms/FormDraft";
 import { requireRole } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
-import { OnboardingShell } from "./shell";
+import { OnboardingShell, StepArt } from "./shell";
 import {
   AddressStep,
   BackButton,
@@ -11,18 +11,20 @@ import {
   LegalStep,
   NotificationsStep,
   PhoneStep,
+  SkipEquipment,
   WelcomeStep,
 } from "./steps";
 
 export const metadata: Metadata = { title: "Configura tu cuenta", robots: { index: false } };
 
-const TITLES = [
-  "Te damos la bienvenida",
-  "Tu celular",
-  "Tu dirección",
-  "Tu primer equipo",
-  "Notificaciones",
-  "Documentos",
+/** [texto, palabra destacada en naranja] */
+const TITLES: [string, string][] = [
+  ["Te damos\nla ", "bienvenida"],
+  ["Tu ", "celular"],
+  ["Tu ", "dirección"],
+  ["Tu primer ", "equipo"],
+  ["", "Notificaciones"],
+  ["Documentos", ""],
 ];
 const SUBTITLES = [
   undefined,
@@ -59,15 +61,27 @@ export default async function OnboardingPage() {
         }[])
       : [];
 
+  const art = <StepArt step={step} />;
+
   return (
     <DraftProvider scope={profile.id}>
-      <OnboardingShell step={step} title={TITLES[step]} subtitle={SUBTITLES[step]}>
-        {step === 0 ? <WelcomeStep name={profile.full_name} /> : null}
-        {step === 1 ? <PhoneStep /> : null}
-        {step === 2 ? <AddressStep cities={cities} /> : null}
-        {step === 3 ? <EquipmentStep /> : null}
-        {step === 4 ? <NotificationsStep /> : null}
-        {step === 5 ? <LegalStep docs={docs} /> : null}
+      <OnboardingShell
+        step={step}
+        title={
+          <>
+            {TITLES[step][0]}
+            <span className="text-brand">{TITLES[step][1]}</span>
+          </>
+        }
+        subtitle={SUBTITLES[step]}
+        skip={step === 3 ? <SkipEquipment /> : undefined}
+      >
+        {step === 0 ? <WelcomeStep name={profile.full_name} art={art} /> : null}
+        {step === 1 ? <PhoneStep art={art} /> : null}
+        {step === 2 ? <AddressStep cities={cities} art={art} /> : null}
+        {step === 3 ? <EquipmentStep art={art} /> : null}
+        {step === 4 ? <NotificationsStep art={art} /> : null}
+        {step === 5 ? <LegalStep docs={docs} art={art} /> : null}
         {step > 0 ? <BackButton /> : null}
       </OnboardingShell>
     </DraftProvider>

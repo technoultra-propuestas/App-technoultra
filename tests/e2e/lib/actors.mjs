@@ -42,7 +42,7 @@ export async function completeOnboarding(b, { phone = "3" + String(Math.floor(Ma
   await must(b, /PASO 4 DE 6/i, 30000);
   await b.fill("brand", brand);
   await b.fill("model", model);
-  await next("Guardar equipo");
+  await next("Continuar");
   await must(b, /PASO 5 DE 6/i, 30000);
   await next("Omitir por ahora");
   await must(b, /PASO 6 DE 6/i, 30000);
