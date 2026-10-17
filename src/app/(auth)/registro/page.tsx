@@ -95,10 +95,10 @@ export default function RegisterPage() {
             </Link>
           </p>
         </header>
-        <ul className="tu-stagger absolute right-[3.2vw] top-[22vh] z-10 m-0 flex w-[min(21vw,310px)] list-none flex-col gap-3.5 p-0">
-          {PILLS.map((p, i) => (
+        <ul className="absolute right-[3.2vw] top-[22vh] z-10 m-0 flex w-[min(21vw,310px)] list-none flex-col gap-3.5 p-0">
+          {PILLS.map((p) => (
             <li key={p.title} className={p.shift}>
-              <div className="flex items-center gap-3.5 rounded-full bg-white/80 py-3 pl-3.5 pr-6 shadow-[0_14px_40px_-18px_rgba(160,70,0,.5)] ring-1 ring-white/70 backdrop-blur-md motion-safe:animate-[tu-float_6s_ease-in-out_infinite]" style={{ animationDelay: `${-i * 1.4}s` }}>
+              <div className="flex items-center gap-3.5 rounded-full bg-white/80 py-3 pl-3.5 pr-6 shadow-[0_14px_40px_-18px_rgba(160,70,0,.5)] ring-1 ring-white/70 backdrop-blur-md">
                 <span className="flex h-12 w-12 flex-none items-center justify-center rounded-2xl bg-brand text-white shadow-[0_8px_18px_-10px_rgba(255,138,0,.9)]">{p.icon}</span>
                 <span className="flex min-w-0 flex-col leading-tight">
                   <strong className="text-[16px] font-extrabold text-ink">{p.title}</strong>
@@ -167,31 +167,6 @@ export default function RegisterPage() {
         </p>
       </div>
 
-      {/* ---- Beneficios (móvil y tableta) ---- */}
-      <div className="relative z-10 mx-4 mt-5 flex flex-col gap-3 pb-8 sm:mx-auto sm:max-w-[480px] lg:hidden">
-        <ul className="m-0 grid list-none grid-cols-2 gap-2.5 p-0">
-          {PILLS.map((p) => (
-            <li key={p.title} className="flex items-center gap-2.5 rounded-2xl bg-white/80 p-2.5 shadow-[0_10px_28px_-18px_rgba(160,70,0,.5)] ring-1 ring-white/70 backdrop-blur">
-              <span className="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-brand text-white [&>svg]:h-5 [&>svg]:w-5">{p.icon}</span>
-              <span className="flex min-w-0 flex-col leading-tight">
-                <strong className="text-[13.5px] font-extrabold text-ink">{p.title}</strong>
-                <span className="text-[11.5px] font-semibold text-muted">{p.text}</span>
-              </span>
-            </li>
-          ))}
-        </ul>
-        <ul className="m-0 grid list-none grid-cols-2 gap-x-3 gap-y-3.5 rounded-[22px] bg-white/75 p-4 ring-1 ring-white/70 backdrop-blur">
-          {BENEFITS.map((b) => (
-            <li key={b.title} className="flex items-start gap-2.5">
-              <span className="mt-0.5 flex-none text-brand [&>svg]:h-5 [&>svg]:w-5">{b.icon}</span>
-              <span className="flex min-w-0 flex-col leading-tight">
-                <strong className="text-[13px] font-extrabold text-ink">{b.title}</strong>
-                <span className="text-[11.5px] font-semibold text-muted">{b.text}</span>
-              </span>
-            </li>
-          ))}
-        </ul>
-      </div>
     </main>
   );
 }

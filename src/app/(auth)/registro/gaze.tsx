@@ -5,7 +5,7 @@ import { useEffect, useRef } from "react";
 /**
  * Modelo de «Crea tu cuenta»: su mirada sigue el cursor (escritorio) o el dedo y los campos que se enfocan (móvil). Dos capas de iris,
  * recortadas por la forma real de cada ojo (máscara), se desplazan sobre la ilustración, cuyos ojos ya vienen «vaciados»: el iris nunca se
- * sale del párpado. Además la modelo flota y se inclina levemente hacia el cursor (paralaje). Todo se interpola por fotograma; sin cursor la
+ * sale del párpado. La modelo queda fija: el único movimiento son los ojos, y su velocidad sigue la del cursor. Todo se interpola por fotograma; sin cursor la
  * mirada vaga sola; con «reducir movimiento» queda estática.
  */
 const W = 1431; // tamaño de la ilustración (px de origen)
@@ -27,8 +27,9 @@ export function GazeStage({ variant = "desktop" }: { variant?: "desktop" | "mobi
     if (!wrap || window.matchMedia("(min-width: 1024px)").matches === mobile) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     // Pose original de la ilustración: mira arriba a la derecha (tx = 1). Hacia la izquierda hay más recorrido que hacia la derecha.
-    let tx = 1, ty = 0, px = 0, py = 0;
-    let cx = tx, cy = ty, cpx = 0, cpy = 0;
+    let tx = 1, ty = 0;
+    let cx = tx, cy = ty;
+    let lastX = -1, lastY = -1, lastT = 0, speed = 0; // velocidad del cursor (px/s), suavizada
     let lastMove = 0;
     let raf = 0;
     let last = performance.now();
@@ -41,10 +42,18 @@ export function GazeStage({ variant = "desktop" }: { variant?: "desktop" | "mobi
       const ey = r ? r.top + r.height / 2 : window.innerHeight * 0.35;
       tx = Math.max(-1, Math.min(1, (clientX - ex) / (window.innerWidth * 0.4)));
       ty = Math.max(-1, Math.min(1, (clientY - ey) / (window.innerHeight * 0.45)));
-      px = (clientX / window.innerWidth - 0.5) * 2;
-      py = (clientY / window.innerHeight - 0.5) * 2;
     };
-    const onMove = (e: PointerEvent) => aim(e.clientX, e.clientY);
+    const onMove = (e: PointerEvent) => {
+      const now = performance.now();
+      if (lastX >= 0 && now > lastT) {
+        const v = (Math.hypot(e.clientX - lastX, e.clientY - lastY) / (now - lastT)) * 1000;
+        speed += (Math.min(v, 6000) - speed) * 0.35;
+      }
+      lastX = e.clientX;
+      lastY = e.clientY;
+      lastT = now;
+      aim(e.clientX, e.clientY);
+    };
     const onFocus = (e: FocusEvent) => {
       // móvil: al enfocar un campo la mirada baja hacia él
       const t = e.target as HTMLElement | null;
@@ -61,14 +70,14 @@ export function GazeStage({ variant = "desktop" }: { variant?: "desktop" | "mobi
         const t = now / 1000;
         tx = 0.1 + 0.9 * Math.sin(t * 0.55);
         ty = 0.5 * Math.sin(t * 0.37 + 1);
-        px = 0.4 * Math.sin(t * 0.3);
-        py = 0.25 * Math.sin(t * 0.23);
+        speed = 0;
       }
-      const k = 1 - Math.pow(0.0006, dt);
+      // La mirada responde al ritmo del cursor: lento = sigue con calma; rápido = reacciona casi al instante.
+      speed *= Math.pow(0.02, dt); // el cursor quieto frena el valor
+      const rate = now - lastMove > 3000 ? 2.2 : Math.min(32, 3.5 + speed / 110); // 1/s
+      const k = 1 - Math.exp(-rate * dt);
       cx += (tx - cx) * k;
       cy += (ty - cy) * k;
-      cpx += (px - cpx) * k * 0.6;
-      cpy += (py - cpy) * k * 0.6;
       const scale = wrap.offsetWidth / W;
       const dx = (cx < 1 ? (cx - 1) * 9.5 : 0) * scale; // hasta ~9 px de origen a la izquierda
       const dy = (cy < 0 ? cy * 3 : cy * 5) * scale;
@@ -76,7 +85,6 @@ export function GazeStage({ variant = "desktop" }: { variant?: "desktop" | "mobi
         const el = irisRefs.current[e.key];
         if (el) el.style.transform = `translate(${dx.toFixed(2)}px, ${dy.toFixed(2)}px)`;
       }
-      wrap.style.transform = `translate(${(cpx * 8).toFixed(2)}px, ${(cpy * 5).toFixed(2)}px) rotate(${(cpx * 0.8).toFixed(2)}deg)`;
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
@@ -89,8 +97,8 @@ export function GazeStage({ variant = "desktop" }: { variant?: "desktop" | "mobi
 
   return (
     <div aria-hidden className="pointer-events-none">
-      <div className="animate-[tu-float_6s_ease-in-out_infinite]">
-        <div ref={wrapRef} className="relative will-change-transform" style={{ aspectRatio: `${W} / ${H}` }}>
+      <div>
+        <div ref={wrapRef} className="relative" style={{ aspectRatio: `${W} / ${H}` }}>
           {/* eslint-disable-next-line @next/next/no-img-element -- ilustración decorativa a medida (capas alineadas al píxel); next/image no admite este montaje */}
           <img src="/registro/modelo.webp" alt="" width={W} height={H} loading="eager" fetchPriority="high" decoding="async" draggable={false} className="absolute inset-0 h-full w-full select-none" />
           {EYES.map((e) => {
