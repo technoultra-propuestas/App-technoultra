@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useState, type InputHTMLAttributes, type ReactNode } from "react";
 import { FormDraft } from "@/components/forms/FormDraft";
 import { Alert, Field, SubmitButton } from "@/components/ui/form";
 import { GoogleG, IconBadge } from "@/components/ui/icons";
@@ -29,33 +29,122 @@ export function GoogleButton({ next }: { next?: string }) {
   );
 }
 
+const fico = { "aria-hidden": true, viewBox: "0 0 24 24", width: 22, height: 22, fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round", strokeLinejoin: "round" } as const;
+const IconUser = () => (
+  <svg {...fico}>
+    <circle cx="12" cy="8" r="4" />
+    <path d="M4.5 20c.8-3.6 3.8-5.5 7.5-5.5s6.7 1.9 7.5 5.5" />
+  </svg>
+);
+const IconMail = () => (
+  <svg {...fico}>
+    <rect x="3" y="5" width="18" height="14" rx="2.5" />
+    <path d="m4 7.5 8 5.5 8-5.5" />
+  </svg>
+);
+const IconLock = () => (
+  <svg {...fico}>
+    <rect x="5" y="11" width="14" height="9" rx="2.5" />
+    <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+  </svg>
+);
+
+/**
+ * Campo del registro. En móvil/tableta es idéntico a `Field` (mismas clases); en escritorio (≥1024 px) añade ícono a la izquierda, el ejemplo
+ * bajo el campo y, en la contraseña, el ojito para verla. Mismos nombres, tipos y validación: solo cambia la presentación.
+ */
+function RegField({
+  label,
+  name,
+  hint,
+  example,
+  error,
+  icon,
+  reveal,
+  ...rest
+}: { label: string; name: string; hint?: string; example?: string; error?: string; icon: ReactNode; reveal?: boolean } & InputHTMLAttributes<HTMLInputElement>) {
+  const id = `f-${name}`;
+  const [show, setShow] = useState(false);
+  return (
+    <label htmlFor={id} className="flex min-w-0 flex-col gap-2 text-[15px] font-bold">
+      {label}
+      <span className="relative block">
+        <input
+          id={id}
+          name={name}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? `${id}-err` : hint ? `${id}-hint` : undefined}
+          className="h-14 w-full min-w-0 rounded-ctl border-[1.5px] border-line-strong bg-white px-4 text-[17px] font-semibold text-ink placeholder:text-muted/60 lg:pl-12 lg:text-[16px] [@media(max-height:940px)]:lg:h-12"
+          {...rest}
+          type={reveal && show ? "text" : rest.type}
+        />
+        <span aria-hidden className="pointer-events-none absolute left-4 top-1/2 hidden -translate-y-1/2 text-muted lg:block">
+          {icon}
+        </span>
+        {reveal ? (
+          <button
+            type="button"
+            onClick={() => setShow((v) => !v)}
+            aria-label={show ? "Ocultar contraseña" : "Mostrar contraseña"}
+            aria-pressed={show}
+            className="absolute right-1.5 top-1/2 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-xl border-none bg-transparent text-muted hover:text-ink lg:flex"
+          >
+            <svg {...fico}>
+              <path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12z" />
+              <circle cx="12" cy="12" r="2.8" />
+              {show ? <path d="M4 4l16 16" /> : null}
+            </svg>
+          </button>
+        ) : null}
+      </span>
+      {example && !error ? <span className="hidden text-[12.5px] font-semibold text-muted lg:block [@media(max-height:940px)]:lg:hidden">{example}</span> : null}
+      {hint && !error ? (
+        <span id={`${id}-hint`} className="text-[13px] font-semibold text-muted">
+          {hint}
+        </span>
+      ) : null}
+      {error ? (
+        <span id={`${id}-err`} className="text-[13px] font-bold text-[#9A2B1E]">
+          {error}
+        </span>
+      ) : null}
+    </label>
+  );
+}
+
 export function RegisterForm() {
   const [state, action] = useActionState(signUpAction, initialState);
   return (
-    <form action={action} className="flex flex-col gap-[18px]" noValidate>
+    <form action={action} className="flex flex-col gap-[18px] lg:gap-4 [@media(max-height:940px)]:lg:gap-3" noValidate>
       <FormDraft id="registro" />
-      <Field
+      <RegField
         label="Nombre completo"
         name="fullName"
         autoComplete="name"
         required
+        icon={<IconUser />}
+        example="Ej. Juan Pérez"
         error={state.fieldErrors?.fullName}
       />
-      <Field
+      <RegField
         label="Correo"
         name="email"
         type="email"
         inputMode="email"
         autoComplete="email"
         required
+        icon={<IconMail />}
+        example="Ej. juan@correo.com"
         error={state.fieldErrors?.email}
       />
-      <Field
+      <RegField
         label="Contraseña"
         name="password"
         type="password"
         autoComplete="new-password"
         required
+        reveal
+        icon={<IconLock />}
         hint="Mínimo 10 caracteres, con mayúscula, minúscula y número."
         error={state.fieldErrors?.password}
       />

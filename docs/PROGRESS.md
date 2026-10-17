@@ -174,3 +174,8 @@ Migraciones 38–40 aplicadas al remoto verificado (agosikmonvjujxzokdlc), despl
 - **CRM:** botón «Eliminar» (solo SUPERADMIN con MFA) en *Usuarios del equipo* y en *Clientes*, con confirmación escribiendo el correo. Acción `purgeUserAction` (límite de intentos; borra después los PDF de Storage y las fotos de Cloudinary, mejor esfuerzo).
 - **Producción:** migración 46 aplicada (46 migraciones). Se eliminaron 6 cuentas de prueba (5 clientes/técnico sin historial + `livac10235` con el ticket TU-2026-00003, 4 pagos, cotización y 3 documentos). Copias: tabla `purged_users_archive` (6) + copia cifrada previa en `technoultra-backups-local/borrado-pruebas-2026-10-16.tar.gz.gpg`.
 - **Pruebas:** `tests/db/purge-user.test.ts` (4) y `tests/unit/purge-user-action.test.ts` (8).
+
+## 2026-10-16 — «Crea tu cuenta» memorable en escritorio (la vista móvil NO cambia)
+- ≥1024 px: escena con la ilustración aprobada, píldoras de beneficios, barra inferior y la MISMA tarjeta de registro (una sola instancia del formulario; mismas clases móviles que antes).
+- Efecto de mirada (`registro/gaze.tsx`): dos capas de iris recortadas por la forma de cada ojo siguen el cursor + paralaje de toda la escena, con interpolación por fotograma; sin cursor la mirada vaga sola; con «reducir movimiento» queda estática. Activos en `public/registro/` (escena sin interfaz, iris, máscaras de ojo).
+- `RegisterForm` usa `RegField` (ícono, ejemplo y ojito solo en escritorio). E2E 01 OK (registro por la interfaz).
