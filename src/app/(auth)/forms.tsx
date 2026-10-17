@@ -74,11 +74,11 @@ function RegField({
           name={name}
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? `${id}-err` : hint ? `${id}-hint` : undefined}
-          className="h-14 w-full min-w-0 rounded-ctl border-[1.5px] border-line-strong bg-white px-4 text-[17px] font-semibold text-ink placeholder:text-muted/60 lg:pl-12 lg:text-[16px] [@media(max-height:940px)]:lg:h-12"
+          className="h-14 w-full min-w-0 rounded-ctl border-[1.5px] border-line-strong bg-white px-4 text-[17px] font-semibold text-ink placeholder:text-muted/60 pl-12 lg:text-[16px] [@media(max-height:940px)]:lg:h-12"
           {...rest}
           type={reveal && show ? "text" : rest.type}
         />
-        <span aria-hidden className="pointer-events-none absolute left-4 top-1/2 hidden -translate-y-1/2 text-muted lg:block">
+        <span aria-hidden className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted">
           {icon}
         </span>
         {reveal ? (
@@ -87,7 +87,7 @@ function RegField({
             onClick={() => setShow((v) => !v)}
             aria-label={show ? "Ocultar contraseña" : "Mostrar contraseña"}
             aria-pressed={show}
-            className="absolute right-1.5 top-1/2 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-xl border-none bg-transparent text-muted hover:text-ink lg:flex"
+            className="absolute right-1.5 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-xl border-none bg-transparent text-muted hover:text-ink"
           >
             <svg {...fico}>
               <path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12z" />
@@ -97,7 +97,7 @@ function RegField({
           </button>
         ) : null}
       </span>
-      {example && !error ? <span className="hidden text-[12.5px] font-semibold text-muted lg:block [@media(max-height:940px)]:lg:hidden">{example}</span> : null}
+      {example && !error ? <span className="block text-[12.5px] font-semibold text-muted [@media(max-height:940px)]:lg:hidden">{example}</span> : null}
       {hint && !error ? (
         <span id={`${id}-hint`} className="text-[13px] font-semibold text-muted">
           {hint}
