@@ -21,11 +21,15 @@ export async function run({ b, rep, state, save }) {
   await b.goto("/login", 1500);
   await b.fill("email", "borrador@e2e.test");
   await b.fill("password", "ClaveSecreta123!");
-  await sleep(900);
+  // El login nuevo solo recuerda el correo si la persona marca «Recordarme» (se guarda al enviar); la contraseña jamás.
+  await b.eval(`document.querySelector('input[type=checkbox]').click()`);
+  await b.eval(`document.querySelector('form button[type=submit]').click()`);
+  await sleep(2500);
   await b.goto("/login", 2000);
-  rep.check("login: al recargar el correo sigue ahí", (await b.eval(`document.querySelector('input[name=email]').value`)) === "borrador@e2e.test");
+  rep.check("login: con «Recordarme» el correo sigue ahí al recargar", (await b.eval(`document.querySelector('input[name=email]').value`)) === "borrador@e2e.test");
   rep.check("login: la contraseña NO se recuerda", (await b.eval(`document.querySelector('input[name=password]').value`)) === "");
-  rep.check("la contraseña no queda guardada en el navegador", !(await b.eval(`Object.keys(localStorage).filter((k) => k.startsWith('tu:draft')).map((k) => localStorage.getItem(k)).join('|').includes('ClaveSecreta')`)));
+  rep.check("la contraseña no queda guardada en el navegador", !(await b.eval(`Object.keys(localStorage).map((k) => localStorage.getItem(k)).join('|').includes('ClaveSecreta')`)))
+  await b.eval(`localStorage.removeItem('tu:login-email')`);;
   await b.eval(`Object.keys(localStorage).filter((k) => k.startsWith('tu:draft')).forEach((k) => localStorage.removeItem(k))`);
 
   // ---------------------------------------------------------------- aceptación legal: texto y registro

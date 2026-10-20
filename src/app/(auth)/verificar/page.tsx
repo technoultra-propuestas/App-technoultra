@@ -53,7 +53,7 @@ export default async function VerifyPage({
             </svg>
           </Link>
           <h1 className="m-0 mt-6 text-[34px] font-extrabold leading-[1.1] tracking-[-0.025em] sm:text-[40px] lg:text-[clamp(40px,3vw,54px)]">
-            Revisa <span className="text-brand">tu correo</span>
+            Revisa <span className="text-brand-display">tu correo</span>
           </h1>
           <div className="mt-3 h-1 w-14 rounded-sm bg-brand" />
           <p className="m-0 mt-4 text-[16px] leading-relaxed text-ink-2 lg:text-[clamp(16px,1.1vw,19px)]">

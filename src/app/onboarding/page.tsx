@@ -70,7 +70,7 @@ export default async function OnboardingPage() {
         title={
           <>
             {TITLES[step][0]}
-            <span className="text-brand">{TITLES[step][1]}</span>
+            <span className="text-brand-display">{TITLES[step][1]}</span>
           </>
         }
         subtitle={SUBTITLES[step]}

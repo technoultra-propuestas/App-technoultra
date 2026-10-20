@@ -147,7 +147,7 @@ export default function RegisterPage() {
       <div className="relative z-10 mx-4 flex flex-col gap-[18px] rounded-[28px] bg-white px-5 py-6 shadow-[0_30px_80px_-34px_rgba(140,60,0,.5)] ring-1 ring-black/5 sm:mx-auto sm:max-w-[480px] lg:absolute lg:left-[7.5vw] lg:top-1/2 lg:z-10 lg:mx-0 lg:max-h-[88vh] lg:w-[min(460px,32vw)] lg:min-w-[400px] lg:max-w-none lg:-translate-y-[49%] lg:gap-4 lg:overflow-y-auto lg:rounded-[28px] lg:bg-white lg:px-8 lg:py-8 [@media(max-height:940px)]:lg:gap-2.5 [@media(max-height:940px)]:lg:py-5 lg:shadow-[0_40px_100px_-40px_rgba(140,60,0,.5)] lg:ring-1 lg:ring-black/5">
         <div className="flex flex-col gap-2">
           <h1 className="m-0 text-[30px] font-extrabold tracking-[-0.025em] text-[32px] lg:text-[40px] [@media(max-height:940px)]:lg:text-[34px]">
-            Crea tu <span className="text-brand">cuenta</span>
+            Crea tu <span className="text-brand-display">cuenta</span>
           </h1>
           <div className="h-1 w-10 rounded-sm bg-brand" />
           <p className="m-0 mt-1 text-base leading-normal text-muted">Con tu cuenta ves tus equipos, cotizaciones y garantías en un solo lugar.</p>
